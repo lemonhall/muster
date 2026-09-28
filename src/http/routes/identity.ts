@@ -1,4 +1,13 @@
-import { JSON_CONTENT_TYPE } from "../grpc";
+import {
+  asObject,
+  json,
+  optionalString,
+  optionalStringMap,
+  parseBody,
+  queryBool,
+  queryList,
+  queryValue,
+} from "../body";
 import { invalidArgument } from "../errors";
 import type { Router } from "../router";
 import {
@@ -38,118 +47,6 @@ import { accountBody, sessionBody, usersBody } from "../../wire/identity";
  * 契约源: server/api_user.go::GetUsers
  * 契约源: server/api.go::securityInterceptorFunc
  */
-
-/**
- * 请求体里的字段名有两种合法写法。
- *
- * `UseProtoNames: true` 只影响**输出**；protojson 的**输入**同时接受 proto 原名
- * （`display_name`）与 lowerCamelCase 的 JSON 名（`displayName`）。官方 SDK 发的就是
- * 后者，所以两种都必须认，只认一种会把 SDK 挡在门外。
- */
-const SNAKE_TO_JSON: Readonly<Record<string, string>> = {
-  display_name: "displayName",
-  avatar_url: "avatarUrl",
-  lang_tag: "langTag",
-  refresh_token: "refreshToken",
-  facebook_ids: "facebookIds",
-};
-
-function readField(container: Record<string, unknown>, key: string): unknown {
-  const jsonName = SNAKE_TO_JSON[key];
-  if (jsonName !== undefined && jsonName in container) return container[jsonName];
-  return container[key];
-}
-
-/**
- * 解析请求体。空 body 与坏 JSON 的 code 都是 InvalidArgument（400），只有消息不同。
- *
- * 返回 `unknown` 而不是 `Record<string, unknown>`：`null` 是一个**有意义的输入**
- * （对应上游 `in.Account == nil`，"认证请求里没给 account"），不能与"坏 JSON"混为一谈。
- */
-async function parseBody(request: Request): Promise<unknown> {
-  const raw = await request.text();
-  if (raw.trim() === "") {
-    // protojson 解码空输入报的就是这句。
-    throw invalidArgument("unexpected EOF");
-  }
-  try {
-    return JSON.parse(raw);
-  } catch {
-    throw invalidArgument("Invalid JSON body.");
-  }
-}
-
-/** 要求请求体是个 JSON 对象（`null` 由调用方按自己的语义处理）。 */
-function asObject(value: unknown, label: string): Record<string, unknown> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw invalidArgument(`Invalid ${label}: expected an object.`);
-  }
-  return value as Record<string, unknown>;
-}
-
-function optionalString(container: Record<string, unknown>, key: string): string | undefined {
-  const value = readField(container, key);
-  if (value === undefined || value === null) return undefined;
-  if (typeof value !== "string") throw invalidArgument(`Invalid ${key}: expected a string.`);
-  return value;
-}
-
-function optionalStringMap(
-  container: Record<string, unknown>,
-  key: string,
-): Record<string, string> | undefined {
-  const value = readField(container, key);
-  if (value === undefined || value === null) return undefined;
-  if (typeof value !== "object" || Array.isArray(value)) {
-    throw invalidArgument(`Invalid ${key}: expected an object.`);
-  }
-  const result: Record<string, string> = {};
-  for (const [entryKey, entryValue] of Object.entries(value as Record<string, unknown>)) {
-    if (typeof entryValue !== "string") {
-      throw invalidArgument(`Invalid ${key}: values must be strings.`);
-    }
-    result[entryKey] = entryValue;
-  }
-  return result;
-}
-
-/** query 参数取单值；没有就是 `""`（与上游 `req.FormValue` 的空值语义一致）。 */
-function queryValue(url: URL, ...names: readonly string[]): string {
-  for (const name of names) {
-    const value = url.searchParams.get(name);
-    if (value !== null) return value;
-  }
-  return "";
-}
-
-/** query 参数取多值（`?ids=a&ids=b`）。上游 swagger 声明的是 `collectionFormat: multi`。 */
-function queryList(url: URL, ...names: readonly string[]): string[] {
-  const values: string[] = [];
-  for (const name of names) {
-    values.push(...url.searchParams.getAll(name));
-  }
-  return values;
-}
-
-/**
- * query 参数取布尔。取值集合照 Go 的 `strconv.ParseBool`（grpc-gateway 就调它），
- * 缺省值由调用方给：上游对 `create` 的语义是 `in.Create == nil || in.Create.Value`，
- * 即**不传 = true**。
- */
-function queryBool(url: URL, name: string, fallback: boolean): boolean {
-  const raw = url.searchParams.get(name);
-  if (raw === null) return fallback;
-  if (["1", "t", "T", "TRUE", "true", "True"].includes(raw)) return true;
-  if (["0", "f", "F", "FALSE", "false", "False"].includes(raw)) return false;
-  throw invalidArgument(`invalid value for boolean field: ${name}`);
-}
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": JSON_CONTENT_TYPE },
-  });
-}
 
 /**
  * 认证端点的请求体**就是** `apiAccountDevice` / `apiAccountCustom` 本体。

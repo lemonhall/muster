@@ -2,6 +2,7 @@ import type { Bindings } from "./env";
 import { JSON_CONTENT_TYPE } from "./http/grpc";
 import { Router } from "./http/router";
 import { registerIdentityRoutes } from "./http/routes/identity";
+import { registerStorageRoutes } from "./http/routes/storage";
 
 /**
  * Worker 入口：只负责把请求交给路由表，不放任何业务逻辑。
@@ -29,6 +30,7 @@ router.handlePublic(
 );
 
 registerIdentityRoutes(router);
+registerStorageRoutes(router);
 
 export default {
   fetch(request: Request, env: Bindings): Response | Promise<Response> {
