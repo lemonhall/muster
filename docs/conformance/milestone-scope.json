@@ -5,7 +5,8 @@
     {
       "id": "M1",
       "title": "身份与账号",
-      "files": ["server/api_test.go", "social/google_token_audience_test.go"]
+      "files": ["server/api_test.go"],
+      "note": "M1 只收 v1 真正要实现的身份/账号面。`social/google_token_audience_test.go` 原先挂在这里，M1 编码时按 PRD 重新归类到 M5：它的验收对象是 Google ID token 的 aud 校验（即 OAuth/社交登录分支），而 PRD REQ-0001-003 与 v1 计划都明确该分支后置到 v2——留在 M1 只会逼出两种坏结果（要么把 v2 的功能提前塞进 v1，要么用豁免把对外可观测行为说成「不用做」）。"
     },
     {
       "id": "M2",
@@ -25,8 +26,9 @@
     },
     {
       "id": "M5",
-      "title": "社交（好友/群组/通知）",
-      "files": ["server/core_friend_test.go"]
+      "title": "社交（好友/群组/通知/社交登录令牌校验）",
+      "files": ["server/core_friend_test.go", "social/google_token_audience_test.go"],
+      "note": "social/google_token_audience_test.go 承载 REQ-0001-003 的 OAuth 分支（Google ID token 的 aud 校验），随社交功能在 v2 交付。"
     },
     {
       "id": "M6",

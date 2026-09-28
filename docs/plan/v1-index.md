@@ -38,7 +38,7 @@
 
 ### M1 身份与账号（REQ-0001-003/004/005）
 
-**范围**：服务端密钥鉴权（Basic）、设备/邮箱/自定义认证、access/refresh 令牌、会话过期与登出、用户资料读写。
+**范围**：多租户（每租户一套 server key 与派生签名密钥，数据按 `tenant_id` 隔离，见 [ECN-0001](../ecn/ECN-0001-multi-tenancy.md)）、服务端密钥鉴权（Basic）、设备/邮箱/自定义认证、access/refresh 令牌、会话过期与登出、用户资料读写。
 
 **DoD**
 
@@ -46,11 +46,14 @@
 |---|---|---|---|
 | 1 | `POST /v2/account/authenticate/device?create=true` 返回 200，body 含 `token`/`refresh_token`，用户 `id` 为 UUIDv4 大写格式 | `npm test`（集成） | 断言全绿 |
 | 2 | 无 `Authorization` 头或错误密钥 → 401 | 同上 | 断言全绿 |
-| 3 | 邮箱认证重复注册 → 冲突码与上游一致（`409`，`code` 字段语义对齐） | 同上 | 断言全绿 |
+| 3 | 冲突与重复语义与上游一致：**用户名**撞车 → `409 Username is already in use.`；**同邮箱二次认证**按上游行为走登录（200，不是 409）；错密码 → `401 Invalid credentials.` | 同上 | 断言全绿 |
 | 4 | 过期/伪造 token → 401；refresh 后可换发新 access token；登出（`/v2/session/logout`）后旧 token 失效 | 同上 | 断言全绿 |
 | 5 | 资料读取/更新字段级一致（username、display_name、avatar_url、lang_tag、location、timezone、metadata） | 同上 | 断言全绿 |
 | 6 | E2E：设备登录 → 带 token 读资料 → 改显示名 → 再读回，全流程在真实 HTTP 面完成 | `npm run e2e` | 退出码 0 |
 | 7 | 覆盖矩阵中与账号/认证相关的上游测试条目状态不再为 `planned` | `npm run conformance:matrix` | 无 `planned` 残留于 M1 范围 |
+| 8 | 多租户隔离：同账号建两个租户；A 租户令牌在 B 租户被拒（401）；同名用户在两租户下共存；未知 server key → 401 `Server key invalid` | `npm test` | 断言全绿 |
+| 9 | 未实现但上游存在的 REST 路径返回 501（不是 404），未知路径仍为 404 | `npm test` | 断言全绿 |
+| 10 | 与上游的刻意偏差必须有 ECN 并从 PRD / 计划 / 覆盖矩阵三处可追 | `npm run docs:check` + 人工核对 `docs/ecn/` | 退出码 0；ECN-0002（密码哈希）、ECN-0003（401 realm）在 PRD 与计划里都有引用 |
 
 ### M2 存储引擎（REQ-0001-006/007）
 
@@ -109,9 +112,10 @@
 |---|---|---|---|---|---|
 | REQ-0001-001 | v1-foundation Step1-4 | `tests/unit/grpc_status.test.ts`（18 条）、`tests/unit/runtime.test.ts`（1 条 workerd 门禁）、`tests/integration/healthcheck.test.ts`（3 条） | `tests/e2e/toolchain.e2e.test.ts`（4 条） | [v1-foundation.md §Evidence A–E](./v1-foundation.md#evidence) | 🟢 done |
 | REQ-0001-002 | v1-foundation Step1-4 | `tests/integration/healthcheck.test.ts`（3 条：根路径 / healthcheck / 未知路径） | `tests/e2e/toolchain.e2e.test.ts`（4 条，含 501 语义） | [v1-foundation.md §Evidence A–E](./v1-foundation.md#evidence) | 🟢 done |
-| REQ-0001-003 | v1-identity-storage M1 | 待填 | 待填 | — | 🔴 todo |
-| REQ-0001-004 | v1-identity-storage M1 | 待填 | 待填 | — | 🔴 todo |
-| REQ-0001-005 | v1-identity-storage M1 | 待填 | 待填 | — | 🔴 todo |
+| REQ-0001-003 | v1-identity-storage M1 | `tests/integration/identity.test.ts`（设备认证 10 条、自定义认证 2 条、邮箱认证 10 条、服务端密钥鉴权 6 条） | `tests/e2e/identity.e2e.test.ts`（14 条中的认证/401/501 组） | [v1-identity-storage.md §Evidence A/B/D](./v1-identity-storage.md#evidence)、[ECN-0002](../ecn/ECN-0002-password-hash.md) | 🟢 done |
+| REQ-0001-004 | v1-identity-storage M1 | `tests/integration/identity.test.ts`（令牌与会话 7 条、登出 4 条） | `tests/e2e/identity.e2e.test.ts`（刷新换发、刷新令牌不可当访问令牌、登出后失效） | [v1-identity-storage.md §Evidence A/B](./v1-identity-storage.md#evidence)、[ECN-0003](../ecn/ECN-0003-www-authenticate-realm.md) | 🟢 done |
+| REQ-0001-005 | v1-identity-storage M1 | `tests/integration/identity.test.ts`（账号资料 6 条、用户查询 4 条） | `tests/e2e/identity.e2e.test.ts`（改显示名 → 读回、`/v2/user` 批量查询） | [v1-identity-storage.md §Evidence A/B](./v1-identity-storage.md#evidence) | 🟢 done |
+| REQ-0001-026 | v1-identity-storage M1（[ECN-0001](../ecn/ECN-0001-multi-tenancy.md)） | `tests/integration/tenancy.test.ts`（7 条）、`tests/unit/tenancy_keys.test.ts`（8 条） | `tests/e2e/identity.e2e.test.ts`（多租户隔离 3 条，真实 HTTP） | [v1-identity-storage.md §Evidence B/E](./v1-identity-storage.md#evidence) | 🟢 done |
 | REQ-0001-006 | v1-identity-storage M2 | 待填 | 待填 | — | 🔴 todo |
 | REQ-0001-007 | v1-identity-storage M2 | 待填 | 待填 | — | 🔴 todo |
 | REQ-0001-008 | v1-realtime-chat M3 | 待填 | 待填 | — | 🔴 todo |
@@ -122,7 +126,11 @@
 
 ## ECN 索引
 
-暂无。
+| ECN | 标题 | 状态 | 关联 Req ID | 落点 |
+|---|---|---|---|---|
+| [ECN-0001](../ecn/ECN-0001-multi-tenancy.md) | 多租户（一个 Cloudflare 账号运营多个游戏） | 已生效（M1 前落地） | REQ-0001-026 | `migrations/0001_identity.sql`、`src/domain/tenancy/store.ts`、`src/http/auth.ts`、`scripts/tenant.mjs` |
+| [ECN-0002](../ecn/ECN-0002-password-hash.md) | 密码哈希改用 PBKDF2-SHA256 | 已生效 | REQ-0001-003 | `src/domain/identity/password.ts` |
+| [ECN-0003](../ecn/ECN-0003-www-authenticate-realm.md) | 401 挑战头的 realm 用本项目命名 | 已生效 | REQ-0001-004 | `src/http/grpc.ts` |
 
 ## Review 记录
 
@@ -161,14 +169,51 @@
 | NOTE | review::M0::same-model-self-review | 派出的独立 reviewer 子代理两次未收到任务正文（其回话为"任务还没来"），本轮无法获得 fresh 上下文 | 已记录残余风险 1；Review 结论全部以命令证据支撑 |
 | NOTE | e2e::tests-e2e-global-setup::readiness-heuristic | 就绪判定仅 `res.status === 200`，不校验 body | 携带至 M1 处理（见残余风险 2） |
 
+## Tashan Review - v1 / M1
+
+- reviewer_context: same-model（自评；本机无法派出独立子代理——两次尝试的子代理都没收到任务正文，见下方 NOTE）
+- round: 1
+- cost_profile: standard
+- verdict: pass
+- blocker_count: 0
+- major_count: 0
+- stuck_signatures: 无
+- regression_signatures: 无
+- commands_checked:
+  - `npm test` → 0（6 files / 90 tests；`tests/unit/runtime.test.ts` 断言 `navigator.userAgent === "Cloudflare-Workers"`，证明这 90 条确实跑在 workerd 里）
+  - `npm run typecheck` → 0
+  - `npm run e2e` → 0（2 files / 18 tests，含多租户隔离 3 条；日志含真实监听地址 `http://127.0.0.1:8788`）
+  - `$env:MUSTER_E2E_TARGET='http://127.0.0.1:8799'; npm run e2e` → 1（18 条全 ECONNREFUSED，反证 E2E 走的是网络而不是进程内直调）
+  - `npm run conformance:inventory` → 0（`upstream_files=40 upstream_tests=263 upstream_commit=e920249a...` mode=verify）
+  - `npm run conformance:matrix` → 0（`entries=263 ported=1 planned=262 exempt=0 unreasoned_exemptions=0`；M1 桶 1/1/0/0 → 本里程碑范围无 `planned` 残留）
+  - `npm run docs:check` → 0（`files=12 requirements=26 plans=3 lines=1774 links=40 problems=0`）
+  - 上游语义核对：`server/api.go`（`securityInterceptorFunc`/`parseBasicAuth`/`parseBearerAuth`/`wwwAuthenticateFixWriter`/`handleRoutingError`）、`server/api_authenticate.go::AuthenticateEmail`、`server/core_authenticate.go::AuthenticateEmail|AuthenticateUsername`、`server/api_session.go::SessionRefresh|SessionLogout`、`server/api_account.go::GetAccount`、`server/core_account.go::GetAccount`、`server/api_user.go`、`apigrpc/apigrpc.swagger.json` → 状态码、错误消息、字段名、校验顺序逐条比对，未发现不一致
+  - 多租户隔离核查：`rg -n "prepare\(" src/domain/identity/store.ts src/domain/tenancy/store.ts` → 所有用户/身份/资料的 SELECT/INSERT/UPDATE 都带 `tenant_id`；唯一按 `token_id` 全局查改的是 `sessions`，已按下方 MINOR 处置
+  - 目录卫生：`git status --porcelain` 在提交后为空
+- residual_risks:
+  1. 本轮 Review 是**同模型自评**：本机派出独立子代理两次都失败（子代理回复"没收到任务正文"），因此没有新鲜上下文的对抗式检查。缓解：结论全部落成可复现命令与永久化门禁（覆盖矩阵脚本、文档卫生脚本、workerd 运行时门禁、E2E 反证），不依赖"我看过"。
+  2. 没有线上部署验收：受"测试不得依赖 Cloudflare 远端资源"的约束，M1 的"能跑"指的是本地 workerd + 真实 HTTP。
+  3. `GET /v2/user` 的 `facebook_ids` 参数永远返回空集合（社交登录后置到 v2，M1 不可能有 facebook 身份）。这不是掩盖：上游"查不到"的响应形状同样是空集合，v2 补身份来源即可。
+
+### Findings
+
+| severity | signature | evidence | disposition |
+|---|---|---|---|
+| MINOR | tenancy::sessions::missing-tenant-predicate | `src/domain/identity/store.ts` 的 `findSession`/`revokeSession` 只按 `token_id` 全局查改；跨租户隔离真正依赖的是"令牌签名密钥按租户派生"这一层，数据库层缺纵深防御 | 已修复（commit `22e139b`）：`insertSession` 的冲突分支加 `WHERE sessions.tenant_id/user_id = <传入值>`，写成 0 行即抛错；`findSession`/`revokeSession` 谓词加 `tenant_id`；90 条测试仍全绿 |
+| MINOR | dod::M1::email-duplicate-409-wrong | M1 DoD #3 原写"邮箱认证重复注册 → 冲突码与上游一致（409）"，而上游 `server/core_authenticate.go::AuthenticateEmail` 对已存在邮箱是**校验密码后登录**（200/401），409 只出现在**用户名**撞车 | 已改写 DoD #3 为"用户名撞车 → 409；同邮箱二次认证走登录；错密码 → 401"，并在 `tests/integration/identity.test.ts` 的两条对应用例中钉住 |
+| MINOR | conformance::M1-scope::google-token-tests-misbucketed | `social/google_token_audience_test.go`（3 条）原本挂在 M1 桶，但 PRD 与 v1 计划都把 OAuth/社交登录后置到 v2——留在 M1 只会逼出"提前做 v2"或"把对外可观测行为当豁免"两种坏结果 | 已重归类到 M5 桶，并在 `milestone-scope.json` 的 M1/M5 条目里写明理由、同步 PRD（REQ-0001-003 备注 + §7 里程碑表） |
+| NOTE | parity::account::verify-time-and-wallet | 核对上游 `core_account.go::GetAccount`：邮箱建号**不写** `verify_time`（INSERT 只有 id/username/email/password/create_time/update_time）；`wallet` 是建表默认 `{}`；`ApiServer.GetAccount` 显式清空 `DisableTime` | 已核对，未发现偏差：`src/wire/identity.ts` 不发 `disable_time`、`verify_time` 仅在非 0 时发、`wallet` 固定 `"{}"` |
+| NOTE | e2e::readiness-heuristic | M0 的残余风险 2（就绪判定只看状态码）已在 M1 闭合：`tests/e2e/global-setup.ts` 现在要求 `GET /healthcheck` 的 body 精确等于 `{}` | 已闭合，本条从残余风险降级为观察记录 |
+| NOTE | review::M1::same-model-self-review | 本机子代理派发失败（两次都收到"没有任务正文"的回话），本轮没有 fresh 上下文 Review | 见残余风险 1；若后续环境允许派发，应补一次独立对抗式 Review |
+
 ## Tashan Trigger Audit
 
 ```markdown
-- expected_review_triggers: v_doc_writing_done, v_milestone_done(M0), v_milestone_done(M1..M4)
-- actual_review_runs: 2 (v_doc_writing_done, v_milestone_done(M0) 同模型自评)
+- expected_review_triggers: v_doc_writing_done, v_milestone_done(M0..M4)
+- actual_review_runs: 3 (v_doc_writing_done, v_milestone_done(M0) 同模型自评, v_milestone_done(M1) 同模型自评)
 - skipped_triggers: 0
-- skip_reasons: -
-- mitigation: 每个里程碑完成前必须补 Review 记录，否则不输出完成信号
+- skip_reasons: 独立子代理派发不通（本机限制），降级为同模型自评 + 命令证据
+- mitigation: 每个里程碑完成前必须补 Review 记录，否则不输出完成信号；把可自动化的检查固化成脚本门禁（覆盖矩阵、文档卫生、workerd 运行时、E2E 反证），降低对人工 Review 的依赖
 ```
 
 ## 差异列表（v1 结束后回填）

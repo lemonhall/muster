@@ -10,21 +10,21 @@
 |---|---|
 | 上游 commit | `e920249a3465bea4b8ea2968020c488201b61a8e` |
 | 上游测试条目 | 263 |
-| ported | 0 |
-| planned | 263 |
+| ported | 1 |
+| planned | 262 |
 | exempt | 0 |
 | 无理由豁免 | 0 |
-| 第二证据源引用（自主契约测试） | 5 |
+| 第二证据源引用（自主契约测试） | 23 |
 
 ## 按里程碑
 
 | 里程碑 | 范围 | 条目 | ported | planned | exempt |
 |---|---|---:|---:|---:|---:|
-| M1 | 身份与账号 | 4 | 0 | 4 | 0 |
+| M1 | 身份与账号 | 1 | 1 | 0 | 0 |
 | M2 | 存储引擎 | 57 | 0 | 57 | 0 |
 | M3 | 实时协议与在线状态 | 1 | 0 | 1 | 0 |
 | M4 | 频道与聊天 | 0 | 0 | 0 | 0 |
-| M5 | 社交（好友/群组/通知） | 1 | 0 | 1 | 0 |
+| M5 | 社交（好友/群组/通知/社交登录令牌校验） | 4 | 0 | 4 | 0 |
 | M6 | 经济与竞技（钱包/排行榜/锦标赛） | 25 | 0 | 25 | 0 |
 | M7 | 匹配与对局 | 35 | 0 | 35 | 0 |
 | M8 | 派对与运行时扩展 | 44 | 0 | 44 | 0 |
@@ -40,84 +40,84 @@
 
 | # | 状态 | 上游测试 | 文件 | 证据 / 理由 |
 |---:|---|---|---|---|
-| 1 | planned | TestWWWAuthenticateHeaderOnUnauthenticated | `server/api_test.go` | — |
-| 2 | planned | TestCheckGoogleTokenDoesNotExchangeMalformedJWT | `social/google_token_audience_test.go` | — |
-| 3 | planned | TestCheckGoogleTokenPreservesAuthorizationCodeFlow | `social/google_token_audience_test.go` | — |
-| 4 | planned | TestCheckGoogleTokenValidatesAudience | `social/google_token_audience_test.go` | — |
+| 1 | ported | TestWWWAuthenticateHeaderOnUnauthenticated | `server/api_test.go` | `tests/integration/identity.test.ts` |
 
 ### M2 存储引擎
 
 | # | 状态 | 上游测试 | 文件 | 证据 / 理由 |
 |---:|---|---|---|---|
-| 5 | planned | TestNonOCCAuthoritative | `server/core_storage_test.go` | — |
-| 6 | planned | TestNonOCCNonAuthoritative | `server/core_storage_test.go` | — |
-| 7 | planned | TestOCCNotExistsAuthoritative | `server/core_storage_test.go` | — |
-| 8 | planned | TestOCCNotExistsNonAuthoritative | `server/core_storage_test.go` | — |
-| 9 | planned | TestOCCWriteAuthoritative | `server/core_storage_test.go` | — |
-| 10 | planned | TestOCCWriteNonAuthoritative | `server/core_storage_test.go` | — |
-| 11 | planned | TestOCCWriteSameValueCorrectVersionSuccess | `server/core_storage_test.go` | — |
-| 12 | planned | TestOCCWriteSameValueWithOutdatedVersionFail | `server/core_storage_test.go` | — |
-| 13 | planned | TestStorageFetchPipelineGlobalPrivate | `server/core_storage_test.go` | — |
-| 14 | planned | TestStorageFetchPipelineUserOtherPublic | `server/core_storage_test.go` | — |
-| 15 | planned | TestStorageFetchPipelineUserOtherPublicMixed | `server/core_storage_test.go` | — |
-| 16 | planned | TestStorageFetchPipelineUserOtherRead | `server/core_storage_test.go` | — |
-| 17 | planned | TestStorageFetchPipelineUserPrivate | `server/core_storage_test.go` | — |
-| 18 | planned | TestStorageFetchPipelineUserPublic | `server/core_storage_test.go` | — |
-| 19 | planned | TestStorageFetchPipelineUserRead | `server/core_storage_test.go` | — |
-| 20 | planned | TestStorageFetchRuntimeGlobalPrivate | `server/core_storage_test.go` | — |
-| 21 | planned | TestStorageFetchRuntimeMixed | `server/core_storage_test.go` | — |
-| 22 | planned | TestStorageFetchRuntimeUserPrivate | `server/core_storage_test.go` | — |
-| 23 | planned | TestStorageListNoRepeats | `server/core_storage_test.go` | — |
-| 24 | planned | TestStorageListPipelineUserOther | `server/core_storage_test.go` | — |
-| 25 | planned | TestStorageListPipelineUserSelf | `server/core_storage_test.go` | — |
-| 26 | planned | TestStorageListRuntimeUser | `server/core_storage_test.go` | — |
-| 27 | planned | TestStorageOverrwriteEmptyAndNonEmptyVersions | `server/core_storage_test.go` | — |
-| 28 | planned | TestStorageReadObjectsAllDistinctArgs | `server/core_storage_test.go` | — |
-| 29 | planned | TestStorageReadObjectsOneDistinctArg | `server/core_storage_test.go` | — |
-| 30 | planned | TestStorageReadObjectsSameArgs | `server/core_storage_test.go` | — |
-| 31 | planned | TestStorageReadObjectsTwoDistinctArgs | `server/core_storage_test.go` | — |
-| 32 | planned | TestStorageRemovePipelineUserDenied | `server/core_storage_test.go` | — |
-| 33 | planned | TestStorageRemovePipelineUserWrite | `server/core_storage_test.go` | — |
-| 34 | planned | TestStorageRemoveRuntimeGlobalIfMatch | `server/core_storage_test.go` | — |
-| 35 | planned | TestStorageRemoveRuntimeGlobalIfMatchNotExists | `server/core_storage_test.go` | — |
-| 36 | planned | TestStorageRemoveRuntimeGlobalIfMatchRejected | `server/core_storage_test.go` | — |
-| 37 | planned | TestStorageRemoveRuntimeGlobalPrivate | `server/core_storage_test.go` | — |
-| 38 | planned | TestStorageRemoveRuntimeGlobalPublic | `server/core_storage_test.go` | — |
-| 39 | planned | TestStorageRemoveRuntimeUserPrivate | `server/core_storage_test.go` | — |
-| 40 | planned | TestStorageRemoveRuntimeUserPublic | `server/core_storage_test.go` | — |
-| 41 | planned | TestStorageWritePipelineIfMatchExists | `server/core_storage_test.go` | — |
-| 42 | planned | TestStorageWritePipelineIfMatchExistsFail | `server/core_storage_test.go` | — |
-| 43 | planned | TestStorageWritePipelineIfMatchNotExists | `server/core_storage_test.go` | — |
-| 44 | planned | TestStorageWritePipelineIfNoneMatchExists | `server/core_storage_test.go` | — |
-| 45 | planned | TestStorageWritePipelineIfNoneMatchNotExists | `server/core_storage_test.go` | — |
-| 46 | planned | TestStorageWritePipelinePermissionFail | `server/core_storage_test.go` | — |
-| 47 | planned | TestStorageWritePipelineUserMultiple | `server/core_storage_test.go` | — |
-| 48 | planned | TestStorageWritePipelineUserMultipleSameKey | `server/core_storage_test.go` | — |
-| 49 | planned | TestStorageWritePipelineUserSingle | `server/core_storage_test.go` | — |
-| 50 | planned | TestStorageWriteRuntimeGlobalMultipleIfMatchNotExists | `server/core_storage_test.go` | — |
-| 51 | planned | TestStorageWriteRuntimeGlobalMultipleSameKey | `server/core_storage_test.go` | — |
-| 52 | planned | TestStorageWriteRuntimeGlobalSingle | `server/core_storage_test.go` | — |
-| 53 | planned | TestStorageWriteRuntimeGlobalSingleIfMatchExists | `server/core_storage_test.go` | — |
-| 54 | planned | TestStorageWriteRuntimeGlobalSingleIfMatchExistsFail | `server/core_storage_test.go` | — |
-| 55 | planned | TestStorageWriteRuntimeGlobalSingleIfMatchNotExists | `server/core_storage_test.go` | — |
-| 56 | planned | TestStorageWriteRuntimeGlobalSingleIfNoneMatchExists | `server/core_storage_test.go` | — |
-| 57 | planned | TestStorageWriteRuntimeGlobalSingleIfNoneMatchNotExists | `server/core_storage_test.go` | — |
-| 58 | planned | TestStorageWriteRuntimeUserMultiple | `server/core_storage_test.go` | — |
-| 59 | planned | TestLocalStorageIndex_Delete | `server/storage_index_test.go` | — |
-| 60 | planned | TestLocalStorageIndex_List | `server/storage_index_test.go` | — |
-| 61 | planned | TestLocalStorageIndex_Write | `server/storage_index_test.go` | — |
+| 2 | planned | TestNonOCCAuthoritative | `server/core_storage_test.go` | — |
+| 3 | planned | TestNonOCCNonAuthoritative | `server/core_storage_test.go` | — |
+| 4 | planned | TestOCCNotExistsAuthoritative | `server/core_storage_test.go` | — |
+| 5 | planned | TestOCCNotExistsNonAuthoritative | `server/core_storage_test.go` | — |
+| 6 | planned | TestOCCWriteAuthoritative | `server/core_storage_test.go` | — |
+| 7 | planned | TestOCCWriteNonAuthoritative | `server/core_storage_test.go` | — |
+| 8 | planned | TestOCCWriteSameValueCorrectVersionSuccess | `server/core_storage_test.go` | — |
+| 9 | planned | TestOCCWriteSameValueWithOutdatedVersionFail | `server/core_storage_test.go` | — |
+| 10 | planned | TestStorageFetchPipelineGlobalPrivate | `server/core_storage_test.go` | — |
+| 11 | planned | TestStorageFetchPipelineUserOtherPublic | `server/core_storage_test.go` | — |
+| 12 | planned | TestStorageFetchPipelineUserOtherPublicMixed | `server/core_storage_test.go` | — |
+| 13 | planned | TestStorageFetchPipelineUserOtherRead | `server/core_storage_test.go` | — |
+| 14 | planned | TestStorageFetchPipelineUserPrivate | `server/core_storage_test.go` | — |
+| 15 | planned | TestStorageFetchPipelineUserPublic | `server/core_storage_test.go` | — |
+| 16 | planned | TestStorageFetchPipelineUserRead | `server/core_storage_test.go` | — |
+| 17 | planned | TestStorageFetchRuntimeGlobalPrivate | `server/core_storage_test.go` | — |
+| 18 | planned | TestStorageFetchRuntimeMixed | `server/core_storage_test.go` | — |
+| 19 | planned | TestStorageFetchRuntimeUserPrivate | `server/core_storage_test.go` | — |
+| 20 | planned | TestStorageListNoRepeats | `server/core_storage_test.go` | — |
+| 21 | planned | TestStorageListPipelineUserOther | `server/core_storage_test.go` | — |
+| 22 | planned | TestStorageListPipelineUserSelf | `server/core_storage_test.go` | — |
+| 23 | planned | TestStorageListRuntimeUser | `server/core_storage_test.go` | — |
+| 24 | planned | TestStorageOverrwriteEmptyAndNonEmptyVersions | `server/core_storage_test.go` | — |
+| 25 | planned | TestStorageReadObjectsAllDistinctArgs | `server/core_storage_test.go` | — |
+| 26 | planned | TestStorageReadObjectsOneDistinctArg | `server/core_storage_test.go` | — |
+| 27 | planned | TestStorageReadObjectsSameArgs | `server/core_storage_test.go` | — |
+| 28 | planned | TestStorageReadObjectsTwoDistinctArgs | `server/core_storage_test.go` | — |
+| 29 | planned | TestStorageRemovePipelineUserDenied | `server/core_storage_test.go` | — |
+| 30 | planned | TestStorageRemovePipelineUserWrite | `server/core_storage_test.go` | — |
+| 31 | planned | TestStorageRemoveRuntimeGlobalIfMatch | `server/core_storage_test.go` | — |
+| 32 | planned | TestStorageRemoveRuntimeGlobalIfMatchNotExists | `server/core_storage_test.go` | — |
+| 33 | planned | TestStorageRemoveRuntimeGlobalIfMatchRejected | `server/core_storage_test.go` | — |
+| 34 | planned | TestStorageRemoveRuntimeGlobalPrivate | `server/core_storage_test.go` | — |
+| 35 | planned | TestStorageRemoveRuntimeGlobalPublic | `server/core_storage_test.go` | — |
+| 36 | planned | TestStorageRemoveRuntimeUserPrivate | `server/core_storage_test.go` | — |
+| 37 | planned | TestStorageRemoveRuntimeUserPublic | `server/core_storage_test.go` | — |
+| 38 | planned | TestStorageWritePipelineIfMatchExists | `server/core_storage_test.go` | — |
+| 39 | planned | TestStorageWritePipelineIfMatchExistsFail | `server/core_storage_test.go` | — |
+| 40 | planned | TestStorageWritePipelineIfMatchNotExists | `server/core_storage_test.go` | — |
+| 41 | planned | TestStorageWritePipelineIfNoneMatchExists | `server/core_storage_test.go` | — |
+| 42 | planned | TestStorageWritePipelineIfNoneMatchNotExists | `server/core_storage_test.go` | — |
+| 43 | planned | TestStorageWritePipelinePermissionFail | `server/core_storage_test.go` | — |
+| 44 | planned | TestStorageWritePipelineUserMultiple | `server/core_storage_test.go` | — |
+| 45 | planned | TestStorageWritePipelineUserMultipleSameKey | `server/core_storage_test.go` | — |
+| 46 | planned | TestStorageWritePipelineUserSingle | `server/core_storage_test.go` | — |
+| 47 | planned | TestStorageWriteRuntimeGlobalMultipleIfMatchNotExists | `server/core_storage_test.go` | — |
+| 48 | planned | TestStorageWriteRuntimeGlobalMultipleSameKey | `server/core_storage_test.go` | — |
+| 49 | planned | TestStorageWriteRuntimeGlobalSingle | `server/core_storage_test.go` | — |
+| 50 | planned | TestStorageWriteRuntimeGlobalSingleIfMatchExists | `server/core_storage_test.go` | — |
+| 51 | planned | TestStorageWriteRuntimeGlobalSingleIfMatchExistsFail | `server/core_storage_test.go` | — |
+| 52 | planned | TestStorageWriteRuntimeGlobalSingleIfMatchNotExists | `server/core_storage_test.go` | — |
+| 53 | planned | TestStorageWriteRuntimeGlobalSingleIfNoneMatchExists | `server/core_storage_test.go` | — |
+| 54 | planned | TestStorageWriteRuntimeGlobalSingleIfNoneMatchNotExists | `server/core_storage_test.go` | — |
+| 55 | planned | TestStorageWriteRuntimeUserMultiple | `server/core_storage_test.go` | — |
+| 56 | planned | TestLocalStorageIndex_Delete | `server/storage_index_test.go` | — |
+| 57 | planned | TestLocalStorageIndex_List | `server/storage_index_test.go` | — |
+| 58 | planned | TestLocalStorageIndex_Write | `server/storage_index_test.go` | — |
 
 ### M3 实时协议与在线状态
 
 | # | 状态 | 上游测试 | 文件 | 证据 / 理由 |
 |---:|---|---|---|---|
-| 62 | planned | TestWebSocketRejectsSessionAfterLogout | `server/socket_ws_test.go` | — |
+| 59 | planned | TestWebSocketRejectsSessionAfterLogout | `server/socket_ws_test.go` | — |
 
-### M5 社交（好友/群组/通知）
+### M5 社交（好友/群组/通知/社交登录令牌校验）
 
 | # | 状态 | 上游测试 | 文件 | 证据 / 理由 |
 |---:|---|---|---|---|
-| 63 | planned | TestServer_ListFriendsOfFriends | `server/core_friend_test.go` | — |
+| 60 | planned | TestServer_ListFriendsOfFriends | `server/core_friend_test.go` | — |
+| 61 | planned | TestCheckGoogleTokenDoesNotExchangeMalformedJWT | `social/google_token_audience_test.go` | — |
+| 62 | planned | TestCheckGoogleTokenPreservesAuthorizationCodeFlow | `social/google_token_audience_test.go` | — |
+| 63 | planned | TestCheckGoogleTokenValidatesAudience | `social/google_token_audience_test.go` | — |
 
 ### M6 经济与竞技（钱包/排行榜/锦标赛）
 
@@ -367,8 +367,26 @@
 | 上游契约源 | 我们的测试 |
 |---|---|
 | `apigrpc/apigrpc.swagger.json::/healthcheck` | `tests/integration/healthcheck.test.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/account/authenticate/device` | `tests/integration/identity.test.ts` |
+| `server/api_account.go::GetAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts` |
+| `server/api_account.go::UpdateAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts` |
+| `server/api_authenticate.go::AuthenticateCustom` | `tests/integration/identity.test.ts` |
+| `server/api_authenticate.go::AuthenticateDevice` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts`、`tests/integration/tenancy.test.ts` |
+| `server/api_authenticate.go::AuthenticateEmail` | `tests/integration/identity.test.ts` |
+| `server/api_authenticate.go::generateRefreshToken` | `tests/unit/tenancy_keys.test.ts` |
+| `server/api_session.go::SessionLogout` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts` |
+| `server/api_session.go::SessionRefresh` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts` |
+| `server/api_user.go::GetUsers` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts` |
 | `server/api.go::grpcGatewayRouter` | `tests/e2e/toolchain.e2e.test.ts`、`tests/integration/healthcheck.test.ts` |
 | `server/api.go::handleRoutingError` | `tests/e2e/toolchain.e2e.test.ts`、`tests/integration/healthcheck.test.ts` |
+| `server/api.go::parseBasicAuth` | `tests/integration/identity.test.ts` |
+| `server/api.go::securityInterceptorFunc` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts`、`tests/integration/tenancy.test.ts` |
+| `server/api.go::wwwAuthenticateFixWriter` | `tests/integration/identity.test.ts` |
+| `server/core_account.go::UpdateAccounts` | `tests/integration/identity.test.ts` |
+| `server/core_authenticate.go::AuthenticateDevice` | `tests/integration/identity.test.ts` |
+| `server/core_authenticate.go::AuthenticateEmail` | `tests/integration/identity.test.ts` |
+| `server/core_session.go::SessionLogout` | `tests/integration/identity.test.ts`、`tests/unit/tenancy_keys.test.ts` |
+| `server/core_session.go::SessionRefresh` | `tests/integration/identity.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=f2efca031770f5195e9400606bcee76a88b48fd093651281754488c307e3074d -->
+<!-- integrity: body_sha256=4018568f5d018a55c25d1cf3eb4bd66aad0536a0aa0ee4f899d60da4c9e3e3fe -->
