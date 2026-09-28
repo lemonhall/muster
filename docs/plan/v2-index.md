@@ -85,6 +85,35 @@ Google ID token 校验（aud/azp 规则与授权码流程）。同时关闭 v1 �
 超时）、REQ-0001-018（对局：authoritative match 生命周期、RPC hook、状态落盘、
 广播过滤、可查询的对局列表）。DoD 在 M7 启动时写入本节并冻结。
 
+**DoD（逐条可判定 + 验证命令 + 反作弊）**
+
+| # | DoD | 验证命令 | 预期 |
+|---|---|---|---|
+| 1 | 匹配器查询语言：`*`、`field:value`、`+`/`-` 前缀、`>=`/`<=`/`>`/`<` 数值范围、`/regex/`、`^boost` 全部可解析；`properties.` 之外的字段按"索引里不存在"处理（恒不匹配但保留布尔结构）；畸形查询在 `Add` 时被拒 | `npm test` | 退出码 0，查询子集用例全绿 |
+| 2 | `TestMatchmakerAddOnly`、`TestMatchmakerAddRemoveRepeated`、`TestMatchmakerPropertyRegexSubmatch`、`TestMatchmakerPropertyRegexSubmatchMultiple` 搬运 | `npm test` | 断言全绿；覆盖矩阵对应 4 条 `ported` |
+| 3 | 基础匹配：`AddWithBasicMatch`（双方互配后各收到 `matchmaker_matched`，带 ticket 与 token，`self` 是收件人自己）、`AddWithMatchOnStar`、`AddAndRemove`、`AddRemoveNotMatch`、`AddButNotMatch` | `npm test` | 断言全绿；覆盖矩阵对应 5 条 `ported` |
+| 4 | 数值范围与 min/max 兼容：`AddWithMatchOnRange`、`AddWithMatchOnRangeAndValue`、`AddButNotMatchOnRange`、`AddButNotMatchOnRangeAndValue` —— 两端 min/max 必须互相兼容（2-4 不与 6-8 匹配） | `npm test` | 断言全绿 |
+| 5 | 多票与 boost：`AddMultipleAndSomeMatch`、`AddMultipleAndSomeMatchWithBoost`、`AddMultipleAndSomeMatchOptionalTextAlteringScore` —— 只有一座位时只成一对，boost 高的子句主导顺序 | `npm test` | 断言全绿 |
+| 6 | 互配（mutual match）：`RequireMutualMatch`、`RequireMutualMatchLarger`、`RequireMutualMatchLargerReversed` —— 单向满足不得成局；`rev_precision` 打开时按双向判定 | `npm test` | 断言全绿 |
+| 7 | 派对与上限：`GroupIndexes` 的递归分组（含 avgCreatedAt 的加权均值）、`MaxPartyTracking`、`MaxSessionTracking`（每会话/每派对最多 3 张票，超出报错且不占位） | `npm test` | 断言全绿 |
+| 8 | 权威对局成局：`AddAndMatchAuthoritative` —— 成局回调返回 match id 时 `matchmaker_matched.id` 是 match id（不是 token），且该 id 能直接 `match_join` | `npm test` | 断言全绿 |
+| 9 | 对局注册表：`match_registry_test.go` 的 8 条用例搬运（`Encode`/`EncodeDecode`/`EncodeDecodePresences` 三条 gob 用例等价物是"跨 DO 边界往返后条目字段不变"）+ `TestMatchPresenceList` | `npm test` | 断言全绿；覆盖矩阵对应 12 条 `ported` |
+| 10 | REST：`GET /v2/match`（`limit` 1..100、`authoritative`/`label`/`min_size`/`max_size`/`query` 五个参数各自独立校验）、`GET /v2/matchmaker/stats`（空池 → `ticket_count=0`） | `npm test` + `npm run e2e` | 退出码 0；错误体是 `{code, message}` 形状 |
+| 11 | E2E：真实 WebSocket 链路上"两个客户端 `matchmaker_add` → 双方收到 `matchmaker_matched` → 各自 `match_join` → 互发 `match_data` → 一方 `match_leave` → 另一方收到 `match_presence_event`" | `npm run e2e` | 退出码 0 |
+| 12 | 覆盖矩阵中 M7 的 35 条 `planned` 清零：本条目的 `ported` 或带非空理由的豁免；第二证据源出现 `/v2/match` 与 `/v2/matchmaker/stats` | `npm run conformance:matrix` | M7 段落 `planned=0`；`unreasoned_exemptions=0` |
+| 13 | 与上游的刻意偏差有 ECN 且从 PRD / 计划 / 源码注释三处可追 | `npm run docs:check` | 退出码 0；[ECN-0011](../ecn/ECN-0011-match-on-durable-objects.md) 在 PRD、计划、覆盖矩阵三处都有引用 |
+
+**反作弊条款**
+
+- 第 3 条与第 10 条的用例必须先红后绿，红/绿输出粘贴到 [v2-match.md](./v2-match.md) 的 Evidence 段。
+- 第 3 条的断言必须读**到达会话的那一帧**（收件人自己的 `self`、`users` 长度、ticket），
+  不允许只看"成局函数返回了非空"。
+- 第 6 条必须构造"单向满足"的真实票面：A 的查询匹配 B 的属性、B 的查询不匹配 A 的属性，
+  断言**没有**任何一方收到成局帧；只用"少放一张票"不算。
+- 第 7 条的上限必须断言"被拒的那张票没有留在池子里"（再放一张能成局，证明没占位）。
+- 第 9 条的往返用例必须断言字段级相等（presence 的 user/session/username、properties、
+  party_id），不允许只断言"能解析成对象"。
+
 ## 计划索引
 
 | 计划 | 覆盖里程碑 | Req ID |
