@@ -27,6 +27,8 @@ import { bearer, call } from "../../helpers/tenants";
  * 契约源: server/core_friend_test.go::TestServer_ListFriendsOfFriends
  * 契约源: server/core_friend.go::ListFriendsOfFriends
  *
+ * 溯源: server/core_friend_test.go::TestServer_ListFriendsOfFriends
+ *
  * REQ-0001-011
  */
 

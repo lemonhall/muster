@@ -4,7 +4,7 @@
 |---|---|
 | 版本 | v2 |
 | 日期 | 2026-09-29 |
-| 状态 | 进行中（M5 交付中；M6 / M7 范围已定，DoD 在各自启动时冻结） |
+| 状态 | 进行中（M5 已交付；M6 / M7 范围已定，DoD 在各自启动时冻结） |
 | 成本档位 | `standard`（普通功能交付，最多 3 轮 Review） |
 | 愿景 | [../prd/VISION.md](../prd/VISION.md) |
 | 需求基线 | [PRD-0001](../prd/PRD-0001-muster-parity.md) |
@@ -72,10 +72,10 @@ DoD 在 M6 启动时写入本节并冻结。
 
 | Req ID | v2 计划 | 单元/集成测试 | E2E | 证据 | 状态 |
 |---|---|---|---|---|---|
-| REQ-0001-011 | v2-social.md | 待回填 | 待回填 | 待回填 | 🔴 未开始 |
-| REQ-0001-012 | v2-social.md | 待回填 | 待回填 | 待回填 | 🔴 未开始 |
-| REQ-0001-013 | v2-social.md | 待回填 | 待回填 | 待回填 | 🔴 未开始 |
-| REQ-0001-003（OAuth 分支） | v2-social.md | 待回填 | 待回填 | 待回填 | 🔴 未开始 |
+| REQ-0001-011 | v2-social.md | `tests/integration/friends/`（4 文件 / 28 条，含 `溯源: server/core_friend_test.go::TestServer_ListFriendsOfFriends`） | `tests/e2e/social.e2e.test.ts`（好友请求→通知→接受→互列好友） | v2-social.md Evidence DoD 1/2；覆盖矩阵第 60 条 `ported` | 🟢 已交付（M5） |
+| REQ-0001-012 | v2-social.md | `tests/integration/groups/`（6 文件 / 34 条）+ `tests/integration/channel/{group-access,dm-request}.test.ts` | `tests/e2e/social.e2e.test.ts`（建群→加入→两条群列表→群目录） | v2-social.md Evidence DoD 4/5/7/8；ECN-0008 偏差 7–14 | 🟢 已交付（M5） |
+| REQ-0001-013 | v2-social.md | `tests/integration/notifications/`（2 文件 / 6 条） | `tests/e2e/social.e2e.test.ts`（读收件箱、删自己的通知、别人删不掉） | v2-social.md Evidence DoD 6；第二证据源 `swagger.json::/v2/notification` | 🟢 已交付（M5） |
+| REQ-0001-003（OAuth 分支） | v2-social.md | `tests/integration/social/`（5 文件 / 28 条，本机 RSA 私钥签名） | 不适用（Google 验签不在端到端链路上） | v2-social.md Evidence DoD 3；覆盖矩阵第 61/62/63 条 `ported`；ECN-0009 | 🟢 已交付（M5，其余 provider 仍为配置守卫） |
 
 > 任何 `待填` / `待回填` / `—` 都是断链，禁止在存在断链的情况下宣称对应需求已交付。
 
@@ -88,13 +88,13 @@ DoD 在 M6 启动时写入本节并冻结。
 
 ## Tashan Review 记录
 
-M5 的 Review 记录在 M5 收尾时写入 `docs/reviews/v2-M5.md`，并在此处补上链接。
+M5 的 Review 记录：[v2-M5.md](../reviews/v2-M5.md)（verdict: pass；7 条 MINOR 全部在提交前修复）。
 
 ## Tashan Trigger Audit
 
 ```markdown
 - expected_review_triggers: v_doc_writing_done, v_milestone_done(M5..M7)
-- actual_review_runs: 1 (v_doc_writing_done)
+- actual_review_runs: 2 (v_doc_writing_done, v_milestone_done(M5))
 - skipped_triggers: 0
 - skip_reasons: 独立子代理派发不通（本机限制），降级为同模型自评 + 命令证据
 - mitigation: 每个里程碑完成前必须补 Review 记录，否则不输出完成信号
@@ -106,5 +106,5 @@ v2 与上游的**全部**刻意差异都登记在 ECN 里，这里只做索引�
 
 | ECN | 差异 | 客户端可见？ | 处置 |
 |---|---|---|---|
-| [ECN-0008](../ecn/ECN-0008-social-graph-on-d1.md) | 社交图与通知建在 D1 上；游标不透明但不与上游互换；通知时间精度到秒 | 收不到（游标不透明）；时间精度差异可见（同秒多条时排序按 id） | 已生效 |
+| [ECN-0008](../ecn/ECN-0008-social-graph-on-d1.md) | 社交图与通知建在 D1 上（偏差 1–14）；游标不透明但不与上游互换；时间精度到秒；群成员变更与群频道系统消息不是同一事务；多目标满员时逐目标原子 | 收不到（游标不透明）；时间精度差异可见（同秒多条时排序按 id）；"批内部分成功"在满员时可观察 | 已生效 |
 | [ECN-0009](../ecn/ECN-0009-google-id-token.md) | Google 证书从 JWKS（`/oauth2/v3/certs`）取而不是 X.509 PEM 端点 | 不可见 | 已生效 |

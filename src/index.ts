@@ -4,7 +4,9 @@ import { Router } from "./http/router";
 import { registerChannelRoutes } from "./http/routes/channel";
 import { registerSocialRoutes } from "./http/routes/authenticate-social";
 import { registerFriendRoutes } from "./http/routes/friend";
+import { registerGroupRoutes } from "./http/routes/group";
 import { registerIdentityRoutes } from "./http/routes/identity";
+import { registerNotificationRoutes } from "./http/routes/notification";
 import { registerSocketRoutes } from "./http/routes/socket";
 import { registerStorageRoutes } from "./http/routes/storage";
 
@@ -43,6 +45,9 @@ registerStorageRoutes(router);
 // 频道历史在存储之后注册：两者路径不重叠，先后无关，但把"新加的里程碑"排在后面读起来顺。
 registerChannelRoutes(router);
 registerFriendRoutes(router);
+registerGroupRoutes(router);
+// 通知排最后：它会用到好友域与群组域发出的通知，但路由本身互不重叠。
+registerNotificationRoutes(router);
 registerSocialRoutes(router);
 registerSocketRoutes(router);
 

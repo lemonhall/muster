@@ -19,6 +19,8 @@
  */
 
 import type { Bindings } from "../env";
+import { dmRequestNotification } from "../domain/notifications/dm-request";
+import { sendNotifications } from "../domain/notifications/service";
 import type {
   ChannelJoinInput,
   ChannelMessageEditInput,
@@ -27,6 +29,7 @@ import type {
   ChannelMessageRefInput,
   ChannelOpResult,
   ChannelService,
+  DmRequestNotice,
 } from "../realtime/channel";
 import { channelOp } from "./channel-call";
 
@@ -55,8 +58,27 @@ export class SessionChannels implements ChannelService {
     // 只有真的进去了才记账：入参不合法时频道 DO 会拒绝，那时不该留下退订清单。
     if (result.ok) {
       this.#sql.exec("INSERT OR IGNORE INTO joined_channels (channel_id) VALUES (?)", input.channelId);
+      await this.#notifyDmRequest(result.dmRequest);
     }
     return result;
+  }
+
+  /**
+   * 私聊请求通知（上游 `channelJoin` 里那段 `NotificationSend`）。
+   *
+   * 落在这里而不是管线里，是因为**只有这一层拿得到 `env`**（管线是纯逻辑，好被独立断言）。
+   * 发送失败只记日志：通知是这次加入的附赠品，人不该因为"通知发不出去"而进不了频道——
+   * 上游对这条 `NotificationSend` 的错误也是直接丢弃（`_ =`）。
+   */
+  async #notifyDmRequest(notice: DmRequestNotice | undefined): Promise<void> {
+    if (notice === undefined) return;
+    try {
+      await sendNotifications(this.env, this.tenantId, Math.floor(Date.now() / 1000), [
+        dmRequestNotification(notice),
+      ]);
+    } catch (error) {
+      console.error("私聊请求通知发送失败", error);
+    }
   }
 
   async leave(input: ChannelMemberInput): Promise<ChannelOpResult> {

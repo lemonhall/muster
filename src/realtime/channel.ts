@@ -238,11 +238,25 @@ export function channelMessageAckOf(
   });
 }
 
-/** `ChannelMessageTypeChat`：上游 `pipeline_channel.go` 里第一个 iota 值。 */
+/**
+ * 上游 `pipeline_channel.go` 的消息类型常量（`iota`，**数值即契约**：客户端按它
+ * 分辨"这条历史是聊天还是某人加入了群组"）。
+ *
+ * 3..9 这七个是群组事件：它们不由客户端发送，而是群组域的写操作在**群组频道**里
+ * 落下的系统消息（`core_group.go` 的 join/leave/add/kick/ban/promote/demote 七条路径
+ * 各写一条）。`content` 恒为 `{}`，`persistent` 恒为 true。
+ */
 export const CHANNEL_MESSAGE_TYPE = {
   chat: 0,
   chatUpdate: 1,
   chatRemove: 2,
+  groupJoin: 3,
+  groupAdd: 4,
+  groupLeave: 5,
+  groupKick: 6,
+  groupPromote: 7,
+  groupBan: 8,
+  groupDemote: 9,
 } as const;
 
 /**
@@ -254,9 +268,21 @@ export const CHANNEL_MESSAGE_TYPE = {
  *
  * 失败带上错误码，是因为上游对"输入不合法"与"服务端异常"分两种码
  * （`BAD_INPUT` = 3、`RUNTIME_EXCEPTION` = 0），而**两条都关连接**——这个决定权在管线那层。
+ *
+ * `dmRequest` 是 `join` 特有的**附赠动作**：私聊里新来的那条会话，如果对方不在频道里，
+ * 上游会给对方发一条 `-1` 通知（"XX 想和你聊天"）。通知归数据库通知域，频道 DO 只负责
+ * 判断"该不该发"（那是它才知道的事实：对方在不在），发送由拿着 `env` 的分片做。
  */
+export interface DmRequestNotice {
+  /** 收通知的人（对方）。 */
+  readonly userId: string;
+  /** 发起者（刚加入的这条会话的主人）。 */
+  readonly senderId: string;
+  readonly username: string;
+}
+
 export type ChannelOpResult =
-  | { readonly ok: true; readonly replies: readonly Envelope[] }
+  | { readonly ok: true; readonly replies: readonly Envelope[]; readonly dmRequest?: DmRequestNotice }
   | {
       readonly ok: false;
       readonly code: "BAD_INPUT" | "RUNTIME_EXCEPTION";

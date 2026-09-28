@@ -40,27 +40,21 @@ import {
   type ChannelMessageRefInput,
   type ChannelMemberInput,
   type ChannelOpResult,
-  type ChannelPresence,
   type ChannelTemplate,
+  type DmRequestNotice,
 } from "../realtime/channel";
 import type { ChannelStream } from "../realtime/channel-ids";
 import { ackEnvelope } from "../realtime/errors";
 import { ChannelFanout } from "./channel-fanout";
+import type { ChannelGroupContext, GroupSystemMessageInput } from "./channel-group-events";
+import { evictAllPresence, evictUserPresence, postSystemMessage } from "./channel-group-events";
 import type { ChannelEditContext } from "./channel-message-edit";
 import { removeChannelMessage, updateChannelMessage } from "./channel-message-edit";
 import type { ChannelMembers, MemberRow } from "./channel-members";
 import type { ChannelMessages, MessageRow } from "./channel-messages";
 import { readChannelHistory, type ChannelHistoryPage } from "./channel-history";
+import { presenceOfRow } from "./channel-presence";
 import { registryCall } from "./registry-call";
-
-function presenceOfRow(row: MemberRow): ChannelPresence {
-  return {
-    userId: row.user_id,
-    sessionId: row.session_id,
-    username: row.username,
-    persistence: row.persistence === 1,
-  };
-}
 
 function failure(code: "BAD_INPUT" | "RUNTIME_EXCEPTION", message: string): ChannelOpResult {
   return { ok: false, code, message };
@@ -126,7 +120,6 @@ export class ChannelCore {
     ];
     if (isNew && !input.hidden) {
       // 上游：新加入且不隐藏 → 广播 joins，接收者包含自己（先回 channel 帧、后到事件）。
-      // 私聊请求通知（NotificationCodeDmRequest）属于通知域，M5 落地（见 ECN-0007）。
       const event = channelPresenceEventEnvelope(
         this.channelId,
         this.#template,
@@ -136,7 +129,27 @@ export class ChannelCore {
       await this.#fanout.send(input.sessionId, event);
       replies.push(event);
     }
-    return { ok: true, replies };
+    const dmRequest = this.#dmRequest(input, isNew);
+    return { ok: true, replies, ...(dmRequest === null ? {} : { dmRequest }) };
+  }
+
+  /**
+   * 私聊频道里"要不要提醒对方"的判断（上游 `pipeline_channel.go` 那段注释
+   * "If the topic join is a DM check if we should notify the other user"）。
+   *
+   * 两个条件同时成立才发：**这是一次新加入**（重复 join 不发，否则每次重连都刷一条）
+   * 且**对方此刻不在这个频道里**（在的话他直接就看见消息了）。
+   *
+   * "对方"是 subject/subcontext 里不是我的那个：频道 id 里两个用户是**排序后**写进去的
+   * （见 `channel-ids.ts`），所以自己的那一半可能是任意一个。
+   */
+  #dmRequest(input: ChannelJoinInput, isNew: boolean): DmRequestNotice | null {
+    if (!isNew || this.stream.mode !== 4) return null;
+    const peer =
+      input.userId === this.stream.subject ? this.stream.subcontext : this.stream.subject;
+    const present = this.members.visible().some((row) => row.user_id === peer);
+    if (present) return null;
+    return { userId: peer, senderId: input.userId, username: input.username };
   }
 
   async leave(input: ChannelMemberInput): Promise<ChannelOpResult> {
@@ -207,6 +220,21 @@ export class ChannelCore {
     });
   }
 
+  /** 系统消息（群事件）——实现与理由见 `channel-group-events.ts`。 */
+  async systemMessage(input: GroupSystemMessageInput): Promise<void> {
+    await postSystemMessage(this.#groupContext(), input);
+  }
+
+  /** 摘掉某人的全部会话，返回剩下的成员数（DO 外壳据此决定是否保留闹钟）。 */
+  async evictUser(userId: string): Promise<number> {
+    return evictUserPresence(this.#groupContext(), userId);
+  }
+
+  /** 群被删除：清空这个频道里的全部 presence。 */
+  async evictAll(): Promise<void> {
+    await evictAllPresence(this.#groupContext());
+  }
+
   /**
    * 兜底巡检：对注册表问"这些会话还有活着的吗"，把没活的成员摘掉并补 leave。
    *
@@ -247,6 +275,17 @@ export class ChannelCore {
 
   /** 交给 `channel-message-edit.ts` 的那一小撮依赖；它只碰这几个，碰不到路由与闹钟。 */
   #editContext(): ChannelEditContext {
+    return {
+      channelId: this.channelId,
+      template: this.#template,
+      members: this.members,
+      messages: this.messages,
+      fanout: this.#fanout,
+    };
+  }
+
+  /** 交给 `channel-group-events.ts` 的那一小撮依赖（系统消息 / presence 摘除）。 */
+  #groupContext(): ChannelGroupContext {
     return {
       channelId: this.channelId,
       template: this.#template,

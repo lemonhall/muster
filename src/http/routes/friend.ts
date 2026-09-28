@@ -25,7 +25,7 @@
  * REQ-0001-011
  */
 
-import { json, queryList, queryValue } from "../body";
+import { json, queryList, queryOptionalInt, queryValue } from "../body";
 import { invalidArgument } from "../errors";
 import type { Router } from "../router";
 import type { UserContext } from "../router";
@@ -42,18 +42,6 @@ const NO_VALID_TARGET = "No valid ID or username was provided.";
 export const SELF_ADD = "Cannot add self as friend.";
 export const SELF_DELETE = "Cannot delete self.";
 export const SELF_BLOCK = "Cannot block self.";
-
-/**
- * query 里的 Int32Value：没给 → `undefined`（"不是 0，是没这个字段"），
- * 给了但不是整数 → 按该端点自己的 limit 文案报错（与本项目存储端点的既有做法一致）。
- */
-function queryInt(url: URL, name: string, invalidMessage: string): number | undefined {
-  const raw = queryValue(url, name);
-  if (raw === "") return undefined;
-  const parsed = Number(raw);
-  if (!Number.isInteger(parsed)) throw invalidArgument(invalidMessage);
-  return parsed;
-}
 
 function callerOf(context: UserContext): FriendCaller {
   return { id: context.session.user.id, username: context.session.user.username };
@@ -78,8 +66,8 @@ async function requireTargets(context: UserContext, selfMessage: string): Promis
 
 export function registerFriendRoutes(router: Router): void {
   router.handleUser("GET", "/v2/friend", async (context) => {
-    const limit = queryInt(context.url, "limit", INVALID_FRIEND_LIMIT);
-    const state = queryInt(context.url, "state", "Invalid state - state must be between 0 and 3.");
+    const limit = queryOptionalInt(context.url, "limit", INVALID_FRIEND_LIMIT);
+    const state = queryOptionalInt(context.url, "state", "Invalid state - state must be between 0 and 3.");
     const tenantId = context.tenantEnv.tenantId;
     const result = await listFriends(context.env.DB, tenantId, context.session.user.id, {
       ...(limit === undefined ? {} : { limit }),
@@ -95,7 +83,7 @@ export function registerFriendRoutes(router: Router): void {
   });
 
   router.handleUser("GET", "/v2/friend/friends", async (context) => {
-    const limit = queryInt(context.url, "limit", INVALID_FOF_LIMIT);
+    const limit = queryOptionalInt(context.url, "limit", INVALID_FOF_LIMIT);
     const tenantId = context.tenantEnv.tenantId;
     const result = await listFriendsOfFriends(context.env.DB, tenantId, context.session.user.id, {
       ...(limit === undefined ? {} : { limit }),

@@ -132,6 +132,23 @@ export class ChannelMembers {
     return row?.total ?? 0;
   }
 
+  /**
+   * 某个用户在这个频道里的全部会话。
+   *
+   * 它服务的是"把某人踢出这个频道"这一类操作（群组被踢/被封禁/自己退群）：上游
+   * `tracker.ListByStream` 按 stream 列出 presence 再逐个 `UserLeave`，本项目按
+   * **用户**找会话（一个用户可能开了多条连接），所以这里是 `WHERE user_id = ?`。
+   */
+  sessionsOfUser(userId: string): string[] {
+    return this.sql
+      .exec<{ readonly session_id: string; readonly [column: string]: SqlStorageValue }>(
+        "SELECT session_id FROM members WHERE user_id = ? ORDER BY session_id",
+        userId,
+      )
+      .toArray()
+      .map((row) => row.session_id);
+  }
+
   /** 巡检：把这些会话的成员资格全部摘掉，返回被摘掉的可见成员（要补 leave 的那些）。 */
   dropSessions(sessionIds: readonly string[]): MemberRow[] {
     if (sessionIds.length === 0) return [];

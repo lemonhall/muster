@@ -14,11 +14,11 @@
 |---|---|
 | 上游 commit | `e920249a3465bea4b8ea2968020c488201b61a8e` |
 | 上游测试条目 | 263 |
-| ported | 59 |
-| planned | 204 |
+| ported | 63 |
+| planned | 200 |
 | exempt | 0 |
 | 无理由豁免 | 0 |
-| 第二证据源引用（自主契约测试） | 62 |
+| 第二证据源引用（自主契约测试） | 100 |
 
 ## 按里程碑
 
@@ -28,7 +28,7 @@
 | M2 | 存储引擎 | 57 | 57 | 0 | 0 |
 | M3 | 实时协议与在线状态 | 1 | 1 | 0 | 0 |
 | M4 | 频道与聊天 | 0 | 0 | 0 | 0 |
-| M5 | 社交（好友/群组/通知/社交登录令牌校验） | 4 | 0 | 4 | 0 |
+| M5 | 社交（好友/群组/通知/社交登录令牌校验） | 4 | 4 | 0 | 0 |
 | M6 | 经济与竞技（钱包/排行榜/锦标赛） | 25 | 0 | 25 | 0 |
 | M7 | 匹配与对局 | 35 | 0 | 35 | 0 |
 | M8 | 派对与运行时扩展 | 44 | 0 | 44 | 0 |
@@ -118,10 +118,10 @@
 
 | # | 状态 | 上游测试 | 文件 | 证据 / 理由 |
 |---:|---|---|---|---|
-| 60 | planned | TestServer_ListFriendsOfFriends | `server/core_friend_test.go` | — |
-| 61 | planned | TestCheckGoogleTokenDoesNotExchangeMalformedJWT | `social/google_token_audience_test.go` | — |
-| 62 | planned | TestCheckGoogleTokenPreservesAuthorizationCodeFlow | `social/google_token_audience_test.go` | — |
-| 63 | planned | TestCheckGoogleTokenValidatesAudience | `social/google_token_audience_test.go` | — |
+| 60 | ported | TestServer_ListFriendsOfFriends | `server/core_friend_test.go` | `tests/integration/friends/friends-of-friends.test.ts` |
+| 61 | ported | TestCheckGoogleTokenDoesNotExchangeMalformedJWT | `social/google_token_audience_test.go` | `tests/integration/social/google-auth-code.test.ts` |
+| 62 | ported | TestCheckGoogleTokenPreservesAuthorizationCodeFlow | `social/google_token_audience_test.go` | `tests/integration/social/google-auth-code.test.ts` |
+| 63 | ported | TestCheckGoogleTokenValidatesAudience | `social/google_token_audience_test.go` | `tests/integration/social/google-token.test.ts` |
 
 ### M6 经济与竞技（钱包/排行榜/锦标赛）
 
@@ -372,14 +372,32 @@
 |---|---|
 | `apigrpc/apigrpc.swagger.json::/healthcheck` | `tests/integration/healthcheck.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/account/authenticate/device` | `tests/helpers/identity-fixtures.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/account/authenticate/google` | `tests/integration/social/google-endpoint.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/channel/{channelId}` | `tests/e2e/realtime-chat.e2e.test.ts`、`tests/integration/channel/history.test.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/friend` | `tests/e2e/social.e2e.test.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/group` | `tests/e2e/social.e2e.test.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/notification` | `tests/e2e/social.e2e.test.ts` |
 | `server/api_account.go::GetAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_account.go::UpdateAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_authenticate.go::AuthenticateCustom` | `tests/helpers/identity-fixtures.ts` |
 | `server/api_authenticate.go::AuthenticateDevice` | `tests/e2e/identity.e2e.test.ts`、`tests/e2e/tenancy.e2e.test.ts`、`tests/helpers/identity-fixtures.ts`、`tests/integration/tenancy.test.ts` |
 | `server/api_authenticate.go::AuthenticateEmail` | `tests/helpers/identity-fixtures.ts` |
+| `server/api_authenticate.go::AuthenticateGoogle` | `tests/integration/social/google-authenticate.test.ts`、`tests/integration/social/google-endpoint.test.ts` |
 | `server/api_authenticate.go::generateRefreshToken` | `tests/unit/tenancy_keys.test.ts` |
 | `server/api_channel.go::ListChannelMessages` | `tests/integration/channel/history.test.ts` |
+| `server/api_friend.go::AddFriends` | `tests/e2e/social.e2e.test.ts`、`tests/integration/friends/relations.test.ts` |
+| `server/api_friend.go::BlockFriends` | `tests/integration/friends/delete-block.test.ts` |
+| `server/api_friend.go::DeleteFriends` | `tests/integration/friends/delete-block.test.ts` |
+| `server/api_friend.go::ListFriends` | `tests/integration/friends/list.test.ts` |
+| `server/api_group.go::CreateGroup` | `tests/e2e/social.e2e.test.ts`、`tests/integration/groups/lifecycle.test.ts` |
+| `server/api_group.go::DeleteGroup` | `tests/integration/groups/lifecycle.test.ts` |
+| `server/api_group.go::JoinGroup` | `tests/integration/groups/join.test.ts` |
+| `server/api_group.go::ListGroups` | `tests/integration/groups/listing-groups.test.ts` |
+| `server/api_group.go::ListGroupUsers` | `tests/integration/groups/listing-members.test.ts` |
+| `server/api_group.go::ListUserGroups` | `tests/integration/groups/listing-members.test.ts` |
+| `server/api_group.go::UpdateGroup` | `tests/integration/groups/lifecycle.test.ts` |
+| `server/api_notification.go::DeleteNotifications` | `tests/integration/notifications/delete.test.ts` |
+| `server/api_notification.go::ListNotifications` | `tests/e2e/social.e2e.test.ts`、`tests/integration/notifications/list.test.ts` |
 | `server/api_session.go::SessionLogout` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_session.go::SessionRefresh` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_user.go::GetUsers` | `tests/e2e/identity.e2e.test.ts`、`tests/e2e/tenancy.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
@@ -391,11 +409,31 @@
 | `server/core_account.go::UpdateAccounts` | `tests/helpers/identity-fixtures.ts` |
 | `server/core_authenticate.go::AuthenticateDevice` | `tests/helpers/identity-fixtures.ts` |
 | `server/core_authenticate.go::AuthenticateEmail` | `tests/helpers/identity-fixtures.ts` |
-| `server/core_channel.go::BuildChannelId` | `tests/integration/channel/ids.test.ts` |
+| `server/core_authenticate.go::AuthenticateGoogle` | `tests/integration/social/google-authenticate.test.ts` |
+| `server/core_channel.go::BuildChannelId` | `tests/integration/channel/group-access.test.ts`、`tests/integration/channel/ids.test.ts` |
 | `server/core_channel.go::ChannelIdToStream` | `tests/integration/channel/ids.test.ts` |
 | `server/core_channel.go::ChannelMessageSend` | `tests/integration/channel/messages.test.ts` |
 | `server/core_channel.go::ChannelMessagesList` | `tests/e2e/realtime-chat.e2e.test.ts`、`tests/integration/channel/history.test.ts` |
 | `server/core_channel.go::StreamToChannelId` | `tests/integration/channel/ids.test.ts` |
+| `server/core_friend_test.go::TestServer_ListFriendsOfFriends` | `tests/integration/friends/friends-of-friends.test.ts` |
+| `server/core_friend.go::addFriend` | `tests/integration/friends/relations.test.ts` |
+| `server/core_friend.go::AddFriends` | `tests/integration/friends/relations.test.ts` |
+| `server/core_friend.go::blockFriend` | `tests/integration/friends/delete-block.test.ts` |
+| `server/core_friend.go::deleteFriend` | `tests/integration/friends/delete-block.test.ts` |
+| `server/core_friend.go::ListFriends` | `tests/integration/friends/list.test.ts` |
+| `server/core_friend.go::ListFriendsOfFriends` | `tests/integration/friends/friends-of-friends.test.ts` |
+| `server/core_group.go::AddGroupUsers` | `tests/integration/groups/membership.test.ts` |
+| `server/core_group.go::BanGroupUsers` | `tests/integration/groups/membership.test.ts` |
+| `server/core_group.go::CreateGroup` | `tests/integration/groups/lifecycle.test.ts` |
+| `server/core_group.go::DemoteGroupUsers` | `tests/integration/groups/roles.test.ts` |
+| `server/core_group.go::groupCheckUserPermission` | `tests/integration/channel/group-access.test.ts` |
+| `server/core_group.go::JoinGroup` | `tests/integration/groups/join.test.ts` |
+| `server/core_group.go::KickGroupUsers` | `tests/integration/groups/membership.test.ts` |
+| `server/core_group.go::ListGroups` | `tests/integration/groups/listing-groups.test.ts` |
+| `server/core_group.go::PromoteGroupUsers` | `tests/integration/groups/roles.test.ts` |
+| `server/core_notification.go::NotificationCodeDmRequest` | `tests/integration/channel/dm-request.test.ts` |
+| `server/core_notification.go::NotificationDelete` | `tests/integration/notifications/delete.test.ts` |
+| `server/core_notification.go::NotificationList` | `tests/integration/notifications/list.test.ts` |
 | `server/core_session.go::SessionLogout` | `tests/helpers/identity-fixtures.ts`、`tests/unit/tenancy_keys.test.ts` |
 | `server/core_session.go::SessionRefresh` | `tests/helpers/identity-fixtures.ts` |
 | `server/core_storage.go::StorageDeleteObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts` |
@@ -404,7 +442,7 @@
 | `server/core_storage.go::storagePrepBatch` | `tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::StorageReadObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::StorageWriteObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
-| `server/pipeline_channel.go::Pipeline.channelJoin` | `tests/integration/channel/join.test.ts`、`tests/integration/channel/validation.test.ts` |
+| `server/pipeline_channel.go::Pipeline.channelJoin` | `tests/integration/channel/dm-request.test.ts`、`tests/integration/channel/join.test.ts`、`tests/integration/channel/validation.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelLeave` | `tests/integration/channel/validation.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelMessageRemove` | `tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelMessageSend` | `tests/e2e/realtime-chat.e2e.test.ts`、`tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
@@ -432,4 +470,4 @@
 | `server/tracker.go::StreamModeChannel` | `tests/integration/channel/ids.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=5f5bbf4640f526e793fa2c19a16d38bcc0e0b363d50fce36875ef3060e8bd277 -->
+<!-- integrity: body_sha256=76a94e703e1a61c31730498a27699154760cb4773548b157104399cd4e154bf6 -->

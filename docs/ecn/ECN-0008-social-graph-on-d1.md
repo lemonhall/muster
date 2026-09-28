@@ -123,6 +123,74 @@ presence 一起摘掉（双方客户端立刻收到 leave）。本项目把频�
 `batch()`（自带事务），推送是跨 DO 的尽力而为调用。可观测差异：**推送可能失败而通知仍然存在**
 ——这正是想要的（客户端下次拉列表就补上了），但极端情况下"在线用户没收到实时帧、库里有"。
 
+### 偏差 7：群组频道系统消息与成员增删不在同一个事务里
+
+上游 `JoinGroup` / `LeaveGroup` / `AddGroupUsers` / `KickGroupUsers` / `BanGroupUsers`
+在**一个数据库事务**里同时改成员边与写群频道的系统消息（`message` 表）。
+本项目把成员边放在 D1，把群频道消息放在频道 DO，两者是**两个不同的存储**，没有跨原语事务：
+先提交成员变更的 `batch()`，再 fire-and-forget 地往频道 DO 写系统消息。
+
+可观测差异：极端情况下（提交成功、跨 DO 调用失败）成员关系已成立，但群里少了一条
+"XX 加入了群组"。选择偏向"关系必须成立"——上游同样是 fire-and-forget 的语义
+（`router.SendToStream` 不返回错误），所以这与其说是偏差，不如说是把上游的容错取向
+沿到了新载体上。库里的成员关系永远是权威。
+
+### 偏差 8：群组列表游标的 `UpdateTime` 精度到秒
+
+与偏差 2 同源。上游 `GroupListCursor` 里的 `UpdateTime` 是 `UnixNano`，本项目是 Unix 秒。
+客户端不可见（游标不透明），但**本项目与上游的群组列表游标同样不可互换**。
+
+### 偏差 9：群目录 `open + langTag` 分支的游标比较方向照"正确语义"写
+
+上游 `core_group.go::ListGroups` 在 `open != nil && langTag != ""` 这一支里，游标比较写成了
+`lang_tag > $cursor.langTag AND update_time >= $cursor.updateTime`（字段顺序与另两支相反的
+比较方向），翻页时会重复或漏掉边界行。本项目照**列表的实际排序键**（`lang_tag, update_time, id`）
+写比较条件，因此这一支的翻页是"不重不漏"的；上游这一支的翻页在有边界行落在同秒时可能重复。
+
+这是一处**有意的行为改进**，不是抄错：上游另两支（`name`、纯 `open`）的比较与本项目一致，
+只有这一支自相矛盾，判定为上游笔误。
+
+### 偏差 10：多目标群组操作遇到"满员"时，逐目标原子而不是整体回滚
+
+上游 `AddGroupUsers` 在一个事务里处理全部 `user_ids`：中途发现"群已满"会**整批回滚**，
+包括它已经发出去的通知（通知与成员边同库同事务）。
+本项目每个目标走一个自己的 `batch()`（D1 的批就是事务），`Group is full.` 之前已经处理完的
+目标保持已生效。可观测差异：**批内多目标 + 容量不足**时，上游"一个都没加进去"，
+本项目"前面的加进去了，后面的报满"。上游这种语义在分布式下不可表达（通知走的是另一套存储），
+而客户端本来就应当把"部分成功"当作可能结果。
+
+### 偏差 11：`group_edge` 主键不同，封禁 upsert 的冲突目标因此不同
+
+上游 `group_edge` 的主键是 `(source_id, destination_id)`；本项目是
+`(tenant_id, source_id, destination_id)`（ECN-0001 的延续）。
+封禁时上游用 `INSERT ... ON CONFLICT (source_id, destination_id) DO UPDATE` 把已有边改成
+state=4；本项目在同一个 `INSERT ... ON CONFLICT(主键)` 上做同样的事。
+冲突键不同但**语义等价**：同一租户内两行的身份判定与上游逐字相同。
+
+### 偏差 12：`UpdateGroup` 的"没有新字段"用显式不等判定，而不是依赖 `changes`
+
+上游用 `UPDATE ... WHERE ...` 的 `rowsAffected == 0` 判"值没变"（Postgres 在 `UPDATE` 命中但
+新值与旧值相同时返回 0 行）；SQLite 的 `changes()` 在"命中了行但没有实际改动"时返回 1。
+直接照抄会让本项目把"没变化"当成"已更新"，于是本该报
+`No new fields in group update.` 的请求静默成功。
+本项目的判定写成 `WHERE ... AND (col <> ? OR col IS NULL)`，与上游**可观测行为**一致：
+值没变 → `400 No new fields in group update.`。
+
+### 偏差 13：通知表带租户列，上游没有
+
+上游的 `notification` 表没有租户列（一个部署一个游戏）；本项目每张业务表都带 `tenant_id`
+且查询必须带租户条件（ECN-0001）。可观测差异只有一条：**同一部署下的两个游戏各自有独立收件箱**，
+而上游需要两套部署。这正是多租户的目标，不是实现走样。
+
+### 偏差 14：群成员边的"双向两行"由一条 `INSERT ... UNION ALL ... WHERE NOT EXISTS` 写出
+
+上游 `group_edge` 里"群 → 用户"与"用户 → 群"是两行，用一条两值 `INSERT` 写入（靠唯一键冲突
+做幂等）。本项目的派生实现里，两行必须**要么都在、要么都不在**——否则
+`edge_count`、`GET /v2/user/{id}/group`、`GET /v2/group/{id}/user` 三处会同时失真。
+因此写成一条语句：`INSERT INTO group_edge SELECT * FROM (SELECT ... UNION ALL SELECT ...)
+WHERE NOT EXISTS (任一方向已存在)`，由同一个 `batch()` 提交。
+可观测行为与上游一致（重复加入是幂等空操作），实现形态不同。
+
 ## 影响范围
 
 - 受影响的 Req ID：REQ-0001-011、REQ-0001-012、REQ-0001-013（M5 全部 DoD），

@@ -102,6 +102,19 @@ export function optionalInt(container: Record<string, unknown>, key: string): nu
   return value;
 }
 
+/**
+ * 可选的 `google.protobuf.BoolValue` 字段。
+ *
+ * 与 `optionalInt` 同一条理由：`{"open":false}` 是"把群改成私有"，
+ * 不写 `open` 是"别动它"，而 protojson 里 `null` 与"缺字段"都表示"没给这个对象"。
+ */
+export function optionalBool(container: Record<string, unknown>, key: string): boolean | undefined {
+  const value = readField(container, key);
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "boolean") throw invalidArgument(`Invalid ${key}: expected a boolean.`);
+  return value;
+}
+
 export function optionalStringMap(
   container: Record<string, unknown>,
   key: string,
@@ -145,11 +158,37 @@ export function queryList(url: URL, ...names: readonly string[]): string[] {
  * 即**不传 = true**。
  */
 export function queryBool(url: URL, name: string, fallback: boolean): boolean {
+  const value = queryOptionalBool(url, name);
+  return value === undefined ? fallback : value;
+}
+
+/**
+ * query 参数取**可选**布尔：没给 → `undefined`（"不是 false，是没这个字段"）。
+ *
+ * 取值集合照 Go 的 `strconv.ParseBool`（grpc-gateway 就调它）。`undefined` 与 `false`
+ * 必须分开：`?open=false` 是"只要私有群"，而不给 `open` 是"不限开放状态"，
+ * 两者命中的是群组列表的不同分支。
+ */
+export function queryOptionalBool(url: URL, name: string): boolean | undefined {
   const raw = url.searchParams.get(name);
-  if (raw === null) return fallback;
+  if (raw === null) return undefined;
   if (["1", "t", "T", "TRUE", "true", "True"].includes(raw)) return true;
   if (["0", "f", "F", "FALSE", "false", "False"].includes(raw)) return false;
   throw invalidArgument(`invalid value for boolean field: ${name}`);
+}
+
+/**
+ * query 参数取**可选** int32（上游用 `google.protobuf.Int32Value` 表达"给了没有"）。
+ *
+ * 没给（或给了空值）→ `undefined`；给了但不是整数 → 用调用方给的那句端点专属文案报错
+ * （上游是 grpc-gateway 自己的解析错误，文案不同，这里统一成该端点的 limit/state 文案）。
+ */
+export function queryOptionalInt(url: URL, name: string, invalidMessage: string): number | undefined {
+  const raw = url.searchParams.get(name);
+  if (raw === null || raw === "") return undefined;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed)) throw invalidArgument(invalidMessage);
+  return parsed;
 }
 
 export function json(body: unknown, status = 200): Response {

@@ -6,19 +6,21 @@
  * 或调用者不是成员，返回的都是"不允许"，调用方据此回
  * `Group not found: Invalid channel target`（`BAD_INPUT`）。
  *
- * v1 **还没有群组数据模型**（群组的建立/成员/权限属于后续里程碑），所以这里的能力
- * 如实返回"不允许"——这与上游面对一个**不存在的群组**时的行为**完全一致**，
- * 而不是"我们暂时放行"或"我们直接报未实现"。
+ * v1 里这条路一定返回 false（群组数据模型还没落地）；M5 群组域落地后换成真查询——
+ * 正如当初写下的那句话："调用点与错误文案都不用动"。
  *
- * 换个说法：M4 要证明的是"三类频道的判定入口都存在且语义正确"，群组这一类在
- * 没有群组数据的前提下唯一可观测的正确行为就是拒绝。群组数据模型落地后，这里换成
- * 真正的成员查询即可，**调用点与错误文案都不用动**。
+ * "权限位 ≥ 2"就是 `state <= 2`：SUPERADMIN(0) / ADMIN(1) / MEMBER(2) 都能进，
+ * JOIN_REQUEST(3) 与 BANNED(4) 不能。注意判据是**群 → 用户**那一行（`source_id = group`），
+ * 与 `groupCheckUserPermission` 取的是同一行（双向边的另一半在"用户群组列表"那一侧用）。
  *
  * 契约源（机器可读）：
  * 契约源: server/core_channel.go::BuildChannelId
+ * 契约源: server/core_group.go::groupCheckUserPermission
  *
  * REQ-0001-010
  */
+
+import { GROUP_ROLE } from "./types";
 
 export async function canAccessGroup(
   db: D1Database,
@@ -26,9 +28,12 @@ export async function canAccessGroup(
   groupId: string,
   userId: string,
 ): Promise<boolean> {
-  void db;
-  void tenantId;
-  void groupId;
-  void userId;
-  return false;
+  const row = await db
+    .prepare(
+      `SELECT state FROM group_edge
+       WHERE tenant_id = ?1 AND source_id = ?2 AND destination_id = ?3`,
+    )
+    .bind(tenantId, groupId, userId)
+    .first<{ state: number }>();
+  return row !== null && row.state <= GROUP_ROLE.member;
 }

@@ -8,6 +8,8 @@ import { signingFixture, type SigningFixture } from "../../helpers/google-jwt";
  *
  * 每个 token 都由本机生成的 RSA 私钥签名、由被测代码用公钥验过——所以
  * "aud 校验通过"这件事发生在一条**真的验过签**的分支上，不是在一个没验签的桩上。
+ *
+ * 溯源: social/google_token_audience_test.go::TestCheckGoogleTokenValidatesAudience
  */
 
 const TARGET = "target-client.apps.googleusercontent.com";

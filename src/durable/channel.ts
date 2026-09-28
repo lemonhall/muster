@@ -122,6 +122,21 @@ export class Channel extends DurableObject<Bindings> {
         return this.#replyOp(await this.#core.remove((await request.json()) as never));
       case "POST /list":
         return this.#list(await request.json());
+      case "POST /system-message": {
+        await this.#core.systemMessage((await request.json()) as never);
+        return json({ ok: true });
+      }
+      case "POST /evict": {
+        const body = (await request.json()) as { userId: string };
+        await this.#core.evictUser(body.userId);
+        await this.#retireAlarmWhenEmpty();
+        return json({ ok: true });
+      }
+      case "POST /evict-all": {
+        await this.#core.evictAll();
+        await this.#retireAlarmWhenEmpty();
+        return json({ ok: true });
+      }
       case "POST /sweep":
         await this.#core.sweep();
         await this.#retireAlarmWhenEmpty();
@@ -171,6 +186,7 @@ export class Channel extends DurableObject<Bindings> {
     return json({
       ok: true,
       replies: result.replies.map((envelope) => toJson(EnvelopeSchema, envelope)),
+      ...(result.dmRequest === undefined ? {} : { dmRequest: result.dmRequest }),
     });
   }
 

@@ -23,18 +23,11 @@ export const FRIEND_STATE = {
   blocked: 3,
 } as const;
 
-/** 通知类别码（上游 `server/core_notification.go` 顶部那组常量）。 */
-export const NOTIFICATION_CODE = {
-  dmRequest: -1,
-  friendRequest: -2,
-  friendAccept: -3,
-  groupAdd: -4,
-  groupJoinRequest: -5,
-  friendJoinGame: -6,
-  singleSocket: -7,
-  userBanned: -8,
-  friendRemove: -9,
-} as const;
+/**
+ * 通知类别码。权威定义在通知域（`domain/notifications/codes.ts`：它同时服务好友、
+ * 群组、私聊三条路径），这里只是让好友域按老习惯从自己的 `types.ts` 取用。
+ */
+export { NOTIFICATION_CODE } from "../notifications/codes";
 
 /** 一个用户的好友列表里的一行：好友的用户资料 + 边本身的状态。 */
 export interface FriendRow {

@@ -11,6 +11,8 @@ import { countingFetch, noCertsSource } from "../../helpers/google-jwt";
  *
  * 第二个用例的分量在于它挡的是"把畸形 JWT 当授权码发给 Google"——既有无效外部请求，
  * 也可能泄露本不该外发的字节。判定方式是**外部请求计数 = 0**（父级 fetch 桩）。
+ *
+ * 溯源: social/google_token_audience_test.go::TestCheckGoogleTokenPreservesAuthorizationCodeFlow,TestCheckGoogleTokenDoesNotExchangeMalformedJWT
  */
 
 const NOW_SEC = 1_800_000_000;
