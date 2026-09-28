@@ -149,7 +149,9 @@ function renderInventory() {
   lines.push("");
   lines.push("| 项目 | 值 |");
   lines.push("|---|---|");
-  lines.push(`| 上游检出目录 | \`${upstreamDir}\` |`);
+  // 只写相对路径：生成物会进公共仓库，没必要把作者的本地绝对路径（含用户名）带出去。
+  const displayDir = path.relative(repoRoot, upstreamDir).split(path.sep).join("/") || ".";
+  lines.push(`| 上游检出目录 | \`${displayDir}\`（相对本仓库） |`);
   lines.push(`| 上游 commit | \`${upstreamCommit}\` |`);
   lines.push(`| commit 日期 | ${upstreamCommitDate} |`);
   lines.push(`| commit 主题 | ${upstreamCommitSubject.replace(/\|/g, "\\|")} |`);

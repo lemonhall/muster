@@ -170,7 +170,13 @@ def check_inventory_numbers(root: Path, markdown: list[Path], found: list[Findin
             Finding("inventory-number", baseline_file, 0, "缺少基线文件，无法校验文档里的统计数字")
         )
         return 0
-    totals = json.loads(baseline_file.read_text(encoding="utf-8"))["totals"]
+    baseline = json.loads(baseline_file.read_text(encoding="utf-8"))
+    totals = baseline["totals"]
+    per_file: dict[str, int] = {}
+    for entry in baseline["entries"]:
+        key = entry["file"]
+        per_file[key] = per_file.get(key, 0) + 1
+
     checked = 0
     for path in markdown:
         for number, line in strip_fenced_code(path.read_text(encoding="utf-8")):
@@ -188,6 +194,51 @@ def check_inventory_numbers(root: Path, markdown: list[Path], found: list[Findin
                                 f"{label}写成 {claimed}，与基线（{expected}）不一致",
                             )
                         )
+            checked += check_single_file_numbers(path, number, line, per_file, found)
+    return checked
+
+
+# 单文件计数：文档里凡是把某个 `*_test.go` 和紧邻的「NNN 条 / NNN 个」写在一起，
+# 就要和基线里那个文件的实际条目数对账。
+# 这条闸门的由来：存储那一块曾被写成"58 条"（实际 54+3=57），而且是写在
+# 一句不含文件名的句子里，上面那两条总量正则抓不到。
+SINGLE_FILE_PATTERN = re.compile(r"`([A-Za-z0-9_./-]*_test\.go)`\s*[（(]?\s*(\d[\d,]*)\s*[条个]")
+
+
+def check_single_file_numbers(
+    path: Path,
+    number: int,
+    line: str,
+    per_file: dict[str, int],
+    found: list[Finding],
+) -> int:
+    checked = 0
+    for match in SINGLE_FILE_PATTERN.finditer(line):
+        name = match.group(1)
+        claimed = int(match.group(2).replace(",", ""))
+        suffix = name if not name.startswith(("./", "/")) else name.lstrip("./")
+        candidates = [key for key in per_file if key == suffix or key.endswith("/" + suffix)]
+        if len(candidates) != 1:
+            found.append(
+                Finding(
+                    "inventory-number",
+                    path,
+                    number,
+                    f"`{name}` 无法唯一对应到基线里的测试文件（匹配到 {len(candidates)} 个）",
+                )
+            )
+            continue
+        checked += 1
+        expected = per_file[candidates[0]]
+        if claimed != expected:
+            found.append(
+                Finding(
+                    "inventory-number",
+                    path,
+                    number,
+                    f"`{name}` 的测试数写成 {claimed}，与基线（{expected}）不一致",
+                )
+            )
     return checked
 
 

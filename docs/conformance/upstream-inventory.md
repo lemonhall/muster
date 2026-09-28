@@ -6,7 +6,7 @@
 
 | 项目 | 值 |
 |---|---|
-| 上游检出目录 | `E:\development\nakama` |
+| 上游检出目录 | `../nakama`（相对本仓库） |
 | 上游 commit | `e920249a3465bea4b8ea2968020c488201b61a8e` |
 | commit 日期 | 2026-09-22T16:16:45+01:00 |
 | commit 主题 | Return 404 on console directory listings. (#2561) |
@@ -329,4 +329,4 @@
 | 261 | TestCheckGoogleTokenDoesNotExchangeMalformedJWT | `social/google_token_audience_test.go` | 0 |
 | 262 | TestCheckGoogleTokenPreservesAuthorizationCodeFlow | `social/google_token_audience_test.go` | 0 |
 | 263 | TestCheckGoogleTokenValidatesAudience | `social/google_token_audience_test.go` | 3 |
-<!-- integrity: body_sha256=11b29902d9239779223805e694f518774b8c74fb8d59b340f00b493c68ca11da -->
+<!-- integrity: body_sha256=ab07391e279cf052af0def3e2142e6698ac7890b9d074e47300c807670f4a6e5 -->
