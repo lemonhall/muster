@@ -6,11 +6,22 @@
   "compatibility_date": "2026-09-28",
   "observability": {
     "enabled": true
-  }
+  },
+
+  // M1：账号/用户/身份的权威库。本地开发与测试都只用 workerd 自带的本地 D1，
+  // 不连任何远端资源（因此不产生账单）。database_id 是占位值，真正部署时替换。
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "muster",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ]
 
   // Bindings are introduced milestone by milestone:
-  //   M1: D1 (accounts/users/profiles), secrets (JWT signing key)
   //   M3: Durable Object namespaces (session shard, session registry)
   //   M4: Durable Object namespace (channel)
-  // They are intentionally absent here so that M0 stays green without provisioning.
+  //   secrets（如 SESSION_ENCRYPTION_KEY）不进仓库：本地用 --var 或 .dev.vars，
+  //   线上用 `wrangler secret put`。缺了它认证端点会明确报错，而不是悄悄用一个弱默认值。
 }

@@ -83,12 +83,33 @@ export function statusBody(code: number, message: string): StatusBody {
 export const JSON_CONTENT_TYPE = "application/json";
 
 /**
+ * 401 响应上的 Bearer 挑战头。
+ *
+ * 上游 `wwwAuthenticateFixWriter` 在写 401 时补 `Bearer realm="nakama"`——它的用意是
+ * 让浏览器/HTTP 客户端看到"这里要 Bearer 凭据"，而不是把 gRPC 的原始错误文案塞进头里
+ * （上游测试 `TestWWWAuthenticateHeaderOnUnauthenticated` 就盯着这两点）。
+ *
+ * 唯一一处刻意不同：realm 用本项目的名字，**不复刻上游的产品名**（见 ECN-0003：
+ * 仓库不得出现与上游产品沾边的对外标识）。头部形状、出现时机与"不放原始错误消息"
+ * 这三条可观测语义都保留。
+ *
+ * 契约源: server/api_test.go::TestWWWAuthenticateHeaderOnUnauthenticated
+ * 契约源: server/api.go::wwwAuthenticateFixWriter
+ */
+export const UNAUTHENTICATED_CHALLENGE = 'Bearer realm="muster"';
+
+/**
  * 与上游 DefaultHTTPErrorHandler 等价的错误响应：
  * HTTP 状态码由 code 反推，响应体是 protojson 化的 google.rpc.Status。
  */
 export function statusResponse(code: number, message: string): Response {
+  const status = httpStatusFromCode(code);
+  const headers: Record<string, string> = { "content-type": JSON_CONTENT_TYPE };
+  if (status === 401) {
+    headers["www-authenticate"] = UNAUTHENTICATED_CHALLENGE;
+  }
   return new Response(JSON.stringify(statusBody(code, message)), {
-    status: httpStatusFromCode(code),
-    headers: { "content-type": JSON_CONTENT_TYPE },
+    status,
+    headers,
   });
 }

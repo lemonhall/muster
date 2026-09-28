@@ -1,5 +1,7 @@
+import type { Bindings } from "./env";
 import { JSON_CONTENT_TYPE } from "./http/grpc";
 import { Router } from "./http/router";
+import { registerIdentityRoutes } from "./http/routes/identity";
 
 /**
  * Worker 入口：只负责把请求交给路由表，不放任何业务逻辑。
@@ -16,16 +18,20 @@ import { Router } from "./http/router";
  */
 const router = new Router();
 
-router.handle("GET", "/", () => new Response(null, { status: 200 }));
+// `/` 不在上游的 REST 表里（91 个操作没有它），是上游 grpc-gateway 外层给的一个
+// "进程活着"的空响应，所以它走 handlePublic，不参与上游对账。
+router.handlePublic("GET", "/", () => new Response(null, { status: 200 }));
 
-router.handle(
+router.handlePublic(
   "GET",
   "/healthcheck",
   () => new Response("{}", { status: 200, headers: { "content-type": JSON_CONTENT_TYPE } }),
 );
 
+registerIdentityRoutes(router);
+
 export default {
-  fetch(request: Request): Response | Promise<Response> {
-    return router.fetch(request);
+  fetch(request: Request, env: Bindings): Response | Promise<Response> {
+    return router.fetch(request, env);
   },
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<Bindings>;
