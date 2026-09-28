@@ -306,7 +306,7 @@ export async function refreshSession(
   if (claims === null) throw unauthenticated("Refresh token invalid or expired.");
   if (claims.gid !== env.tenantId) throw unauthenticated("Refresh token invalid or expired.");
 
-  const session = await store.findSession(env.db, claims.tid);
+  const session = await store.findSession(env.db, claims.tid, env.tenantId);
   if (session === null || session.revoked_at !== 0 || session.tenant_id !== env.tenantId) {
     throw unauthenticated("Refresh token invalid or expired.");
   }
@@ -347,7 +347,7 @@ export async function logout(
     const claims = await verifySessionToken(sessionKey, token, { nowSec: env.nowSec });
     if (claims === null) throw invalidArgument("Session token invalid.");
     if (claims.uid !== userId || claims.gid !== env.tenantId) throw invalidArgument("Session token invalid.");
-    await store.revokeSession(env.db, claims.tid, env.nowSec);
+    await store.revokeSession(env.db, claims.tid, env.tenantId, env.nowSec);
   }
 
   if (refreshToken !== "") {
@@ -355,7 +355,7 @@ export async function logout(
     const claims = await verifySessionToken(refreshKey, refreshToken, { nowSec: env.nowSec });
     if (claims === null) throw invalidArgument("Refresh token invalid.");
     if (claims.uid !== userId || claims.gid !== env.tenantId) throw invalidArgument("Refresh token invalid.");
-    await store.revokeSession(env.db, claims.tid, env.nowSec);
+    await store.revokeSession(env.db, claims.tid, env.tenantId, env.nowSec);
   }
 
   if (token === "" && refreshToken === "") {
@@ -378,7 +378,7 @@ export async function resolveBearerSession(env: TenantEnv, token: string): Promi
   // 令牌里的租户与请求租户不一致 = 拿 A 游戏的令牌打 B 游戏，一律当作无效令牌。
   if (claims === null || claims.gid !== env.tenantId) throw unauthenticated("Auth token invalid");
 
-  const session = await store.findSession(env.db, claims.tid);
+  const session = await store.findSession(env.db, claims.tid, env.tenantId);
   if (session === null || session.revoked_at !== 0 || session.tenant_id !== env.tenantId) {
     throw unauthenticated("Auth token invalid");
   }

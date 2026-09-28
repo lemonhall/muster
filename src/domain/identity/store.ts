@@ -233,34 +233,54 @@ export async function updateProfile(
     .run();
 }
 
-export function insertSession(
+/**
+ * 登记一个会话。
+ *
+ * `token_id` 是全局主键（对应上游 `sessionCache` 的 token 索引），但 upsert 的
+ * 冲突分支**额外要求租户与用户一致**：万一真出现 token id 碰撞（122 bit 随机，
+ * 概率可忽略但不为零），宁可让这条语句写成 0 行、由调用方报错，也不能把 A 游戏
+ * 的会话悄悄改写成 B 游戏的会话。会话令牌的签名密钥本来就是按租户派生的，
+ * 这一层是纵深防御，不是唯一防线。
+ */
+export async function insertSession(
   db: D1Database,
   row: { tokenId: string; tenantId: string; userId: string; exp: number; refreshExp: number; now: number },
-): Promise<D1Result> {
-  return db
+): Promise<void> {
+  const result = await db
     .prepare(
       `INSERT INTO sessions (token_id, tenant_id, user_id, exp, refresh_exp, created_at, revoked_at)
        VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0)
-       ON CONFLICT (token_id) DO UPDATE SET exp = ?4, refresh_exp = ?5, revoked_at = 0`,
+       ON CONFLICT (token_id) DO UPDATE SET exp = ?4, refresh_exp = ?5, revoked_at = 0
+       WHERE sessions.tenant_id = ?2 AND sessions.user_id = ?3`,
     )
     .bind(row.tokenId, row.tenantId, row.userId, row.exp, row.refreshExp, row.now)
     .run();
+  if ((result.meta.changes ?? 0) === 0) {
+    throw new Error("session token id collided across tenants or users");
+  }
 }
 
-export function findSession(db: D1Database, tokenId: string): Promise<SessionRow | null> {
+/** 按 (token_id, tenant_id) 取会话：跨租户同 id 的会话在查询层就取不到。 */
+export function findSession(db: D1Database, tokenId: string, tenantId: string): Promise<SessionRow | null> {
   return db
     .prepare(
-      "SELECT token_id, tenant_id, user_id, exp, refresh_exp, created_at, revoked_at FROM sessions WHERE token_id = ?1",
+      "SELECT token_id, tenant_id, user_id, exp, refresh_exp, created_at, revoked_at FROM sessions " +
+        "WHERE token_id = ?1 AND tenant_id = ?2",
     )
-    .bind(tokenId)
+    .bind(tokenId, tenantId)
     .first<SessionRow>();
 }
 
-/** 登出：写 revoked_at。返回受影响行数，0 表示这个 token_id 本来就不存在。 */
-export async function revokeSession(db: D1Database, tokenId: string, now: number): Promise<number> {
+/** 登出：写 revoked_at。返回受影响行数，0 表示这个 token_id 在**本租户内**不存在或已吊销。 */
+export async function revokeSession(
+  db: D1Database,
+  tokenId: string,
+  tenantId: string,
+  now: number,
+): Promise<number> {
   const result = await db
-    .prepare("UPDATE sessions SET revoked_at = ?1 WHERE token_id = ?2 AND revoked_at = 0")
-    .bind(now, tokenId)
+    .prepare("UPDATE sessions SET revoked_at = ?1 WHERE token_id = ?2 AND tenant_id = ?3 AND revoked_at = 0")
+    .bind(now, tokenId, tenantId)
     .run();
   return result.meta.changes ?? 0;
 }
