@@ -27,8 +27,11 @@ import { decodeEnvelope, encodeEnvelope, type SessionFormat } from "../realtime/
 import { handleEnvelope, type PipelineContext, type StatusService } from "../realtime/pipeline";
 import { decodeSocketMeta, SOCKET_META_HEADER, type SocketMeta } from "../realtime/socket-meta";
 import { DELIVER_PATH, parseDelivery } from "./delivery";
+import { matchmakerRemoveAll } from "./matchmaker-call";
 import { registryCall, registryFollow } from "./registry-call";
 import { SessionChannels } from "./session-channels";
+import { SessionMatch } from "./session-match";
+import { SessionMatchmaker } from "./matchmaker-call";
 
 const decoder = new TextDecoder();
 
@@ -48,6 +51,8 @@ export const SESSION_TOUCH_INTERVAL_MS = 20_000;
 export class SessionShard extends DurableObject<Bindings> {
   readonly #tenantId: string;
   readonly #channels: SessionChannels;
+  readonly #matches: SessionMatch;
+  readonly #matchmaker: SessionMatchmaker;
 
   constructor(ctx: DurableObjectState, env: Bindings) {
     super(ctx, env);
@@ -60,8 +65,11 @@ export class SessionShard extends DurableObject<Bindings> {
     if (separator <= 0) throw new Error("SessionShard 的实例名必须是 `租户|会话`");
     this.#tenantId = name.slice(0, separator);
     this.#channels = new SessionChannels(ctx.storage.sql, env, this.#tenantId);
+    this.#matches = new SessionMatch(env, this.#tenantId, ctx.storage.sql);
+    this.#matchmaker = new SessionMatchmaker(env, this.#tenantId);
     ctx.blockConcurrencyWhile(async () => {
       this.#channels.migrate();
+      this.#matches.migrate();
     });
   }
 
@@ -197,6 +205,8 @@ export class SessionShard extends DurableObject<Bindings> {
       username: meta.username,
       status: this.#statusService(meta),
       channel: this.#channels,
+      matchmaker: this.#matchmaker,
+      match: this.#matches,
     };
   }
 
@@ -235,6 +245,19 @@ export class SessionShard extends DurableObject<Bindings> {
       await this.#channels.leaveAll(meta.sessionId);
     } catch (error) {
       console.error("频道成员清理失败", error);
+    }
+    // 对局侧同样是 `UntrackAll` 的一半：不退的话对手会一直看到这个幽灵玩家。
+    try {
+      await this.#matches.leaveAll(meta.sessionId);
+    } catch (error) {
+      console.error("对局成员清理失败", error);
+    }
+    // 等票也得撤（上游 `sessionWS.Close` 里的 `matchmaker.RemoveSessionAll`）：
+    // 连接都没了，再拿它的票去成局只会得到一群收不到帧的人。
+    try {
+      await matchmakerRemoveAll(this.env, this.#tenantId, meta.sessionId);
+    } catch (error) {
+      console.error("匹配器清票失败", error);
     }
   }
 

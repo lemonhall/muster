@@ -13,6 +13,7 @@ import { RpcSchema } from "../../src/proto/api/api_pb";
 import type { PipelineContext, PipelineResult, StatusService } from "../../src/realtime/pipeline";
 import type { PresenceSnapshot } from "../../src/realtime/presence";
 import { recordingChannel } from "./channel";
+import { recordingMatch, recordingMatchmaker } from "./match-service";
 
 /**
  * M3 实时套件的共享工装：造用户、造帧、记下管线对注册表说过什么。
@@ -138,6 +139,9 @@ export function pipelineContext(
     status,
     // M4 起管线需要频道服务；这些 M3 用例不碰频道，给一个"记下调用、不回帧"的假实现。
     channel: recordingChannel().service,
+    // M7 同理：对局与匹配器都是 DO 的活儿，纯管线用例给"什么都不做"的假实现。
+    matchmaker: recordingMatchmaker().service,
+    match: recordingMatch().service,
     ...overrides,
   };
 }

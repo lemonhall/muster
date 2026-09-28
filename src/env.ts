@@ -1,4 +1,6 @@
 import type { Channel } from "./durable/channel";
+import type { Match } from "./durable/match";
+import type { Matchmaker } from "./durable/matchmaker";
 import type { SessionRegistry } from "./durable/session-registry";
 import type { SessionShard } from "./durable/session-shard";
 
@@ -9,6 +11,7 @@ import type { SessionShard } from "./durable/session-shard";
  * - M1：`DB`（D1Database，租户/用户/身份/会话的权威库）、`SESSION_ENCRYPTION_KEY`（secret）
  * - M3：`SESSION_SHARD`（DurableObjectNamespace，会话分片）、`SESSION_REGISTRY`
  * - M4：`CHANNEL`（DurableObjectNamespace，每频道一个实例）
+ * - M7：`MATCHMAKER`（每租户一个匹配池）、`MATCH`（每场对局一个实例）
  *
  * 全局 `Env` 接口由 `wrangler types` 生成到 `worker-configuration.d.ts`（配置里声明的绑定），
  * 而 **secret 不在配置里**，所以在这里显式补上。
@@ -34,6 +37,13 @@ export interface Bindings extends Env {
    * 与持久化消息历史都住在这个 DO 里（单点定序）。
    */
   CHANNEL: DurableObjectNamespace<Channel>;
+
+  /**
+   * M7：一个租户一个匹配池（成局必须有一个单点看整个池子），一场对局一个实例
+   * （成员快照与广播顺序要靠单点定序）。都是 SQLite 后端，本地跑在 workerd 里。
+   */
+  MATCHMAKER: DurableObjectNamespace<Matchmaker>;
+  MATCH: DurableObjectNamespace<Match>;
 
   /**
    * M5：Google 登录。四个都是**可选**的，缺省行为在 `src/domain/social/google/config.ts`

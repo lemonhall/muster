@@ -14,8 +14,8 @@
 |---|---|
 | 上游 commit | `e920249a3465bea4b8ea2968020c488201b61a8e` |
 | 上游测试条目 | 263 |
-| ported | 87 |
-| planned | 175 |
+| ported | 107 |
+| planned | 155 |
 | exempt | 1 |
 | 无理由豁免 | 0 |
 | 第二证据源引用（自主契约测试） | 108 |
@@ -30,7 +30,7 @@
 | M4 | 频道与聊天 | 0 | 0 | 0 | 0 |
 | M5 | 社交（好友/群组/通知/社交登录令牌校验） | 4 | 4 | 0 | 0 |
 | M6 | 经济与竞技（钱包/排行榜/锦标赛） | 25 | 24 | 0 | 1 |
-| M7 | 匹配与对局 | 35 | 0 | 35 | 0 |
+| M7 | 匹配与对局 | 35 | 20 | 15 | 0 |
 | M8 | 派对与运行时扩展 | 44 | 0 | 44 | 0 |
 | M9 | 管理台与运维面 | 5 | 0 | 5 | 0 |
 | MX | 横切（配置/指标/关停/流管理） | 4 | 0 | 4 | 0 |
@@ -169,29 +169,29 @@
 | 98 | planned | TestMatchRegistryAuthoritativeMatchAndListMatchesWithQueryingArrays | `server/match_registry_test.go` | — |
 | 99 | planned | TestMatchRegistryAuthoritativeMatchAndListMatchesWithTokenizableLabel | `server/match_registry_test.go` | — |
 | 100 | planned | TestMatchRegistryListMatchesAfterLabelsUpdate | `server/match_registry_test.go` | — |
-| 101 | planned | TestGroupIndexes | `server/matchmaker_test.go` | — |
+| 101 | ported | TestGroupIndexes | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
 | 102 | planned | TestMatchmakerAddAndMatchAuthoritative | `server/matchmaker_test.go` | — |
-| 103 | planned | TestMatchmakerAddAndRemove | `server/matchmaker_test.go` | — |
-| 104 | planned | TestMatchmakerAddButNotMatch | `server/matchmaker_test.go` | — |
-| 105 | planned | TestMatchmakerAddButNotMatchOnRange | `server/matchmaker_test.go` | — |
-| 106 | planned | TestMatchmakerAddButNotMatchOnRangeAndValue | `server/matchmaker_test.go` | — |
-| 107 | planned | TestMatchmakerAddMultipleAndSomeMatch | `server/matchmaker_test.go` | — |
-| 108 | planned | TestMatchmakerAddMultipleAndSomeMatchOptionalTextAlteringScore | `server/matchmaker_test.go` | — |
-| 109 | planned | TestMatchmakerAddMultipleAndSomeMatchWithBoost | `server/matchmaker_test.go` | — |
-| 110 | planned | TestMatchmakerAddOnly | `server/matchmaker_test.go` | — |
-| 111 | planned | TestMatchmakerAddRemoveNotMatch | `server/matchmaker_test.go` | — |
-| 112 | planned | TestMatchmakerAddRemoveRepeated | `server/matchmaker_test.go` | — |
-| 113 | planned | TestMatchmakerAddWithBasicMatch | `server/matchmaker_test.go` | — |
-| 114 | planned | TestMatchmakerAddWithMatchOnRange | `server/matchmaker_test.go` | — |
-| 115 | planned | TestMatchmakerAddWithMatchOnRangeAndValue | `server/matchmaker_test.go` | — |
-| 116 | planned | TestMatchmakerAddWithMatchOnStar | `server/matchmaker_test.go` | — |
+| 103 | ported | TestMatchmakerAddAndRemove | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 104 | ported | TestMatchmakerAddButNotMatch | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 105 | ported | TestMatchmakerAddButNotMatchOnRange | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 106 | ported | TestMatchmakerAddButNotMatchOnRangeAndValue | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 107 | ported | TestMatchmakerAddMultipleAndSomeMatch | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 108 | ported | TestMatchmakerAddMultipleAndSomeMatchOptionalTextAlteringScore | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 109 | ported | TestMatchmakerAddMultipleAndSomeMatchWithBoost | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 110 | ported | TestMatchmakerAddOnly | `server/matchmaker_test.go` | `tests/unit/matchmaker/pool.test.ts` |
+| 111 | ported | TestMatchmakerAddRemoveNotMatch | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 112 | ported | TestMatchmakerAddRemoveRepeated | `server/matchmaker_test.go` | `tests/unit/matchmaker/pool.test.ts` |
+| 113 | ported | TestMatchmakerAddWithBasicMatch | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 114 | ported | TestMatchmakerAddWithMatchOnRange | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 115 | ported | TestMatchmakerAddWithMatchOnRangeAndValue | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 116 | ported | TestMatchmakerAddWithMatchOnStar | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
 | 117 | planned | TestMatchmakerMaxPartyTracking | `server/matchmaker_test.go` | — |
 | 118 | planned | TestMatchmakerMaxSessionTracking | `server/matchmaker_test.go` | — |
-| 119 | planned | TestMatchmakerPropertyRegexSubmatch | `server/matchmaker_test.go` | — |
-| 120 | planned | TestMatchmakerPropertyRegexSubmatchMultiple | `server/matchmaker_test.go` | — |
-| 121 | planned | TestMatchmakerRequireMutualMatch | `server/matchmaker_test.go` | — |
-| 122 | planned | TestMatchmakerRequireMutualMatchLarger | `server/matchmaker_test.go` | — |
-| 123 | planned | TestMatchmakerRequireMutualMatchLargerReversed | `server/matchmaker_test.go` | — |
+| 119 | ported | TestMatchmakerPropertyRegexSubmatch | `server/matchmaker_test.go` | `tests/unit/matchmaker/pool.test.ts` |
+| 120 | ported | TestMatchmakerPropertyRegexSubmatchMultiple | `server/matchmaker_test.go` | `tests/unit/matchmaker/pool.test.ts` |
+| 121 | ported | TestMatchmakerRequireMutualMatch | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 122 | ported | TestMatchmakerRequireMutualMatchLarger | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 123 | ported | TestMatchmakerRequireMutualMatchLargerReversed | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
 
 ### M8 派对与运行时扩展
 
@@ -478,4 +478,4 @@
 | `server/tracker.go::StreamModeChannel` | `tests/integration/channel/ids.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=be950e664f0f6e9b071a7e570ef7e26d526b90f059a42cd9725bf762f3da4f94 -->
+<!-- integrity: body_sha256=eddc4aec380d146da27b083102d186b37b8edf8d6b95d51bfe90da548eb6b53d -->

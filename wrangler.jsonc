@@ -25,7 +25,9 @@
     "bindings": [
       { "name": "SESSION_SHARD", "class_name": "SessionShard" },
       { "name": "SESSION_REGISTRY", "class_name": "SessionRegistry" },
-      { "name": "CHANNEL", "class_name": "Channel" }
+      { "name": "CHANNEL", "class_name": "Channel" },
+      { "name": "MATCHMAKER", "class_name": "Matchmaker" },
+      { "name": "MATCH", "class_name": "Match" }
     ]
   },
   "migrations": [
@@ -37,11 +39,18 @@
       // M4：一个频道一个实例。成员与消息都存 SQLite（本地跑在 workerd 里，不产生账单）。
       "tag": "m4-channels",
       "new_sqlite_classes": ["Channel"]
+    },
+    {
+      // M7：一个租户一个匹配池（成局要有单点看整个池子），一场对局一个实例
+      // （成员快照与广播顺序靠单点定序）。同样只跑本地 workerd，不产生账单。
+      "tag": "m7-matches",
+      "new_sqlite_classes": ["Matchmaker", "Match"]
     }
   ]
 
   // Bindings are introduced milestone by milestone:
   //   M4: Durable Object namespace (channel)
+  //   M7: Durable Object namespaces (matchmaker, match)
   //   secrets（如 SESSION_ENCRYPTION_KEY）不进仓库：本地用 --var 或 .dev.vars，
   //   线上用 `wrangler secret put`。缺了它认证端点会明确报错，而不是悄悄用一个弱默认值。
 }

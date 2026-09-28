@@ -14,6 +14,8 @@ import { registerTournamentRoutes } from "./http/routes/tournament";
 
 // Durable Object 的类必须从入口模块导出，`wrangler.jsonc` 里的 migrations 才找得到它们。
 export { Channel } from "./durable/channel";
+export { Match } from "./durable/match";
+export { Matchmaker } from "./durable/matchmaker";
 export { SessionRegistry } from "./durable/session-registry";
 export { SessionShard } from "./durable/session-shard";
 

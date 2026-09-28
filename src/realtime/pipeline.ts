@@ -10,9 +10,10 @@
  * `sessionWS.consume` 跳出读循环并 Close。所以 `BAD_INPUT`、`MISSING_PAYLOAD`、
  * `UNRECOGNIZED_PAYLOAD` 三条路都是"先发错误帧，再关连接"。
  *
- * M3 接通 `ping` / `pong` / `status_*`，M4 接通 `channel_*` 五个；其余消息类型
- * （对局、派对、RPC……）暂时与上游"没有对应处理函数"时一样走 `UNRECOGNIZED_PAYLOAD`
- * 分支并关闭。这是**临时**行为，后续里程碑逐条替换，差异记在 ECN-0006 里。
+ * M3 接通 `ping` / `pong` / `status_*`，M4 接通 `channel_*` 五个，M7 接通
+ * `match_*` 四个与 `matchmaker_*` 两个；其余消息类型（派对、RPC……）暂时与上游
+ * "没有对应处理函数"时一样走 `UNRECOGNIZED_PAYLOAD` 分支并关闭。这是**临时**行为，
+ * 后续里程碑逐条替换，差异记在 ECN-0006 里。
  *
  * 契约源（机器可读）：
  * 契约源: server/pipeline.go::Pipeline.ProcessRequest
@@ -43,8 +44,12 @@ import {
   channelMessageSend,
   channelMessageUpdate,
 } from "./pipeline-channel";
+import { matchCreate, matchDataSend, matchJoin, matchLeave } from "./pipeline-match";
+import { matchmakerAdd, matchmakerRemove } from "./pipeline-matchmaker";
 import { statusEnvelope, type PresenceSnapshot } from "./presence";
 import type { ChannelService } from "./channel";
+import type { MatchService } from "./match";
+import type { MatchmakerService } from "./matchmaker";
 
 /** 状态订阅在会话侧的样子。实现由分片 DO 提供（它去调注册表 DO）。 */
 export interface StatusService {
@@ -63,6 +68,8 @@ export interface PipelineContext {
   readonly username: string;
   readonly status: StatusService;
   readonly channel: ChannelService;
+  readonly matchmaker: MatchmakerService;
+  readonly match: MatchService;
 }
 
 export interface PipelineResult {
@@ -123,6 +130,24 @@ export async function handleEnvelope(
 
     case "channelMessageRemove":
       return channelMessageRemove(context, cid, envelope.message.value);
+
+    case "matchmakerAdd":
+      return matchmakerAdd(context, cid, envelope.message.value);
+
+    case "matchmakerRemove":
+      return matchmakerRemove(context, cid, envelope.message.value);
+
+    case "matchCreate":
+      return matchCreate(context, cid, envelope.message.value);
+
+    case "matchJoin":
+      return matchJoin(context, cid, envelope.message.value);
+
+    case "matchLeave":
+      return matchLeave(context, cid, envelope.message.value);
+
+    case "matchDataSend":
+      return matchDataSend(context, cid, envelope.message.value);
 
     default:
       return reply(unrecognizedPayloadError(cid), true);
