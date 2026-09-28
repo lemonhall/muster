@@ -84,36 +84,55 @@ export function findLeaderboard(
     .first<LeaderboardRow>();
 }
 
-/** 锦标赛目录：分类区间 + 起止时间过滤，按 id 升序（对应 `GET /v2/tournament`）。 */
+export interface TournamentListFilters {
+  readonly categoryStart: number;
+  readonly categoryEnd: number;
+  readonly startTime: number;
+  readonly endTime: number;
+  readonly limit: number;
+  readonly now: number;
+  /** 上一页最后一条的 `(create_time, id)`；空串表示从头发。 */
+  readonly cursor: { readonly createTime: number; readonly id: string } | null;
+}
+
+/**
+ * 锦标赛目录：分类区间 + 起止时间过滤（对应 `GET /v2/tournament`）。
+ *
+ * `endTime` 的三个取值各有确定含义，是上游 `ListTournaments` 里最难照抄的一段：
+ *   - `-1`（默认）：只看"还在进行或还没结束"的——`end_time = 0` 或 `end_time >= now`；
+ *   - `0`：只看**没有**结束时间的；
+ *   - `> 0`：`end_time` 必须存在且不晚于它。
+ * 写成 `end_time <= ?` 一条比较就会把 `-1` 与 `0` 混成一件事，这是这一段的坑。
+ *
+ * 契约源（机器可读）：
+ * 契约源: server/leaderboard_cache.go::LocalLeaderboardCache.ListTournaments
+ */
 export async function listTournamentRows(
   db: D1Database,
   tenantId: string,
-  filters: {
-    readonly categoryStart: number;
-    readonly categoryEnd: number;
-    readonly startTime: number;
-    readonly endTime: number;
-    readonly limit: number;
-    readonly cursorId: string;
-  },
+  filters: TournamentListFilters,
 ): Promise<LeaderboardRow[]> {
   const params: unknown[] = [tenantId, filters.categoryStart, filters.categoryEnd];
+  const push = (value: unknown): string => {
+    params.push(value);
+    return `?${params.length}`;
+  };
   let sql = `SELECT ${LEADERBOARD_COLUMNS} FROM leaderboard
     WHERE tenant_id = ?1 AND duration != 0 AND category >= ?2 AND category <= ?3`;
-  if (filters.startTime >= 0) {
-    params.push(filters.startTime);
-    sql += ` AND start_time >= ?${params.length}`;
+  if (filters.startTime >= 0) sql += ` AND start_time >= ${push(filters.startTime)}`;
+  if (filters.endTime === 0) {
+    sql += " AND end_time = 0";
+  } else if (filters.endTime === -1) {
+    sql += ` AND (end_time = 0 OR end_time >= ${push(filters.now)})`;
+  } else {
+    sql += ` AND end_time != 0 AND end_time <= ${push(filters.endTime)}`;
   }
-  if (filters.endTime >= 0) {
-    params.push(filters.endTime);
-    sql += ` AND start_time <= ?${params.length}`;
+  if (filters.cursor !== null) {
+    const createTime = push(filters.cursor.createTime);
+    const id = push(filters.cursor.id);
+    sql += ` AND (create_time > ${createTime} OR (create_time = ${createTime} AND id > ${id}))`;
   }
-  if (filters.cursorId !== "") {
-    params.push(filters.cursorId);
-    sql += ` AND id > ?${params.length}`;
-  }
-  params.push(filters.limit + 1);
-  sql += ` ORDER BY id ASC LIMIT ?${params.length}`;
+  sql += ` ORDER BY create_time ASC, id ASC LIMIT ${push(filters.limit + 1)}`;
   const result = await db.prepare(sql).bind(...params).all<LeaderboardRow>();
   return result.results;
 }

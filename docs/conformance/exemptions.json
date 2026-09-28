@@ -1,5 +1,10 @@
 {
   "schema": 1,
   "note": "显式豁免清单。每条豁免都必须给非空理由，否则 conformance:matrix 以非 0 退出。允许豁免的情形只有两类：依赖上游 Go 内部实现细节；或依赖我们刻意不同的实现路线，且对应的可观测行为已由等价的自主测试覆盖。对外可观测行为不允许豁免。",
-  "exemptions": []
+  "exemptions": [
+    {
+      "test": "server/leaderboard_scheduler_test.go::TestLeaderboardScheduler",
+      "reason": "上游自己把它 skip 了：正文第一行是 t.Skip(\"auxiliary test for scheduling logic, but too finicky to be part of the test suite\")，函数体没有被任何 CI 执行过。它测的是「后台调度器连续跑几轮之后哪些期数该被清掉」这一段内部时序，属于上游 Go 实现的内部细节，不构成对外可观测契约。同一文件里真正有断言的另外两条（EndedTournamentHidesLiveExpiry / HidesSuccessorExpiry）已逐条搬运到 tests/unit/competitive/leaderboard-scheduler.test.ts，而调度重算本身由 computeNext 的单元用例覆盖。"
+    }
+  ]
 }

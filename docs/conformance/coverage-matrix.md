@@ -14,11 +14,11 @@
 |---|---|
 | 上游 commit | `e920249a3465bea4b8ea2968020c488201b61a8e` |
 | 上游测试条目 | 263 |
-| ported | 85 |
-| planned | 178 |
-| exempt | 0 |
+| ported | 87 |
+| planned | 175 |
+| exempt | 1 |
 | 无理由豁免 | 0 |
-| 第二证据源引用（自主契约测试） | 100 |
+| 第二证据源引用（自主契约测试） | 108 |
 
 ## 按里程碑
 
@@ -29,7 +29,7 @@
 | M3 | 实时协议与在线状态 | 1 | 1 | 0 | 0 |
 | M4 | 频道与聊天 | 0 | 0 | 0 | 0 |
 | M5 | 社交（好友/群组/通知/社交登录令牌校验） | 4 | 4 | 0 | 0 |
-| M6 | 经济与竞技（钱包/排行榜/锦标赛） | 25 | 22 | 3 | 0 |
+| M6 | 经济与竞技（钱包/排行榜/锦标赛） | 25 | 24 | 0 | 1 |
 | M7 | 匹配与对局 | 35 | 0 | 35 | 0 |
 | M8 | 派对与运行时扩展 | 44 | 0 | 44 | 0 |
 | M9 | 管理台与运维面 | 5 | 0 | 5 | 0 |
@@ -127,8 +127,8 @@
 
 | # | 状态 | 上游测试 | 文件 | 证据 / 理由 |
 |---:|---|---|---|---|
-| 64 | planned | TestApiLeaderboard | `server/api_leaderboard_test.go` | — |
-| 65 | planned | TestApiTournamentHaystack | `server/api_tournament_test.go` | — |
+| 64 | ported | TestApiLeaderboard | `server/api_leaderboard_test.go` | `tests/integration/competitive/leaderboard-haystack.test.ts`、`tests/integration/competitive/leaderboard.test.ts` |
+| 65 | ported | TestApiTournamentHaystack | `server/api_tournament_test.go` | `tests/integration/competitive/tournament.test.ts` |
 | 66 | ported | TestTournamentEveryDayMonThruFri | `server/core_tournament_test.go` | `tests/unit/competitive/tournament-deadlines.test.ts` |
 | 67 | ported | TestTournamentEveryFourteenDaysFromFirst | `server/core_tournament_test.go` | `tests/unit/competitive/tournament-deadlines.test.ts` |
 | 68 | ported | TestTournamentNowIsBeforeStart | `server/core_tournament_test.go` | `tests/unit/competitive/tournament-deadlines.test.ts` |
@@ -149,7 +149,7 @@
 | 83 | ported | TestLocalLeaderboardRankCache_Insert_Existing | `server/leaderboard_rank_cache_test.go` | `tests/unit/competitive/rank-cache-insert.test.ts` |
 | 84 | ported | TestLocalLeaderboardRankCache_LeaderboardSeparation | `server/leaderboard_rank_cache_test.go` | `tests/unit/competitive/rank-cache-lifecycle.test.ts` |
 | 85 | ported | TestLocalLeaderboardRankCache_TrimExpired | `server/leaderboard_rank_cache_test.go` | `tests/unit/competitive/rank-cache-lifecycle.test.ts` |
-| 86 | planned | TestLeaderboardScheduler | `server/leaderboard_scheduler_test.go` | — |
+| 86 | exempt | TestLeaderboardScheduler | `server/leaderboard_scheduler_test.go` | 上游自己把它 skip 了：正文第一行是 t.Skip("auxiliary test for scheduling logic, but too finicky to be part of the test suite")，函数体没有被任何 CI 执行过。它测的是「后台调度器连续跑几轮之后哪些期数该被清掉」这一段内部时序，属于上游 Go 实现的内部细节，不构成对外可观测契约。同一文件里真正有断言的另外两条（EndedTournamentHidesLiveExpiry / HidesSuccessorExpiry）已逐条搬运到 tests/unit/competitive/leaderboard-scheduler.test.ts，而调度重算本身由 computeNext 的单元用例覆盖。 |
 | 87 | ported | TestLeaderboardSchedulerEndedTournamentHidesLiveExpiry | `server/leaderboard_scheduler_test.go` | `tests/unit/competitive/leaderboard-scheduler.test.ts` |
 | 88 | ported | TestLeaderboardSchedulerEndedTournamentHidesSuccessorExpiry | `server/leaderboard_scheduler_test.go` | `tests/unit/competitive/leaderboard-scheduler.test.ts` |
 
@@ -376,7 +376,9 @@
 | `apigrpc/apigrpc.swagger.json::/v2/channel/{channelId}` | `tests/e2e/realtime-chat.e2e.test.ts`、`tests/integration/channel/history.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/friend` | `tests/e2e/social.e2e.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/group` | `tests/e2e/social.e2e.test.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/leaderboard/{leaderboardId}` | `tests/e2e/competitive.e2e.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/notification` | `tests/e2e/social.e2e.test.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/tournament` | `tests/e2e/competitive.e2e.test.ts`、`tests/integration/competitive/tournament-endpoints.test.ts` |
 | `server/api_account.go::GetAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_account.go::UpdateAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_authenticate.go::AuthenticateCustom` | `tests/helpers/identity-fixtures.ts` |
@@ -396,16 +398,22 @@
 | `server/api_group.go::ListGroupUsers` | `tests/integration/groups/listing-members.test.ts` |
 | `server/api_group.go::ListUserGroups` | `tests/integration/groups/listing-members.test.ts` |
 | `server/api_group.go::UpdateGroup` | `tests/integration/groups/lifecycle.test.ts` |
+| `server/api_leaderboard.go::ListLeaderboardRecords` | `tests/e2e/competitive.e2e.test.ts` |
 | `server/api_notification.go::DeleteNotifications` | `tests/integration/notifications/delete.test.ts` |
 | `server/api_notification.go::ListNotifications` | `tests/e2e/social.e2e.test.ts`、`tests/integration/notifications/list.test.ts` |
 | `server/api_session.go::SessionLogout` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_session.go::SessionRefresh` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
+| `server/api_tournament.go::JoinTournament` | `tests/integration/competitive/tournament-endpoints.test.ts` |
+| `server/api_tournament.go::ListTournaments` | `tests/e2e/competitive.e2e.test.ts`、`tests/integration/competitive/tournament-endpoints.test.ts` |
+| `server/api_tournament.go::WriteTournamentRecord` | `tests/integration/competitive/tournament-endpoints.test.ts` |
 | `server/api_user.go::GetUsers` | `tests/e2e/identity.e2e.test.ts`、`tests/e2e/tenancy.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api.go::grpcGatewayRouter` | `tests/e2e/toolchain.e2e.test.ts`、`tests/integration/healthcheck.test.ts` |
 | `server/api.go::handleRoutingError` | `tests/e2e/toolchain.e2e.test.ts`、`tests/integration/healthcheck.test.ts` |
 | `server/api.go::parseBasicAuth` | `tests/helpers/identity-fixtures.ts` |
 | `server/api.go::securityInterceptorFunc` | `tests/e2e/identity.e2e.test.ts`、`tests/e2e/tenancy.e2e.test.ts`、`tests/helpers/identity-fixtures.ts`、`tests/integration/tenancy.test.ts` |
 | `server/api.go::wwwAuthenticateFixWriter` | `tests/helpers/identity-fixtures.ts` |
+| `server/console_account.go::DeleteWalletLedger` | `tests/integration/competitive/wallet-ledger.test.ts` |
+| `server/console_account.go::GetWalletLedger` | `tests/integration/competitive/wallet-ledger.test.ts` |
 | `server/core_account.go::UpdateAccounts` | `tests/helpers/identity-fixtures.ts` |
 | `server/core_authenticate.go::AuthenticateDevice` | `tests/helpers/identity-fixtures.ts` |
 | `server/core_authenticate.go::AuthenticateEmail` | `tests/helpers/identity-fixtures.ts` |
@@ -470,4 +478,4 @@
 | `server/tracker.go::StreamModeChannel` | `tests/integration/channel/ids.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=b088f6ccd45626634e85a9c96536f6d50116e3647482e387bd4e503a5125aedc -->
+<!-- integrity: body_sha256=be950e664f0f6e9b071a7e570ef7e26d526b90f059a42cd9725bf762f3da4f94 -->

@@ -25,6 +25,8 @@ export const invalidArgument = (message: string): ApiError => new ApiError(Code.
 export const unauthenticated = (message: string): ApiError => new ApiError(Code.Unauthenticated, message);
 export const notFound = (message: string): ApiError => new ApiError(Code.NotFound, message);
 export const alreadyExists = (message: string): ApiError => new ApiError(Code.AlreadyExists, message);
+export const failedPrecondition = (message: string): ApiError =>
+  new ApiError(Code.FailedPrecondition, message);
 export const permissionDenied = (message: string): ApiError => new ApiError(Code.PermissionDenied, message);
 export const internal = (message: string): ApiError => new ApiError(Code.Internal, message);
 export const unimplemented = (message: string): ApiError => new ApiError(Code.Unimplemented, message);

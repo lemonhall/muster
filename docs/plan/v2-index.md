@@ -4,7 +4,7 @@
 |---|---|
 | 版本 | v2 |
 | 日期 | 2026-09-29 |
-| 状态 | 进行中（M5 已交付；M6 / M7 范围已定，DoD 在各自启动时冻结） |
+| 状态 | 进行中（M5、M6 已交付；M7 范围已定，DoD 在启动时冻结） |
 | 成本档位 | `standard`（普通功能交付，最多 3 轮 Review） |
 | 愿景 | [../prd/VISION.md](../prd/VISION.md) |
 | 需求基线 | [PRD-0001](../prd/PRD-0001-muster-parity.md) |
@@ -54,7 +54,30 @@ Google ID token 校验（aud/azp 规则与授权码流程）。同时关闭 v1 �
 
 **范围**：REQ-0001-014（钱包与账本）、REQ-0001-015（排行榜：best/incr/set、衰减、
 重置周期、owner 记录）、REQ-0001-016（锦标赛：起止、规模、尝试次数、加入与排名）。
-DoD 在 M6 启动时写入本节并冻结。
+
+**DoD（逐条可判定 + 验证命令 + 反作弊）**
+
+| # | DoD | 验证命令 | 预期 |
+|---|---|---|---|
+| 1 | `TestApiLeaderboard` 的 5 个子用例全部搬运：空榜回空列表、SET 覆盖之后顺序重排（500 → 200 → 排到第一）、删分之后人从列表消失、haystack 的中间 / 榜首 / 榜尾三个位置、关掉名次之后 `rank` 全为 0 而顺序不变 | `npm test` | 退出码 0；覆盖矩阵第 64 条 `ported` |
+| 2 | 四种 operator（BEST / SET / INCREMENT / DECREMENT）与请求级 `operator` 覆盖：`BEST` 是"更好才更新"、`SET` 直接覆盖、`INCREMENT` 累加、`DECREMENT` 扣减且**首次插入写 0 而不是负数**；两套 operator 编号（榜单 0..3 与 `api.Operator` 0..4）不混用 | `npm test` | 断言全绿 |
+| 3 | 重置周期：`calculateTournamentDeadlines` 的 4 条上游用例逐条搬运（每工作日 / 每 14 天 / 现在早于开赛 / 现在正好落在重置点），另有 `computeNext` 的下一跳与"结束的锦标赛不再露出当期数据" | `npm test` | 断言全绿；覆盖矩阵第 66–69、87–88 条 `ported` |
+| 4 | 名次缓存：上游 9 条逐条搬运（升序 / 降序插入、重复插入的世代号语义、`Fill` 返回"这一期总条目数"、删除与删榜、过期分桶与排行榜隔离、`TrimExpired`） | `npm test` | 断言全绿；覆盖矩阵第 77–85 条 `ported` |
+| 5 | `TestApiTournamentHaystack` 搬运：best + desc、五人 10/20/30/40/50、owner 是 30 分、`limit=3` → 记录是 40/30/20（名次 2/3/4），`prev_cursor` 翻出 50（名次 1）、`next_cursor` 翻出 10（名次 5），**两个游标不相等** | `npm test` | 断言全绿；覆盖矩阵第 65 条 `ported` |
+| 6 | 锦标赛约束：目录的四条边界文案（`categoryEnd >= 128` / `categoryEnd < categoryStart` / `endTime < startTime` / `limit` 越界）、默认只列未结束的、`join_required` 未报名写分被拒（`Must join tournament before attempting to write value.`）、报名后可写、重复报名幂等、`max_size` 满员被拒且不占位、权威榜 403、不存在的锦标赛三条 404 | `npm test` | 断言全绿；第二证据源段出现 `/v2/tournament` 与 `/v2/leaderboard/{leaderboardId}` |
+| 7 | 钱包：上游 `core_wallet_test.go` 的 7 条逐条搬运（终值 984 与 0），加上并发写、CAS 守卫整批回滚、`updateLedger=true` 写账本行；账本存储层另有倒序取页、反向游标、时间窗过滤与 `json_patch` 合并 | `npm test` | 断言全绿；覆盖矩阵第 70–76 条 `ported` |
+| 8 | E2E：真实 HTTP 面上三条路由的 404 形状、请求体与 `limit` 的校验顺序、目录参数与空目录、无令牌 401 | `npm run e2e` | 退出码 0 |
+| 9 | 与上游的 12 条刻意偏差都有 ECN 且从 PRD / 计划 / 源码注释三处可追 | `npm run docs:check` + 人工核对 | 退出码 0；[ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) 在 PRD、计划、覆盖矩阵三处都有引用 |
+| 10 | 覆盖矩阵中 M6 的 `planned` 清零：两条 API 用例转 `ported`，上游自己 `t.Skip` 的 `TestLeaderboardScheduler` 在 `docs/conformance/exemptions.json` 里有非空理由的豁免 | `npm run conformance:matrix` | M6 段落 `planned=0`；`unreasoned_exemptions=0` |
+
+**反作弊条款**
+
+- 第 1 条与第 5 条的用例必须先红后绿，红/绿输出粘贴到
+  [v2-competitive.md](./v2-competitive.md) 的 Evidence 段。
+- 第 4 条的世代号语义必须用"同一 owner 用更小的世代号再插一次"来钉，不能只看"插进去有名次"。
+- 第 6 条的每一条拒绝路径都断言**状态码 + 文案**两件事；只断状态码无法区分"拒绝"与"拒绝错了理由"。
+- 第 7 条的"整数不动"必须读**库里的钱包列**，不允许只看返回值。
+- 第 8 条的 E2E 不得只断言 200：必须断言错误体是上游 `google.rpc.Status` 的形状（`{code, message}`）。
 
 ### M7 匹配与对局
 
@@ -67,6 +90,7 @@ DoD 在 M6 启动时写入本节并冻结。
 | 计划 | 覆盖里程碑 | Req ID |
 |---|---|---|
 | [v2-social.md](./v2-social.md) | M5 | REQ-0001-011, REQ-0001-012, REQ-0001-013，以及 REQ-0001-003 的 OAuth 分支 |
+| [v2-competitive.md](./v2-competitive.md) | M6 | REQ-0001-014, REQ-0001-015, REQ-0001-016 |
 
 ## 追溯矩阵
 
@@ -76,6 +100,9 @@ DoD 在 M6 启动时写入本节并冻结。
 | REQ-0001-012 | v2-social.md | `tests/integration/groups/`（6 文件 / 34 条）+ `tests/integration/channel/{group-access,dm-request}.test.ts` | `tests/e2e/social.e2e.test.ts`（建群→加入→两条群列表→群目录） | v2-social.md Evidence DoD 4/5/7/8；ECN-0008 偏差 7–14 | 🟢 已交付（M5） |
 | REQ-0001-013 | v2-social.md | `tests/integration/notifications/`（2 文件 / 6 条） | `tests/e2e/social.e2e.test.ts`（读收件箱、删自己的通知、别人删不掉） | v2-social.md Evidence DoD 6；第二证据源 `swagger.json::/v2/notification` | 🟢 已交付（M5） |
 | REQ-0001-003（OAuth 分支） | v2-social.md | `tests/integration/social/`（5 文件 / 28 条，本机 RSA 私钥签名） | 不适用（Google 验签不在端到端链路上） | v2-social.md Evidence DoD 3；覆盖矩阵第 61/62/63 条 `ported`；ECN-0009 | 🟢 已交付（M5，其余 provider 仍为配置守卫） |
+| REQ-0001-014 | v2-competitive.md | `tests/integration/competitive/wallet.test.ts`（11 条）+ `wallet-ledger.test.ts`（4 条） | 无独立 E2E（钱包没有 REST 面；运行时面在 M8） | v2-competitive.md Evidence DoD 7；覆盖矩阵第 70–76 条 `ported`；ECN-0010 偏差 6/7/12 | 🟢 已交付（M6，账本端点后置到 M9） |
+| REQ-0001-015 | v2-competitive.md | `tests/integration/competitive/{leaderboard,leaderboard-haystack}.test.ts`（7 条）+ `tests/unit/competitive/`（16 条） | `tests/e2e/competitive.e2e.test.ts`（路由注册、404 形状、校验顺序） | v2-competitive.md Evidence DoD 1/2/4；覆盖矩阵第 64、66–69、77–88 条 `ported` | 🟢 已交付（M6，创建面在 M8） |
+| REQ-0001-016 | v2-competitive.md | `tests/integration/competitive/{tournament,tournament-endpoints}.test.ts`（7 条） | `tests/e2e/competitive.e2e.test.ts`（目录参数、空目录、404） | v2-competitive.md Evidence DoD 5/6；覆盖矩阵第 65 条 `ported`；ECN-0010 偏差 4/9/11 | 🟢 已交付（M6，创建面在 M8） |
 
 > 任何 `待填` / `待回填` / `—` 都是断链，禁止在存在断链的情况下宣称对应需求已交付。
 
@@ -85,16 +112,20 @@ DoD 在 M6 启动时写入本节并冻结。
 |---|---|---|---|---|
 | [ECN-0008](../ecn/ECN-0008-social-graph-on-d1.md) | 社交图（好友边/群组/通知）建在 D1 上，游标沿用 base64url(JSON) | 已生效 | REQ-0001-011, REQ-0001-012, REQ-0001-013 | `migrations/0003_social.sql`、`src/domain/friends/*`、`src/domain/groups/*`、`src/domain/notifications/*` |
 | [ECN-0009](../ecn/ECN-0009-google-id-token.md) | Google 登录用 WebCrypto 验 RS256，证书来自 JWKS 端点 | 已生效 | REQ-0001-003 | `src/domain/social/google/*` |
+| [ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) | 经济与竞技建在 D1 + 内存缓存上（偏差 1–12）：定义进库、名次缓存换有序数组 + 懒加载、钱包用 CAS + 守卫批次、cron 只做受限子集、时间精度到秒、创建面与权威写路径后置到 M8 | 已生效 | REQ-0001-014, REQ-0001-015, REQ-0001-016 | `migrations/0004_competitive.sql`、`src/domain/competitive/*`、`src/http/routes/{leaderboard,tournament}.ts` |
 
 ## Tashan Review 记录
 
 M5 的 Review 记录：[v2-M5.md](../reviews/v2-M5.md)（verdict: pass；7 条 MINOR 全部在提交前修复）。
 
+M6 的 Review 记录：[v2-M6.md](../reviews/v2-M6.md)（verdict: pass；1 条 MAJOR
+（新记录 `metadata` 违反 NOT NULL，首写 500）+ 3 条 MINOR + 1 条 NOTE 全部在提交前处置）。
+
 ## Tashan Trigger Audit
 
 ```markdown
 - expected_review_triggers: v_doc_writing_done, v_milestone_done(M5..M7)
-- actual_review_runs: 2 (v_doc_writing_done, v_milestone_done(M5))
+- actual_review_runs: 3 (v_doc_writing_done, v_milestone_done(M5), v_milestone_done(M6))
 - skipped_triggers: 0
 - skip_reasons: 独立子代理派发不通（本机限制），降级为同模型自评 + 命令证据
 - mitigation: 每个里程碑完成前必须补 Review 记录，否则不输出完成信号
@@ -108,3 +139,4 @@ v2 与上游的**全部**刻意差异都登记在 ECN 里，这里只做索引�
 |---|---|---|---|
 | [ECN-0008](../ecn/ECN-0008-social-graph-on-d1.md) | 社交图与通知建在 D1 上（偏差 1–14）；游标不透明但不与上游互换；时间精度到秒；群成员变更与群频道系统消息不是同一事务；多目标满员时逐目标原子 | 收不到（游标不透明）；时间精度差异可见（同秒多条时排序按 id）；"批内部分成功"在满员时可观察 | 已生效 |
 | [ECN-0009](../ecn/ECN-0009-google-id-token.md) | Google 证书从 JWKS（`/oauth2/v3/certs`）取而不是 X.509 PEM 端点 | 不可见 | 已生效 |
+| [ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) | 竞技域建在 D1 与内存缓存上（偏差 1–12）：游标不与上游互换、时间精度到秒、`authoritative = 1` 的榜在 M6 里无人能写分、账本端点后置到 M9 | 收不到（游标不透明）；时间精度差异可见（同秒排序退化到元组）；"权威榜永远空"可见 | 已生效 |

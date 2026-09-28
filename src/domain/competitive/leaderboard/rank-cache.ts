@@ -7,7 +7,7 @@
  *   (3) `Fill` 给一批记录按名次填 `Rank`，并返回这一期缓存里的总条目数。
  * 跳表是实现细节：它的 O(log n) 插入换到有序数组上是 O(n) 的一次搬运，
  * 但我们一次 HTTP 请求最多几千条记录，而**正确性**（名次数值、并列时的次序、
- * 世代号覆盖旧记录）与跳表逐条一致。差异登记在 ECN-0010 偏差 4。
+ * 世代号覆盖旧记录）与跳表逐条一致。差异登记在 ECN-0010 偏差 5。
  *
  * 排序与上游 `RankAsc.Less` / `RankDesc.Less` 逐条对齐：
  *   ASC ：score 小者在前，再 subscore 小者在前，再 ownerId 字节序小者在前；
@@ -192,5 +192,10 @@ export class RankCache {
   count(leaderboardId: string, expiryUnix: number): number {
     if (!this.#allowed(leaderboardId)) return 0;
     return this.#boards.get(keyOf(leaderboardId, expiryUnix))?.entries.length ?? 0;
+  }
+
+  /** 清空整张缓存（只给测试用工装使用；生产路径靠 `trimExpired`）。 */
+  clear(): void {
+    this.#boards.clear();
   }
 }

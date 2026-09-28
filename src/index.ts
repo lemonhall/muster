@@ -6,9 +6,11 @@ import { registerSocialRoutes } from "./http/routes/authenticate-social";
 import { registerFriendRoutes } from "./http/routes/friend";
 import { registerGroupRoutes } from "./http/routes/group";
 import { registerIdentityRoutes } from "./http/routes/identity";
+import { registerLeaderboardRoutes } from "./http/routes/leaderboard";
 import { registerNotificationRoutes } from "./http/routes/notification";
 import { registerSocketRoutes } from "./http/routes/socket";
 import { registerStorageRoutes } from "./http/routes/storage";
+import { registerTournamentRoutes } from "./http/routes/tournament";
 
 // Durable Object 的类必须从入口模块导出，`wrangler.jsonc` 里的 migrations 才找得到它们。
 export { Channel } from "./durable/channel";
@@ -49,6 +51,9 @@ registerGroupRoutes(router);
 // 通知排最后：它会用到好友域与群组域发出的通知，但路由本身互不重叠。
 registerNotificationRoutes(router);
 registerSocialRoutes(router);
+// 竞技域（排行榜与锦标赛）注册在社交之后：路径前缀不同，先后无关。
+registerTournamentRoutes(router);
+registerLeaderboardRoutes(router);
 registerSocketRoutes(router);
 
 export default {

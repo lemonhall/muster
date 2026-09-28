@@ -5,7 +5,7 @@
  *   1. `next(t)` 返回**严格晚于** t 的下一个命中时刻。上游
  *      `calculateTournamentDeadlines` 用 `Next(t.Add(-1s)) == t` 判断"正好落在重置点"，
  *      这条判断只有在"严格晚于"下才成立；
- *   2. `last(t)` 返回**不晚于** t 的最近一个命中时刻（本项目的选择，见 ECN-0010 偏差 2）；
+ *   2. `last(t)` 返回**不晚于** t 的最近一个命中时刻（本项目的选择，见 ECN-0010 偏差 3）；
  *   3. day-of-month 与 day-of-week **同时**受限时是 OR（crontab 手册的行为，
  *      上游 `calculateActualDaysOfMonth` 的注释逐字引用了同一段）。
  *

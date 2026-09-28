@@ -4,7 +4,7 @@
  * 上游的钱包是 `users.wallet` 上的一个 jsonb 对象，值是 int64；"加钱"是
  * `wallet[k] += delta`。本项目把同一份 JSON 存成 TEXT，数值仍用 JS number——
  * 超过 2^53 的钱包在两边都会失真，这是上游 int64 与本项目 number 的共同边界，
- * 登记在 ECN-0010 偏差 6。
+ * 登记在 ECN-0010 偏差 7。
  *
  * 契约源（机器可读）：
  * 契约源: server/core_wallet.go::UpdateWallets

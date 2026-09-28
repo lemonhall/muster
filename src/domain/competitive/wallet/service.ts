@@ -10,7 +10,7 @@
  *   4. `updateLedger` 为真时**每条 update 写一行账本**（同一用户多次就是多行）。
  *
  * 与上游唯一的实现差异是并发控制：上游 `SELECT ... FOR UPDATE`，这里 CAS + 重试
- * （见 store.ts 的说明与 ECN-0010 偏差 5）。
+ * （见 store.ts 的说明与 ECN-0010 偏差 6）。
  *
  * 契约源（机器可读）：
  * 契约源: server/core_wallet.go::UpdateWallets

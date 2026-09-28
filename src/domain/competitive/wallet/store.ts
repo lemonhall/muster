@@ -9,7 +9,7 @@
  *   3. 每条 UPDATE 后面跟一条守卫 INSERT，`changes() = 0` 时故意违反 CHECK 约束，
  *      让**整个批次回滚**。
  * 于是"半个批次写进去"在结构上不可能发生；CAS 失败就是"我这轮读到的快照过期了"，
- * 由上层重读重算（见 service.ts 的重试循环）。差异登记在 ECN-0010 偏差 5。
+ * 由上层重读重算（见 service.ts 的重试循环）。差异登记在 ECN-0010 偏差 6。
  *
  * 契约源（机器可读）：
  * 契约源: server/core_wallet.go::updateWallets

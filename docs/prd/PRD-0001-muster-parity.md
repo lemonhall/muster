@@ -146,9 +146,9 @@
 | REQ-0001-011 | 好友 / 关注 / 拉黑 | P1 | 上游 `core_friend` 等价断言全绿 |
 | REQ-0001-012 | 群组：创建、加入、角色、踢人、封禁、列表 | P1 | 上游 `api_group` 等价断言全绿 |
 | REQ-0001-013 | 通知与收件箱 | P1 | 通知列表/删除语义与上游一致 |
-| REQ-0001-014 | 钱包与账本（含幂等与事务性） | P1 | 并发扣款不出现负余额；账本可逐笔对账 |
-| REQ-0001-015 | 排行榜：best/incr/set 模式、衰减、重置周期、owner 记录 | P1 | 上游 `api_leaderboard` 等价断言全绿；重置后旧周期数据可查 |
-| REQ-0001-016 | 锦标赛：起止时间、最大规模、尝试次数、加入/排名 | P1 | 上游 `api_tournament` 等价断言全绿 |
+| REQ-0001-014 | 钱包与账本（含幂等与事务性） | P1 | 并发扣款不出现负余额；账本可逐笔对账。**M6 交付**：上游 `core_wallet_test.go` 的 7 条全部搬运，另有并发写、CAS 守卫与账本用例；原子性从 `SELECT ... FOR UPDATE` 换成 CAS + 守卫批次，数值用 JS number（[ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) 偏差 6/7）。账本的 REST 面属控制台 API，M9 交付（偏差 12） |
+| REQ-0001-015 | 排行榜：best/incr/set 模式、衰减、重置周期、owner 记录 | P1 | 上游 `api_leaderboard` 等价断言全绿；重置后旧周期数据可查。**M6 交付**：`TestApiLeaderboard` 的 5 个子用例搬运，名次缓存用有序数组 + 世代号（[ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) 偏差 5），定义放 D1（偏差 1），cron 只实现受限子集（偏差 2/3）；**创建面**（运行时模块）在 M8（偏差 10） |
+| REQ-0001-016 | 锦标赛：起止时间、最大规模、尝试次数、加入/排名 | P1 | 上游 `api_tournament` 等价断言全绿。**M6 交付**：`TestApiTournamentHaystack` 搬运 + 目录 / 报名 / 写分的契约测试；`max_size = 0` 表示无上限（[ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) 偏差 4），目录坏游标改回 400（偏差 9），目录排序键为 `(create_time, id)`（偏差 11） |
 | REQ-0001-017 | 匹配器：ticket、查询表达式、数值属性、min/max/count_multiple、超时 | P1 | 上游 `matchmaker` 等价断言全绿（含并发与超时） |
 | REQ-0001-018 | 对局：authoritative match 生命周期、RPC hook、状态落盘、广播过滤、可查询的对局列表 | P1 | 上游 `match_registry`/`match_common` 等价断言全绿 |
 | REQ-0001-019 | 派对：创建、加入请求、批准、踢人、转移队长、关闭、数据广播、标签 | P1 | 上游 `party_handler` 等价断言全绿 |
