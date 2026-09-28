@@ -18,7 +18,7 @@
 | planned | 96 |
 | exempt | 2 |
 | 无理由豁免 | 0 |
-| 第二证据源引用（自主契约测试） | 138 |
+| 第二证据源引用（自主契约测试） | 143 |
 
 ## 按里程碑
 
@@ -379,6 +379,8 @@
 | `apigrpc/apigrpc.swagger.json::/v2/leaderboard/{leaderboardId}` | `tests/e2e/competitive.e2e.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/match` | `tests/e2e/match.e2e.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/notification` | `tests/e2e/social.e2e.test.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/party` | `tests/e2e/party.e2e.test.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/rpc/{id}` | `tests/e2e/runtime.e2e.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/tournament` | `tests/e2e/competitive.e2e.test.ts`、`tests/integration/competitive/tournament-endpoints.test.ts` |
 | `server/api_account.go::GetAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_account.go::UpdateAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
@@ -404,7 +406,8 @@
 | `server/api_matchmaker.go::ApiServer.GetMatchmakerStats` | `tests/integration/match/rest.test.ts` |
 | `server/api_notification.go::DeleteNotifications` | `tests/integration/notifications/delete.test.ts` |
 | `server/api_notification.go::ListNotifications` | `tests/e2e/social.e2e.test.ts`、`tests/integration/notifications/list.test.ts` |
-| `server/api_party.go::ApiServer.ListParties` | `tests/integration/party/listing.test.ts` |
+| `server/api_party.go::ApiServer.ListParties` | `tests/e2e/party.e2e.test.ts`、`tests/integration/party/listing.test.ts` |
+| `server/api_rpc.go::ApiServer.RpcFuncHttp` | `tests/e2e/runtime.e2e.test.ts` |
 | `server/api_session.go::SessionLogout` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_session.go::SessionRefresh` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_tournament.go::JoinTournament` | `tests/integration/competitive/tournament-endpoints.test.ts` |
@@ -461,11 +464,13 @@
 | `server/match_registry.go::LocalMatchRegistry.UpdateMatchLabel` | `tests/integration/match/registry.test.ts`、`tests/unit/match/store.test.ts` |
 | `server/matchmaker.go::LocalMatchmaker.Add` | `tests/e2e/match.e2e.test.ts`、`tests/integration/matchmaker/rounds.test.ts`、`tests/unit/matchmaker/tracking.test.ts` |
 | `server/matchmaker.go::LocalMatchmaker.Process` | `tests/integration/matchmaker/rounds.test.ts`、`tests/unit/match/token.test.ts` |
-| `server/party_handler.go::PartyHandler.Close` | `tests/integration/party/lifecycle.test.ts` |
+| `server/party_handler.go::PartyHandler.Close` | `tests/integration/party/leadership.test.ts`、`tests/integration/party/lifecycle.test.ts` |
 | `server/party_handler.go::PartyHandler.DataSend` | `tests/integration/party/frames.test.ts` |
-| `server/party_handler.go::PartyHandler.JoinRequest` | `tests/integration/party/lifecycle.test.ts`、`tests/unit/party/members.test.ts` |
-| `server/party_handler.go::PartyHandler.Leave` | `tests/integration/party/lifecycle.test.ts` |
+| `server/party_handler.go::PartyHandler.JoinRequest` | `tests/e2e/party.e2e.test.ts`、`tests/integration/party/lifecycle.test.ts`、`tests/unit/party/members.test.ts` |
+| `server/party_handler.go::PartyHandler.Leave` | `tests/integration/party/leadership.test.ts`、`tests/integration/party/lifecycle.test.ts` |
 | `server/party_handler.go::PartyHandler.MatchmakerAdd` | `tests/integration/party/frames.test.ts` |
+| `server/party_handler.go::PartyHandler.Promote` | `tests/integration/party/leadership.test.ts` |
+| `server/party_handler.go::PartyHandler.Remove` | `tests/integration/party/leadership.test.ts` |
 | `server/party_handler.go::PartyHandler.Update` | `tests/integration/party/frames.test.ts` |
 | `server/party_presence.go::PartyPresenceList.Reserve` | `tests/unit/party/members.test.ts` |
 | `server/party_registry.go::LocalPartyRegistry.Create` | `tests/unit/party/label.test.ts` |
@@ -508,4 +513,4 @@
 | `server/tracker.go::StreamModeChannel` | `tests/integration/channel/ids.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=34630bcebcd20784ac877798a31bf4793f841fa06393635d43aba238395de056 -->
+<!-- integrity: body_sha256=82973a20dc2bf020c7684a6659a4925b9d195c8527f146f4ee1f2dd8bd8685b3 -->

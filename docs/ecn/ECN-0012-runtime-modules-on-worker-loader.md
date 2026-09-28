@@ -84,6 +84,7 @@ workerd 上没有这两样东西：
 | 12 | `ctx` 只提供 `userId` / `username` / `sessionId` / `executionMode` / `env` / `matchId` | **可见**：上游 `ctx` 的其余字段（节点 id、tick 速率一类）在本项目的载体上没有对应物 |
 | 13 | 时间字段精度到秒（通知、钱包账本） | 与 ECN-0008 / ECN-0010 一致；同秒多条按 id 决胜 |
 | 14 | 能力对象（`nk` / `logger`）**只在本次调用内有效**，必须从 handler / hook 的入参里取；在 `InitModule` 里捕获一份留到以后用，会在第二次调用时**大声失败**（`RPC stub used after being disposed`） | **可见**（对模块作者）：上游 `nk` 是进程内的长生命周期对象，两种写法都行；本项目每次调用现造宿主壳，它背后的 RPC 会话随这次调用结束而关闭。这是刻意选的方向——留一个"上一次请求的身份"继续可用就是跨请求身份泄漏。上游 JS 的**标准写法**（handler 签名 `(ctx, logger, nk, payload)`）不受影响，受影响的是"在 InitModule 里捕获 nk"这一种 |
+| 15 | 宿主侧**只缓存模块映射（纯数据），不缓存 Loader 句柄**；每次调用重新 `LOADER.get` 拿一次入口 | **对模块作者不可见**：`InitModule` 仍然只跑一次、模块级状态仍跨请求保留（复用由 Worker Loader 按装载键做，不由我们的缓存做）。可见的只有平台自己的实现形状：换代码仍然是"换 revision = 换 isolate"，与偏差 3 是同一条性质 |
 
 ## 为什么这些偏差可接受
 
@@ -104,6 +105,27 @@ M8 收尾时 `TestRuntimeStorageWrite` / `TestRuntimeStorageRead` 的搬运用�
 而那一份的生命周期只有一次调用。修法是让桥按上游逐位传 `(ctx, logger, nk, payload…)`，
 并把这条规则写进本表；红 → 绿输出见
 [v3-party-runtime.md](../plan/v3-party-runtime.md) 的 Evidence DoD 8。
+
+### 偏差 15 同样是实测发现的，而且只有在真进程里才会露头
+
+M8 的 E2E 第一次跑 `tests/e2e/runtime.e2e.test.ts` 时，**三条用例全红**（500），
+服务端日志里是：
+
+```
+Error: Cannot perform I/O on behalf of a different request. I/O objects (such as streams,
+request/response bodies, and others) created in the context of one request handler cannot
+be accessed from a different request's handler. ... (I/O type: SubrequestChannel)
+```
+
+根因是宿主侧的装载缓存把 **Loader 返回的 stub** 也一起缓存了，而 stub 是绑在
+**造它的那次请求**上的 I/O 对象：第一个请求把它建出来之后，第二个请求再用它就被
+workerd 拒绝。集成测试没抓到它，是因为在测试池里同一批调用共享同一个请求上下文；
+真 `wrangler dev` 进程里每个 HTTP 请求各有自己的上下文，于是它必然露头。
+
+修法是把装载拆成两半：`buildRuntimeDefinition`（装载键 + 模块映射，纯数据，可跨请求缓存）
+与 `mountRuntime`（句柄，每次调用现造）。复用的性质没有丢——`LOADER.get` 的同一个键
+仍然指向同一个 isolate。E2E 里那条 `test_module_state_survives_across_two_real_requests`
+就是这件事的现场证据：两个真 HTTP 请求打过来，模块级计数器 1 → 2，而 `InitModule` 始终是 1。
 
 **多租户语义变强而不是变弱**：上游是"一个进程一个游戏"；muster 是"一个租户一个 isolate"，
 所以同账号下多个游戏的代码与数据同时隔离（REQ-0001-026 的代码侧延伸）。

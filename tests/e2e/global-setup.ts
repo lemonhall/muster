@@ -4,6 +4,8 @@ import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
+import { seedRpcModuleStatement } from "./runtime-fixture";
+
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 /** 监听端口。测试侧用同一个变量算出 base URL，两边不会漂移。 */
@@ -67,6 +69,17 @@ function prepareLocalDatabase(): void {
       `('${tenant.id}', '${tenant.name}', '${keyHash}', ${now}, 0);`;
     runWrangler(["d1", "execute", "muster", "--local", "--command", statement, "--yes"]);
   }
+  // 租户运行时模块（`POST /v2/rpc/{id}` 那一套）也在这里就位：跟租户登记同一步，
+  // 都是"dev server 起来之前，本地 D1 里该有的行"。见 tests/e2e/runtime-fixture.ts。
+  runWrangler([
+    "d1",
+    "execute",
+    "muster",
+    "--local",
+    "--command",
+    seedRpcModuleStatement(e2eTenant.id, now),
+    "--yes",
+  ]);
 }
 
 async function waitForReady(baseUrl: string, log: string[]): Promise<void> {

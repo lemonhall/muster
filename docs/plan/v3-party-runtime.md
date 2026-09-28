@@ -90,6 +90,7 @@ v3 补上的是**最后两块让平台真正"可二次开发"的东西**：
 | 运行时域（装载与桥） | `src/runtime/{loader,bridge,service,host,hooks}.ts` |
 | 运行时域（能力面） | `src/runtime/{capability,capability-tools,capability-data,capability-groups}.ts` |
 | 运行时接入面 | `src/http/routes/rpc.ts`、`src/realtime/pipeline-hooks.ts` |
+| 验收面（E2E） | `tests/e2e/party.e2e.test.ts`、`tests/e2e/party-helpers.ts`、`tests/e2e/runtime.e2e.test.ts`、`tests/e2e/runtime-fixture.ts`（模块在 dev server 起来之前写进本地 D1） |
 | 迁移 | `migrations/0006_runtime.sql` |
 
 > 与规划时的差别：`rpc-call.ts` 在落地时拆成 `src/http/routes/rpc.ts`（HTTP 面）
@@ -223,3 +224,62 @@ $ npx vitest run tests/integration/runtime/tools.test.ts --reporter=verbose
 
 这里刻意把两类红分开写：把"实现错了"和"断言写错了"混成一句"修好了"，
 等于把这次唯一的真缺陷从记录里抹掉。
+
+### DoD 13（E2E）红 → 绿：第二个真缺陷，只有真进程才抓得到
+
+第一次跑新加的运行时 E2E（`tests/e2e/runtime.e2e.test.ts`）是 **3 failed**，
+三条全是 500；服务端日志（`MUSTER_E2E_VERBOSE=1`）给出的是这句话：
+
+```
+[e2e:server] ✘ [ERROR] RPC 执行失败 Error: Cannot perform I/O on behalf of a different
+request. I/O objects (such as streams, request/response bodies, and others) created in the
+context of one request handler cannot be accessed from a different request's handler.
+This is a limitation of Cloudflare Workers ... (I/O type: SubrequestChannel)
+    at callTenantRpc (file:///E:/development/muster/src/runtime/service.ts:90:39)
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+```
+
+根因：宿主侧的装载缓存把 **Loader 返回的 stub** 也一起缓存了，而它是绑在造它的那次
+请求上的 I/O 对象——第二个请求再用它，workerd 直接拒绝。集成测试抓不到它，因为测试池里
+同一批调用共享同一个请求上下文；真 dev 进程里每个 HTTP 请求各有上下文，它必然露头。
+
+修法是把装载拆成两半：`buildRuntimeDefinition`（装载键 + 模块映射，纯数据，可跨请求
+缓存）与 `mountRuntime`（句柄，每次调用现造）；isolate 复用仍旧由 Loader 按装载键做。
+改完再加一条**把它钉死**的用例——两个真 HTTP 请求打同一个模块级计数器：
+
+```
+$ npx vitest run --config vitest.e2e.config.ts tests/e2e/runtime.e2e.test.ts --reporter=verbose
+ ✓ test_http_key_channel_returns_the_payload_from_the_deployed_module 695ms
+ ✓ test_a_user_token_call_can_round_trip_through_nk_storage 2195ms
+ ✓ test_module_state_survives_across_two_real_requests 508ms
+ ✓ test_unknown_rpc_and_missing_credentials_keep_the_upstream_error_bodies 585ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+```
+
+第三行是这件事的现场证据：请求 1 回 `{count:1, init:1}`、请求 2 回 `{count:2, init:1}`——
+isolate 跨请求复用、`InitModule` 只跑一次，两条性质在真进程里同时成立。
+偏差登记为 [ECN-0012](../ecn/ECN-0012-runtime-modules-on-worker-loader.md) 偏差 15。
+
+派对那两条（同一批 E2E 文件里的 `tests/e2e/party.e2e.test.ts`）一次通过：
+
+```
+$ npx vitest run --config vitest.e2e.config.ts tests/e2e/party.e2e.test.ts --reporter=verbose
+ ✓ test_private_party_join_request_accept_broadcast_kick_close 17959ms
+ ✓ test_the_directory_lists_open_parties_and_hides_hidden_ones 17724ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+```
+
+全量 E2E（串行，含既有的 9 个文件）：
+
+```
+$ npm run e2e
+ Test Files  11 passed (11)
+      Tests  43 passed (43)
+```
+
+E2E 的运行时模块是在 dev server 起来**之前**写进本地 D1 的
+（`tests/e2e/runtime-fixture.ts` + `global-setup.ts`）：本地 D1 的文件在 `wrangler dev`
+手里开着，用例跑到一半再从另一个进程写它，是拿两个进程同时写同一个 SQLite 文件赌运气。

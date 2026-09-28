@@ -1,8 +1,12 @@
 /**
  * 宿主侧的运行时服务：装载缓存 + 三种调用（RPC、请求 hook、实时 hook）。
  *
- * 缓存的是**isolate 入口**，键是 `tenantId:revision`；外面那层"读模块清单算键"每次都
- * 走一次 D1（一条索引查询），因为"有人刚部署了新版本"必须在下一个请求就生效。
+ * 缓存的是**模块映射**（纯数据），键是 `tenantId:revision`；外面那层"读模块清单算键"
+ * 每次都走一次 D1（一条索引查询），因为"有人刚部署了新版本"必须在下一个请求就生效。
+ *
+ * 句柄（Loader stub + 入口 stub）**每次调用现造**，不进缓存：它是绑在请求上的 I/O
+ * 对象，跨请求复用会被 workerd 拒绝（ECN-0012 偏差 15）。isolate 复用不靠这个缓存——
+ * 那是 Worker Loader 按装载键自己做的。
  *
  * 每次调用现造宿主壳（`host.ts`），所以能力对象里的租户与调用者永远是这一次的。
  *
@@ -18,10 +22,12 @@ import type { Bindings } from "../env";
 import { EXECUTION_MODE, type CapabilityContext } from "./capability";
 import { buildHostShell, moduleContext } from "./host";
 import {
+  buildRuntimeDefinition,
   listRuntimeModules,
-  openRuntime,
+  mountRuntime,
   type HookOutcome,
   type RuntimeHandle,
+  type RuntimeDefinition,
 } from "./loader";
 
 export interface RuntimeCaller {
@@ -43,21 +49,22 @@ export interface HookDecision {
   readonly message: string;
 }
 
-const isolates = new Map<string, RuntimeHandle>();
+const definitions = new Map<string, RuntimeDefinition>();
 
 export async function tenantRuntime(env: Bindings, tenantId: string): Promise<RuntimeHandle | null> {
   const listed = await listRuntimeModules(env, tenantId);
   if (listed === null) return null;
-  const cached = isolates.get(listed.key);
-  if (cached !== undefined) return cached;
-  const handle = openRuntime(env, tenantId, listed.key, listed.modules);
-  isolates.set(listed.key, handle);
-  return handle;
+  let definition = definitions.get(listed.key);
+  if (definition === undefined) {
+    definition = buildRuntimeDefinition(tenantId, listed.key, listed.modules);
+    definitions.set(listed.key, definition);
+  }
+  return mountRuntime(env, definition);
 }
 
 /** 测试与排障用：把缓存清掉（下一次调用会重新读清单、必要时重新装载）。 */
 export function resetRuntimeCache(): void {
-  isolates.clear();
+  definitions.clear();
 }
 
 function capabilityOf(
