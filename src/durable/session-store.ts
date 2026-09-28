@@ -116,6 +116,27 @@ export class SessionStore {
       .map((row) => row.session_id);
   }
 
+  /**
+   * 这批用户里当前**在线**的那些（与上游 `FillOnlineUsers` 同义）。
+   *
+   * 判据是"该用户在 status stream 上有 presence"，也就是 `has_status = 1` 的会话。
+   * 上游靠 `tracker.ListPresenceIDByStreams` 查同一个东西，这里用一句 SQL 表达——
+   * 一个用户开两条连接也只回一次（`DISTINCT`），因为这里问的是"人在不在"。
+   */
+  onlineAmong(userIds: readonly string[]): string[] {
+    if (userIds.length === 0) return [];
+    const placeholders = userIds.map(() => "?").join(", ");
+    return this.sql
+      .exec<{ user_id: string }>(
+        `SELECT DISTINCT user_id FROM sessions
+         WHERE has_status = 1 AND user_id IN (${placeholders})
+         ORDER BY user_id`,
+        ...userIds,
+      )
+      .toArray()
+      .map((row) => row.user_id);
+  }
+
   follow(sessionId: string, userId: string): void {
     this.sql.exec(
       "INSERT OR IGNORE INTO follows (session_id, user_id) VALUES (?, ?)",

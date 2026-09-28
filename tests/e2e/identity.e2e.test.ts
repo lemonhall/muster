@@ -164,8 +164,12 @@ describe("M1 E2E: 设备认证与账号（真实 HTTP）", () => {
     //
     // 这个例子**必须随里程碑更新**：M1 时这里写的是 `/v2/channel/room-1`，M4 接通频道之后
     // 它变成 400 `Invalid channel ID.`（路由认得，只是 id 不合法），这条断言当场过期。
-    // 现在拿好友域当例子（REQ-0001-011，M5 之前不该被接通）。
-    const notImplemented = await call("/v2/friend", {
+    // M5 又把它换掉了：好友域接通之后 `/v2/friend` 是 200，于是拿锦标赛当例子
+    // （REQ-0001-016，M6 之前不该被接通）。
+    // 路径必须是 ≥3 段：两段的 `POST /v2/<名字>` 会被 `/v2/storage/{collection}` 抢走，
+    // 返回 501 `Method Not Allowed` 而不是 `Not implemented.`。
+    const notImplemented = await call("/v2/tournament/t-1/join", {
+      method: "POST",
       authorization: `Bearer ${session.token}`,
     });
     await expectStatus(notImplemented, 501, 12, "Not implemented.");

@@ -81,8 +81,12 @@ describe("M1 契约: 服务端密钥鉴权", () => {
 
 describe("M1 契约: 上游对账（501/404）", () => {
   it("test_upstream_path_we_have_not_implemented_returns_501", async () => {
-    // `GET /v2/friend` 在上游 REST 表里存在、本项目还没做 → 诚实地说"有、没做"。
-    const res = await call("/v2/friend", { method: "GET" });
+    // `POST /v2/tournament/{id}/join` 在上游 REST 表里存在、本项目还没做 → 诚实地说"有、没做"。
+    // 这条用例会随里程碑推进而"换靶子"：M5 把 `/v2/friend` 做掉之后它就不再是未实现的了。
+    //
+    // 路径选得**不能是两段**：`/v2/storage/{collection}` 会把任何 `v2/<名字>` 抢走，
+    // 于是两段路径得到的是 "Method Not Allowed" 而不是 "Not implemented."。
+    const res = await call("/v2/tournament/t-1/join", { method: "POST" });
     expect(res.status).toBe(501);
     expect(await errorBody(res)).toEqual({ code: 12, message: "Not implemented." });
   });
@@ -102,4 +106,3 @@ describe("M1 契约: 上游对账（501/404）", () => {
     expect(await errorBody(res)).toEqual({ code: 5, message: "Not Found" });
   });
 });
-

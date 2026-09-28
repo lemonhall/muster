@@ -14,28 +14,12 @@
  */
 
 import { invalidArgument } from "../../http/errors";
+import { MAX_CURSOR_LENGTH, fromBase64Url, toBase64Url } from "../base64url";
 
 export interface StorageCursor {
   readonly read: number;
   readonly key: string;
   readonly userId: string;
-}
-
-const MAX_CURSOR_LENGTH = 4096;
-
-function toBase64Url(text: string): string {
-  const bytes = new TextEncoder().encode(text);
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
-function fromBase64Url(value: string): string {
-  const padded = value.replace(/-/g, "+").replace(/_/g, "/");
-  const binary = atob(padded.padEnd(Math.ceil(padded.length / 4) * 4, "="));
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-  return new TextDecoder().decode(bytes);
 }
 
 export function encodeCursor(cursor: StorageCursor): string {

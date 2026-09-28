@@ -23,6 +23,7 @@ import {
   type EmailInput,
 } from "../../domain/identity/service";
 import type { ProfilePatch } from "../../domain/identity/store";
+import { registryOnline } from "../../durable/registry-call";
 import { accountBody, sessionBody, usersBody } from "../../wire/identity";
 
 /**
@@ -162,7 +163,13 @@ export function registerIdentityRoutes(router: Router): void {
       if (!isUuid(id)) throw invalidArgument(`ID '${id}' is not a valid system ID.`);
     }
     const users = await getUsers(context.tenantEnv, { ids, usernames });
-    return json(usersBody(users));
+    // 上游 `GetUsers` 会调 `FillOnlineUsers`：命中多个用户时，在线的那些人带上 online。
+    const online = await registryOnline(
+      context.env,
+      context.tenantEnv.tenantId,
+      users.map((user) => user.id),
+    );
+    return json(usersBody(users, online));
   });
 }
 

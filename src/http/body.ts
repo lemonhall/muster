@@ -84,6 +84,14 @@ export function optionalString(container: Record<string, unknown>, key: string):
   return value;
 }
 
+/** repeated string（`ids` / `usernames` 这类）。元素不是字符串就报错，不静默丢弃。 */
+export function optionalStringList(container: Record<string, unknown>, key: string): string[] {
+  return optionalArray(container, key).map((entry) => {
+    if (typeof entry !== "string") throw invalidArgument(`Invalid ${key}: expected an array of strings.`);
+    return entry;
+  });
+}
+
 /** 可选的 int32（上游用 `google.protobuf.Int32Value` 表达"给了没有"）。 */
 export function optionalInt(container: Record<string, unknown>, key: string): number | undefined {
   const value = readField(container, key);

@@ -10,6 +10,7 @@
 
 import type { Bindings } from "../env";
 import type { PresenceSnapshot } from "../realtime/presence";
+import type { NotificationSnapshot } from "../realtime/notifications";
 
 export async function registryCall<T>(
   env: Bindings,
@@ -49,4 +50,38 @@ export async function registryFollow(
     { sessionId, userIds },
   );
   return result.presences;
+}
+
+/**
+ * 这批用户里，当前**在线**的那些。
+ *
+ * 上游把它叫 `FillOnlineUsers` / `FillOnlineFriends`：列表类端点返回前，把每个对象上的
+ * `online` 布尔按在线状态填好。本项目等价的做法是问一次注册表——"谁在线"只有它知道。
+ * 返回集合而不是逐个布尔，是因为调用方拿到的是一批用户，逐个问会变成 N 次跨 DO 调用。
+ */
+export async function registryOnline(
+  env: Bindings,
+  tenantId: string,
+  userIds: readonly string[],
+): Promise<ReadonlySet<string>> {
+  if (userIds.length === 0) return new Set();
+  const result = await registryCall<{ online: string[] }>(env, tenantId, "/online", { userIds });
+  return new Set(result.online);
+}
+
+/**
+ * 把若干条通知推给某个用户**当前在线的每条会话**。
+ *
+ * 上游在 `NotificationSend` 里做的是"按通知 stream 找 presence，再 SendToPresenceIDs"；
+ * 本项目把这一步收进每租户一个的注册表 DO：只有它知道谁在线。调用方（通知域）
+ * 已经先落库，所以这里的失败只意味着"某个客户端要等下次拉列表才看到"，不是数据丢失。
+ */
+export async function registryNotify(
+  env: Bindings,
+  tenantId: string,
+  userId: string,
+  notifications: readonly NotificationSnapshot[],
+): Promise<void> {
+  if (notifications.length === 0) return;
+  await registryCall<{ ok: boolean }>(env, tenantId, "/notify", { userId, notifications });
 }

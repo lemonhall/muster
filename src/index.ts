@@ -2,6 +2,7 @@ import type { Bindings } from "./env";
 import { JSON_CONTENT_TYPE } from "./http/grpc";
 import { Router } from "./http/router";
 import { registerChannelRoutes } from "./http/routes/channel";
+import { registerFriendRoutes } from "./http/routes/friend";
 import { registerIdentityRoutes } from "./http/routes/identity";
 import { registerSocketRoutes } from "./http/routes/socket";
 import { registerStorageRoutes } from "./http/routes/storage";
@@ -40,6 +41,7 @@ registerIdentityRoutes(router);
 registerStorageRoutes(router);
 // 频道历史在存储之后注册：两者路径不重叠，先后无关，但把"新加的里程碑"排在后面读起来顺。
 registerChannelRoutes(router);
+registerFriendRoutes(router);
 registerSocketRoutes(router);
 
 export default {

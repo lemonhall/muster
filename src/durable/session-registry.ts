@@ -35,6 +35,7 @@ import {
   statusPresenceEventEnvelope,
   type PresenceSnapshot,
 } from "../realtime/presence";
+import { notificationsEnvelope, type NotificationSnapshot } from "../realtime/notifications";
 import { deliverToSession } from "./delivery";
 import { SessionStore } from "./session-store";
 
@@ -91,6 +92,10 @@ export class SessionRegistry extends DurableObject<Bindings> {
         return await this.#touch(await request.json());
       case "POST /alive":
         return await this.#alive(await request.json());
+      case "POST /notify":
+        return await this.#notify(await request.json());
+      case "POST /online":
+        return await this.#online(await request.json());
       default:
         return json({ error: "not found" }, 404);
     }
@@ -169,6 +174,30 @@ export class SessionRegistry extends DurableObject<Bindings> {
     return json({ alive: this.#store.aliveAmong(input.sessionIds) });
   }
 
+  /**
+   * 把通知推给某用户的全部在线会话（上游 `NotificationSend` 的投递那一半）。
+   *
+   * 上游投给的是"通知 stream 上的 presence"，也就是**该用户的每条连接**，所以这里
+   * 遍历 `listByUser` 而不是只挑一条。某条会话投递失败是正常的（客户端刚好断开），
+   * 因此用 `allSettled`：库里的那份才是权威，推送只是加速。
+   */
+  async #notify(input: NotifyInput): Promise<Response> {
+    const sessions = this.#store.listByUser(input.userId);
+    if (sessions.length === 0) return json({ ok: true });
+    const envelope = notificationsEnvelope(input.notifications);
+    await Promise.allSettled(
+      sessions.map((session) =>
+        deliverToSession(this.env, this.#tenantId, session.session_id, envelope),
+      ),
+    );
+    return json({ ok: true });
+  }
+
+  /** 这批用户里谁在线（上游 `FillOnlineUsers` 系列）。列表类端点返回前问一次。 */
+  async #online(input: { readonly userIds: string[] }): Promise<Response> {
+    return json({ online: this.#store.onlineAmong(input.userIds) });
+  }
+
   /** 兜底巡检：分片没来得及上报就消失的会话，在这里被清掉并补发 leave。 */
   override async alarm(): Promise<void> {
     for (const row of this.#store.staleBefore(Date.now() - SESSION_EVICT_AFTER_MS)) {
@@ -223,4 +252,9 @@ interface FollowInput {
 
 interface StatusInput extends ConnectInput {
   readonly status: string | null;
+}
+
+interface NotifyInput {
+  readonly userId: string;
+  readonly notifications: NotificationSnapshot[];
 }

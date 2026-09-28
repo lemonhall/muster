@@ -17,6 +17,24 @@ export function formatTimestamp(seconds: number): string {
   return new Date(seconds * 1000).toISOString().replace(/\.000Z$/u, "Z");
 }
 
+/**
+ * `api.User` 序列化**只需要**这些列。用最小接口而不是 `UserRow`，是为了让
+ * 好友列表（`user_edge` 联表出来的行）与"好友的好友"（`users` 表的行）都能直接复用
+ * 同一个函数，而不必为了字段齐全去补几个用不上的列。
+ */
+export interface UserBodySource {
+  readonly id: string;
+  readonly username: string;
+  readonly display_name: string;
+  readonly avatar_url: string;
+  readonly lang_tag: string;
+  readonly location: string;
+  readonly timezone: string;
+  readonly metadata: string;
+  readonly create_time: number;
+  readonly update_time: number;
+}
+
 export interface SessionWire {
   readonly created: boolean;
   readonly token: string;
@@ -32,7 +50,13 @@ export function sessionBody(session: SessionWire): Record<string, unknown> {
   };
 }
 
-export function userBody(user: UserRow): Record<string, unknown> {
+/**
+ * `online` 是上游 `statusRegistry.FillOnlineUsers` 系列填上去的字段：只有**为真**时
+ * 才出现在 JSON 里（protojson 省略零值）。调用方拿不到在线信息时传 false，
+ * 与"这个人确实不在线"落到同一个形状——这正是上游在 `statusRegistry == nil`
+ * 时的行为（它同样填不出 online）。
+ */
+export function userBody(user: UserBodySource, online = false): Record<string, unknown> {
   return {
     id: user.id,
     username: user.username,
@@ -45,6 +69,7 @@ export function userBody(user: UserRow): Record<string, unknown> {
     ...(user.metadata === "" ? {} : { metadata: user.metadata }),
     create_time: formatTimestamp(user.create_time),
     update_time: formatTimestamp(user.update_time),
+    ...(online ? { online: true } : {}),
   };
 }
 
@@ -63,6 +88,10 @@ export function accountBody(user: UserRow, identities: readonly IdentityRow[]): 
   const devices = identities.filter((identity) => identity.provider === "device");
   const custom = identities.find((identity) => identity.provider === "custom");
 
+  // 单账号查询**不**填 online：上游 `GetAccount` 拿到的 statusRegistry 只在
+  // `GetAccounts`（复数）里被使用（core_account.go 的两个函数，只有一个调
+  // FillOnlineAccounts）。所以这里如实不填。
+
   return {
     user: userBody(user),
     wallet: "{}",
@@ -74,7 +103,10 @@ export function accountBody(user: UserRow, identities: readonly IdentityRow[]): 
 }
 
 /** Users 消息：没有命中时上游返回 `{}`（空 repeated 字段被省略）。 */
-export function usersBody(users: readonly UserRow[]): Record<string, unknown> {
+export function usersBody(
+  users: readonly UserRow[],
+  onlineIds: ReadonlySet<string> = new Set(),
+): Record<string, unknown> {
   if (users.length === 0) return {};
-  return { users: users.map(userBody) };
+  return { users: users.map((user) => userBody(user, onlineIds.has(user.id))) };
 }
