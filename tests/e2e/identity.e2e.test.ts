@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { e2eTenant, e2eTenantB } from "./global-setup";
+
+import { e2eTenant } from "./global-setup";
+import {
+  accountOf,
+  authenticateDevice,
+  basic,
+  call,
+  expectStatus,
+  freshDeviceId,
+  userIdOf,
+  type SessionBody,
+} from "./http-helpers";
 
 /**
  * M1 E2E：身份 / 会话 / 账号，走真实 HTTP 通道。
@@ -12,6 +23,9 @@ import { e2eTenant, e2eTenantB } from "./global-setup";
  * 目标是一个本地 `wrangler dev --local` 进程（见 `global-setup.ts`），
  * 不连接任何 Cloudflare 账号资源，因此不产生账单。
  *
+ * 多租户隔离的用例刻意不在这个文件里，而在同目录的 `tenancy.e2e.test.ts`：
+ * 一个文件只回答一个问题，坏掉时能一眼看出是哪一半坏。
+ *
  * 契约源（机器可读）：
  * 契约源: server/api_authenticate.go::AuthenticateDevice
  * 契约源: server/api_session.go::SessionRefresh
@@ -23,82 +37,6 @@ import { e2eTenant, e2eTenantB } from "./global-setup";
  *
  * REQ-0001-003, REQ-0001-004, REQ-0001-005, REQ-0001-026
  */
-const baseUrl = process.env.MUSTER_E2E_TARGET ?? `http://127.0.0.1:${process.env.MUSTER_E2E_PORT ?? "8788"}`;
-
-interface TenantRef {
-  readonly id: string;
-  readonly serverKey: string;
-}
-
-interface HttpCall {
-  readonly method?: string;
-  readonly authorization?: string;
-  readonly body?: unknown;
-}
-
-function call(path: string, options: HttpCall = {}): Promise<Response> {
-  const headers: Record<string, string> = { "content-type": "application/json" };
-  if (options.authorization !== undefined) headers["authorization"] = options.authorization;
-  const body = options.body === undefined ? undefined : JSON.stringify(options.body);
-  return fetch(`${baseUrl}${path}`, {
-    method: options.method ?? (body === undefined ? "GET" : "POST"),
-    headers,
-    ...(body === undefined ? {} : { body }),
-  });
-}
-
-/** `Authorization: Basic base64(<server_key>:)`，与官方 SDK 的写法一致。 */
-function basic(serverKey: string): string {
-  return `Basic ${Buffer.from(`${serverKey}:`, "utf8").toString("base64")}`;
-}
-
-interface SessionBody {
-  readonly created?: boolean;
-  readonly token: string;
-  readonly refresh_token: string;
-}
-
-/** 每次运行都用新的设备 ID：本地 D1 是跨运行保留的，固定 ID 会让断言依赖"上一轮"。 */
-function freshDeviceId(prefix = "e2e"): string {
-  return `${prefix}-device-${crypto.randomUUID()}`;
-}
-
-async function authenticateDevice(
-  tenant: TenantRef,
-  deviceId: string,
-  query = "?create=true",
-): Promise<{ status: number; session: SessionBody }> {
-  const res = await call(`/v2/account/authenticate/device${query}`, {
-    authorization: basic(tenant.serverKey),
-    body: { id: deviceId },
-  });
-  expect(res.status).toBe(200);
-  return { status: res.status, session: (await res.json()) as SessionBody };
-}
-
-async function accountOf(token: string): Promise<Record<string, unknown>> {
-  const res = await call("/v2/account", { authorization: `Bearer ${token}` });
-  expect(res.status).toBe(200);
-  return (await res.json()) as Record<string, unknown>;
-}
-
-async function userIdOf(token: string): Promise<string> {
-  const account = await accountOf(token);
-  return (account.user as { id: string }).id;
-}
-
-/** 断言失败响应是上游形状的 google.rpc.Status，并返回解析后的 body。 */
-async function expectStatus(
-  response: Response,
-  status: number,
-  code: number,
-  message: string,
-): Promise<void> {
-  expect(response.status).toBe(status);
-  expect(response.headers.get("content-type")).toBe("application/json");
-  expect(await response.json()).toEqual({ code, message });
-}
-
 describe("M1 E2E: 设备认证与账号（真实 HTTP）", () => {
   it("test_device_authenticate_over_real_http_creates_account", async () => {
     const deviceId = freshDeviceId();
@@ -248,71 +186,5 @@ describe("M1 E2E: 设备认证与账号（真实 HTTP）", () => {
       body: {},
     });
     await expectStatus(withServerKey, 401, 16, "Auth token invalid");
-  });
-});
-
-describe("M1 E2E: 多租户隔离（真实 HTTP）", () => {
-  it("test_same_device_id_in_two_tenants_yields_two_distinct_accounts", async () => {
-    const deviceId = freshDeviceId("shared");
-    const a = await authenticateDevice(e2eTenant, deviceId);
-    const b = await authenticateDevice(e2eTenantB, deviceId);
-
-    expect(a.session.created).toBe(true);
-    expect(b.session.created).toBe(true);
-    const userA = await userIdOf(a.session.token);
-    const userB = await userIdOf(b.session.token);
-    expect(userA).not.toBe(userB);
-  });
-
-  it("test_tenant_token_cannot_read_another_tenants_user", async () => {
-    const deviceId = freshDeviceId("cross");
-    const a = await authenticateDevice(e2eTenant, deviceId);
-    const b = await authenticateDevice(e2eTenantB, deviceId);
-    const userA = await userIdOf(a.session.token);
-
-    // B 的令牌查 A 的用户 id：查得到才是泄漏。这里必须是"查不到"，而且形状与上游一致（空对象）。
-    const peerQuery = await call(`/v2/user?ids=${userA}`, {
-      authorization: `Bearer ${b.session.token}`,
-    });
-    expect(peerQuery.status).toBe(200);
-    expect(await peerQuery.json()).toEqual({});
-
-    // A 的令牌查 A 的用户 id：这才是正主，必须有。
-    const ownQuery = await call(`/v2/user?ids=${userA}`, {
-      authorization: `Bearer ${a.session.token}`,
-    });
-    expect(ownQuery.status).toBe(200);
-    const own = (await ownQuery.json()) as { users: { id: string }[] };
-    expect(own.users.map((user) => user.id)).toEqual([userA]);
-  });
-
-  it("test_same_username_can_live_in_two_tenants", async () => {
-    const username = `dupe-${crypto.randomUUID().slice(0, 8)}`;
-    const a = await authenticateDevice(
-      e2eTenant,
-      freshDeviceId("u"),
-      `?create=true&username=${username}`,
-    );
-    const b = await authenticateDevice(
-      e2eTenantB,
-      freshDeviceId("u"),
-      `?create=true&username=${username}`,
-    );
-
-    const tokenA = a.session.token;
-    const tokenB = b.session.token;
-    const seen = new Set([await userIdOf(tokenA), await userIdOf(tokenB)]);
-    expect(seen.size).toBe(2);
-
-    for (const token of [tokenA, tokenB]) {
-      const res = await call(`/v2/user?usernames=${username}`, {
-        authorization: `Bearer ${token}`,
-      });
-      expect(res.status).toBe(200);
-      const body = (await res.json()) as { users: { username: string }[] };
-      // 每个租户只能看到自己那一个同名账号，看不到另一个租户的。
-      expect(body.users).toHaveLength(1);
-      expect(body.users[0]?.username).toBe(username);
-    }
   });
 });

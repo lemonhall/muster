@@ -143,6 +143,12 @@ function renderInventory() {
   const lines = [];
   lines.push("# 上游测试清单（脚本生成，请勿手改）");
   lines.push("");
+  // 本文件刻意不拆成多份：它的唯一价值就是"总数对得上"，拆开会让"每条都有归宿"这个
+  // 判断失去单一锚点。按仓库约定（单文件 ≤300 行），生成物属于显式豁免的整块。
+  lines.push("> **为什么它是一个整块**：本文件由 `npm run conformance:inventory` 整体重写，");
+  lines.push("> 价值全在“每一个 `Test*` 都在这张表里、总数对得上”这一条。拆成多份会让总数失去");
+  lines.push("> 单一锚点，所以按仓库约定（单文件 ≤300 行）作为生成物整体豁免拆分。");
+  lines.push("");
   lines.push("本文件是**对齐基准**，不是文档：它把上游测试套件变成一份可逐条勾选的清单。");
   lines.push("每条上游 `Test*` 函数都必须在 `docs/conformance/coverage-matrix.md` 里有归宿");
   lines.push("（`ported` / `planned` / `exempt` + 理由），不允许凭空消失。");

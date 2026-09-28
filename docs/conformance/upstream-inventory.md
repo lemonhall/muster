@@ -1,5 +1,9 @@
 # 上游测试清单（脚本生成，请勿手改）
 
+> **为什么它是一个整块**：本文件由 `npm run conformance:inventory` 整体重写，
+> 价值全在“每一个 `Test*` 都在这张表里、总数对得上”这一条。拆成多份会让总数失去
+> 单一锚点，所以按仓库约定（单文件 ≤300 行）作为生成物整体豁免拆分。
+
 本文件是**对齐基准**，不是文档：它把上游测试套件变成一份可逐条勾选的清单。
 每条上游 `Test*` 函数都必须在 `docs/conformance/coverage-matrix.md` 里有归宿
 （`ported` / `planned` / `exempt` + 理由），不允许凭空消失。
@@ -329,4 +333,4 @@
 | 261 | TestCheckGoogleTokenDoesNotExchangeMalformedJWT | `social/google_token_audience_test.go` | 0 |
 | 262 | TestCheckGoogleTokenPreservesAuthorizationCodeFlow | `social/google_token_audience_test.go` | 0 |
 | 263 | TestCheckGoogleTokenValidatesAudience | `social/google_token_audience_test.go` | 3 |
-<!-- integrity: body_sha256=ab07391e279cf052af0def3e2142e6698ac7890b9d074e47300c807670f4a6e5 -->
+<!-- integrity: body_sha256=6bf16164ff309a64a0bbfa23c46b5c21482d7bb386f12f42850cf79aa9fedf02 -->

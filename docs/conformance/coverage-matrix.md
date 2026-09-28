@@ -1,5 +1,9 @@
 # 覆盖矩阵（脚本生成，请勿手改）
 
+> **为什么它是一个整块**：本文件由 `npm run conformance:matrix` 整体重写，
+> 价值全在“逐条去向与总数在同一张表里自洽”。拆成多份就没法只看一处判断有没有条目漏网，
+> 所以按仓库约定（单文件 ≤300 行）作为生成物整体豁免拆分。
+
 这份表回答一个问题：**上游测试套件里的每一条，在我们的项目里到底有着落没有。**
 
 状态判定全部由脚本完成，不靠人填表：`ported` = 我们的测试里写了 `溯源:` 指向它；
@@ -371,16 +375,16 @@
 | `server/api_account.go::GetAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_account.go::UpdateAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_authenticate.go::AuthenticateCustom` | `tests/helpers/identity-fixtures.ts` |
-| `server/api_authenticate.go::AuthenticateDevice` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts`、`tests/integration/tenancy.test.ts` |
+| `server/api_authenticate.go::AuthenticateDevice` | `tests/e2e/identity.e2e.test.ts`、`tests/e2e/tenancy.e2e.test.ts`、`tests/helpers/identity-fixtures.ts`、`tests/integration/tenancy.test.ts` |
 | `server/api_authenticate.go::AuthenticateEmail` | `tests/helpers/identity-fixtures.ts` |
 | `server/api_authenticate.go::generateRefreshToken` | `tests/unit/tenancy_keys.test.ts` |
 | `server/api_session.go::SessionLogout` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_session.go::SessionRefresh` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
-| `server/api_user.go::GetUsers` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
+| `server/api_user.go::GetUsers` | `tests/e2e/identity.e2e.test.ts`、`tests/e2e/tenancy.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api.go::grpcGatewayRouter` | `tests/e2e/toolchain.e2e.test.ts`、`tests/integration/healthcheck.test.ts` |
 | `server/api.go::handleRoutingError` | `tests/e2e/toolchain.e2e.test.ts`、`tests/integration/healthcheck.test.ts` |
 | `server/api.go::parseBasicAuth` | `tests/helpers/identity-fixtures.ts` |
-| `server/api.go::securityInterceptorFunc` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts`、`tests/integration/tenancy.test.ts` |
+| `server/api.go::securityInterceptorFunc` | `tests/e2e/identity.e2e.test.ts`、`tests/e2e/tenancy.e2e.test.ts`、`tests/helpers/identity-fixtures.ts`、`tests/integration/tenancy.test.ts` |
 | `server/api.go::wwwAuthenticateFixWriter` | `tests/helpers/identity-fixtures.ts` |
 | `server/core_account.go::UpdateAccounts` | `tests/helpers/identity-fixtures.ts` |
 | `server/core_authenticate.go::AuthenticateDevice` | `tests/helpers/identity-fixtures.ts` |
@@ -398,4 +402,4 @@
 | `server/storage_index.go::LocalStorageIndex.Write` | `tests/integration/storage/index-write.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=4624b3690b1a19c0c175fd7d7129518ff5ae4e4d132f7c7d563b995a4b43afa5 -->
+<!-- integrity: body_sha256=e4cf04b9483975bddef1b834d9f77aa7941424933f5945fe7f8a2df5483ec805 -->

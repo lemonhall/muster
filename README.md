@@ -86,6 +86,23 @@ npm run docs:check              # 文档卫生检查
 
 细节与红绿证据要求见 [docs/prd/PRD-0001-muster-parity.md](docs/prd/PRD-0001-muster-parity.md) §2。
 
+### 文件体量：单文件 ≤300 行
+
+源码、测试、脚本、配置单个文件控制在 300 行以内；超了就按职责拆成兄弟文件
+（先例：`tests/integration/identity/` 按主题拆 5 个文件，`tests/e2e/` 把设备认证与多租户
+拆成 `identity.e2e.test.ts` / `tenancy.e2e.test.ts`，共用工装落在 `http-helpers.ts`）。
+拆的是职责，不是删测试或删注释。
+
+以下文件**整体豁免**（都是"拆了就废掉"的整块）：
+
+| 文件 | 为什么是整块 |
+|---|---|
+| `docs/conformance/upstream-inventory.md` | 脚本生成的清单，价值在"每条都在表里、总数对得上" |
+| `docs/conformance/coverage-matrix.md` | 脚本生成的矩阵，逐条去向与总数必须同表自洽 |
+| `docs/conformance/baseline.json` | 脚本生成的机器基线（JSON 不能写注释），漂移检测的唯一锚点 |
+| `package-lock.json` | npm 自己维护的 lockfile |
+| `worker-configuration.d.ts` | `wrangler types` 生成的绑定类型 |
+
 ## 计划与进度
 
 - 愿景：[docs/prd/VISION.md](docs/prd/VISION.md)

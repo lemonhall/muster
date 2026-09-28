@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import { e2eTenant } from "./global-setup";
+import { authenticateDevice, call, freshDeviceId, userIdOf } from "./http-helpers";
 
 /**
  * M2 E2E：存储引擎，走真实 HTTP 通道。
@@ -24,9 +25,6 @@ import { e2eTenant } from "./global-setup";
  *
  * REQ-0001-006
  */
-const baseUrl =
-  process.env.MUSTER_E2E_TARGET ?? `http://127.0.0.1:${process.env.MUSTER_E2E_PORT ?? "8788"}`;
-
 /** 一次批量写的上限（上游同值：一批最多 100 个对象）。 */
 const WRITE_BATCH = 100;
 
@@ -35,45 +33,12 @@ interface Session {
   readonly userId: string;
 }
 
-interface CallOptions {
-  readonly method?: string;
-  readonly token?: string;
-  readonly body?: unknown;
-}
-
-async function call(path: string, options: CallOptions = {}): Promise<Response> {
-  const headers: Record<string, string> = { "content-type": "application/json" };
-  if (options.token !== undefined) headers["authorization"] = `Bearer ${options.token}`;
-  const body = options.body === undefined ? undefined : JSON.stringify(options.body);
-  return fetch(`${baseUrl}${path}`, {
-    method: options.method ?? (body === undefined ? "GET" : "POST"),
-    headers,
-    ...(body === undefined ? {} : { body }),
-  });
-}
-
-/** `Authorization: Basic base64(<server_key>:)`，与官方 SDK 的写法一致。 */
-function basic(serverKey: string): string {
-  return `Basic ${Buffer.from(`${serverKey}:`, "utf8").toString("base64")}`;
-}
-
 /**
  * 每次运行都新建一个设备用户：本地 D1 是跨运行保留的，复用固定设备 id 会让断言依赖"上一轮"。
  */
 async function authenticate(): Promise<Session> {
-  const res = await fetch(`${baseUrl}/v2/account/authenticate/device?create=true`, {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: basic(e2eTenant.serverKey) },
-    body: JSON.stringify({ id: `e2e-storage-${crypto.randomUUID()}` }),
-  });
-  expect(res.status).toBe(200);
-  const session = (await res.json()) as { readonly token: string };
-  const account = await call("/v2/account", { token: session.token });
-  expect(account.status).toBe(200);
-  const profile = (await account.json()) as { readonly user?: { readonly id?: string } };
-  const userId = profile.user?.id;
-  expect(typeof userId).toBe("string");
-  return { token: session.token, userId: userId ?? "" };
+  const { session } = await authenticateDevice(e2eTenant, freshDeviceId("e2e-storage"));
+  return { token: session.token, userId: await userIdOf(session.token) };
 }
 
 /** 值 → 版本号：上游 `fmt.Sprintf("%x", md5.Sum([]byte(value)))`，这里用 node 的 crypto 独立复算。 */
