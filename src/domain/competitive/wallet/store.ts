@@ -156,6 +156,15 @@ export async function selectWalletLedger(
   return result.results;
 }
 
+export interface WalletLedgerUpdateRow {
+  readonly id: string;
+  readonly user_id: string;
+  readonly changeset: string;
+  readonly metadata: string;
+  readonly create_time: number;
+  readonly update_time: number;
+}
+
 /** 账本单行更新：`metadata = metadata || $2`（JSON 对象合并）。 */
 export async function updateWalletLedgerRow(
   db: D1Database,
@@ -163,14 +172,14 @@ export async function updateWalletLedgerRow(
   ledgerId: string,
   metadata: string,
   now: number,
-): Promise<WalletLedgerListRow | null> {
+): Promise<WalletLedgerUpdateRow | null> {
   return db
     .prepare(
       `UPDATE wallet_ledger
        SET update_time = ?1, metadata = json_patch(metadata, ?2)
        WHERE tenant_id = ?3 AND id = ?4
-       RETURNING id, changeset, metadata, create_time, update_time`,
+       RETURNING id, user_id, changeset, metadata, create_time, update_time`,
     )
     .bind(now, metadata, tenantId, ledgerId)
-    .first<WalletLedgerListRow>();
+    .first<WalletLedgerUpdateRow>();
 }

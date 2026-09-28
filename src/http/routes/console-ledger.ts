@@ -24,11 +24,11 @@
  * REQ-0001-021
  */
 
-import { listWalletLedger } from "../../domain/console/ledger";
+import { LEDGER_LIST_FAILURE, LedgerCursorError, listWalletLedger } from "../../domain/console/ledger";
 import { walletLedgerListBody } from "../../wire/console";
 import { normalizeUserId } from "../../realtime/identifiers";
 import { json, queryOptionalInt, queryValue } from "../body";
-import { invalidArgument } from "../errors";
+import { internal, invalidArgument } from "../errors";
 import type { AuthedContext, Router } from "../router";
 
 export const LEDGER_LIMIT_RANGE = "expects a limit value between 1 and 100";
@@ -55,14 +55,18 @@ async function walletLedger(context: AuthedContext): Promise<Response> {
   const after = timestampSeconds(queryValue(context.url, "after"), INVALID_AFTER);
   const before = timestampSeconds(queryValue(context.url, "before"), INVALID_BEFORE);
 
+  // 上游这一条端点的失败路径只有一句话：游标非法连同别的错误整段折成 Internal。
   const page = await listWalletLedger(context.env.DB, context.tenantEnv.tenantId, {
-    userId,
-    limit,
-    cursor: queryValue(context.url, "cursor"),
-    after,
-    before,
-    now: context.tenantEnv.nowSec,
-  });
+      userId,
+      limit,
+      cursor: queryValue(context.url, "cursor"),
+      after,
+      before,
+      now: context.tenantEnv.nowSec,
+    }).catch((error: unknown) => {
+      if (error instanceof LedgerCursorError) throw internal(LEDGER_LIST_FAILURE);
+      throw error;
+    });
   return json(
     walletLedgerListBody(page.rows, userId, page.nextCursor, page.prevCursor),
   );

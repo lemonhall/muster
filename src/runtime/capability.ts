@@ -13,8 +13,11 @@
  */
 
 import type { Bindings } from "../env";
+import { buildNkCompetitive } from "./capability-competitive";
 import { buildNkData } from "./capability-data";
 import { buildNkGroups } from "./capability-groups";
+import { buildNkLedger } from "./capability-ledger";
+import { buildNkRecords } from "./capability-records";
 import { buildNkTools } from "./capability-tools";
 
 export interface CapabilityContext {
@@ -31,7 +34,14 @@ export interface CapabilityContext {
 /** `nk` 是"模块能碰到的全部平台能力"。返回普通对象，不是类实例。 */
 export function buildNk(context: CapabilityContext): Record<string, unknown> {
   const data = { env: context.env, tenantId: context.tenantId };
-  return { ...buildNkTools(), ...buildNkData(data), ...buildNkGroups(data) };
+  return {
+    ...buildNkTools(),
+    ...buildNkData(data),
+    ...buildNkGroups(data),
+    ...buildNkCompetitive(data),
+    ...buildNkRecords(data),
+    ...buildNkLedger(data),
+  };
 }
 
 /**

@@ -19,7 +19,6 @@
  */
 
 import { MAX_CURSOR_LENGTH, fromBase64Url, toBase64Url } from "../base64url";
-import { internal } from "../../http/errors";
 import {
   selectWalletLedger,
   type LedgerCursor,
@@ -28,6 +27,26 @@ import {
 
 /** 上游控制台端点把这一类错误一律折成 Internal（连同"游标非法"一起）。 */
 export const LEDGER_LIST_FAILURE = "An error occurred while trying to list the user's wallet ledger.";
+
+/** 上游 `runtime.ErrWalletLedgerInvalidCursor` 的原文（`runtime/runtime.go`）。 */
+export const LEDGER_CURSOR_INVALID = "wallet ledger cursor invalid";
+
+/**
+ * "游标非法"这一个领域失败。
+ *
+ * 两个调用面的**折法不同**，所以领域层只报"是哪一种失败"，由调用面各自翻译：
+ *   - 控制台端点（`server/console_account.go::GetWalletLedger`）把它连同别的错误
+ *     一起折成 `Internal` + `LEDGER_LIST_FAILURE`；
+ *   - 运行时 `nk.walletLedgerList` 折成
+ *     `failed to retrieve user wallet ledger: wallet ledger cursor invalid`。
+ * 把 HTTP 状态码写进领域层，运行时那一侧就只能去反解一个 HTTP 概念。
+ */
+export class LedgerCursorError extends Error {
+  constructor() {
+    super(LEDGER_CURSOR_INVALID);
+    this.name = "LedgerCursorError";
+  }
+}
 
 interface StoredCursor {
   readonly userId: string;
@@ -63,15 +82,15 @@ function encodeCursor(cursor: StoredCursor): string {
  */
 export function decodeLedgerCursor(raw: string, query: LedgerQuery): LedgerCursor | null {
   if (raw === "") return null;
-  if (raw.length > MAX_CURSOR_LENGTH) throw internal(LEDGER_LIST_FAILURE);
+  if (raw.length > MAX_CURSOR_LENGTH) throw new LedgerCursorError();
   let parsed: unknown;
   try {
     parsed = JSON.parse(fromBase64Url(raw));
   } catch {
-    throw internal(LEDGER_LIST_FAILURE);
+    throw new LedgerCursorError();
   }
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw internal(LEDGER_LIST_FAILURE);
+    throw new LedgerCursorError();
   }
   const record = parsed as Record<string, unknown>;
   const { userId, createTime, id, isNext, after, before } = record;
@@ -84,10 +103,10 @@ export function decodeLedgerCursor(raw: string, query: LedgerQuery): LedgerCurso
     typeof before !== "number" ||
     !Number.isInteger(createTime)
   ) {
-    throw internal(LEDGER_LIST_FAILURE);
+    throw new LedgerCursorError();
   }
   if (userId !== query.userId || after !== query.after || before !== query.before) {
-    throw internal(LEDGER_LIST_FAILURE);
+    throw new LedgerCursorError();
   }
   return { userId, createTime, id, isNext };
 }
