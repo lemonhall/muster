@@ -387,15 +387,15 @@
 | `server/core_authenticate.go::AuthenticateEmail` | `tests/helpers/identity-fixtures.ts` |
 | `server/core_session.go::SessionLogout` | `tests/helpers/identity-fixtures.ts`、`tests/unit/tenancy_keys.test.ts` |
 | `server/core_session.go::SessionRefresh` | `tests/helpers/identity-fixtures.ts` |
-| `server/core_storage.go::StorageDeleteObjects` | `tests/helpers/storage-domain.ts` |
+| `server/core_storage.go::StorageDeleteObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts` |
 | `server/core_storage.go::storageListObjects` | `tests/integration/storage/domain-extra.test.ts` |
-| `server/core_storage.go::StorageListObjects` | `tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
+| `server/core_storage.go::StorageListObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::storagePrepBatch` | `tests/integration/storage/domain-extra.test.ts` |
-| `server/core_storage.go::StorageReadObjects` | `tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
-| `server/core_storage.go::StorageWriteObjects` | `tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
+| `server/core_storage.go::StorageReadObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
+| `server/core_storage.go::StorageWriteObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
 | `server/storage_index.go::LocalStorageIndex.List` | `tests/integration/storage/index-list.test.ts`、`tests/integration/storage/index-write.test.ts` |
 | `server/storage_index.go::LocalStorageIndex.mapIndexStorageFields` | `tests/integration/storage/index-write.test.ts` |
 | `server/storage_index.go::LocalStorageIndex.Write` | `tests/integration/storage/index-write.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=49034e9351b8cb0a6e2d1813d84008eac11bdb203f78ef61e0033d608611fe66 -->
+<!-- integrity: body_sha256=4624b3690b1a19c0c175fd7d7129518ff5ae4e4d132f7c7d563b995a4b43afa5 -->

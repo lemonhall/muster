@@ -112,12 +112,12 @@
 |---|---|---|---|---|---|
 | REQ-0001-001 | v1-foundation Step1-4 | `tests/unit/grpc_status.test.ts`（18 条）、`tests/unit/runtime.test.ts`（1 条 workerd 门禁）、`tests/integration/healthcheck.test.ts`（3 条） | `tests/e2e/toolchain.e2e.test.ts`（4 条） | [v1-foundation.md §Evidence A–E](./v1-foundation.md#evidence) | 🟢 done |
 | REQ-0001-002 | v1-foundation Step1-4 | `tests/integration/healthcheck.test.ts`（3 条：根路径 / healthcheck / 未知路径） | `tests/e2e/toolchain.e2e.test.ts`（4 条，含 501 语义） | [v1-foundation.md §Evidence A–E](./v1-foundation.md#evidence) | 🟢 done |
-| REQ-0001-003 | v1-identity-storage M1 | `tests/integration/identity.test.ts`（设备认证 10 条、自定义认证 2 条、邮箱认证 10 条、服务端密钥鉴权 6 条） | `tests/e2e/identity.e2e.test.ts`（14 条中的认证/401/501 组） | [v1-identity-storage.md §Evidence A/B/D](./v1-identity-storage.md#evidence)、[ECN-0002](../ecn/ECN-0002-password-hash.md) | 🟢 done |
-| REQ-0001-004 | v1-identity-storage M1 | `tests/integration/identity.test.ts`（令牌与会话 7 条、登出 4 条） | `tests/e2e/identity.e2e.test.ts`（刷新换发、刷新令牌不可当访问令牌、登出后失效） | [v1-identity-storage.md §Evidence A/B](./v1-identity-storage.md#evidence)、[ECN-0003](../ecn/ECN-0003-www-authenticate-realm.md) | 🟢 done |
-| REQ-0001-005 | v1-identity-storage M1 | `tests/integration/identity.test.ts`（账号资料 6 条、用户查询 4 条） | `tests/e2e/identity.e2e.test.ts`（改显示名 → 读回、`/v2/user` 批量查询） | [v1-identity-storage.md §Evidence A/B](./v1-identity-storage.md#evidence) | 🟢 done |
+| REQ-0001-003 | v1-identity-storage M1 | `tests/integration/identity/authenticate-device-custom.test.ts`（12 条）、`tests/integration/identity/authenticate-email.test.ts`（10 条）、`tests/integration/identity/base-and-auth-server.test.ts`（10 条：服务端密钥鉴权与基础面） | `tests/e2e/identity.e2e.test.ts`（14 条中的认证/401/501 组） | [v1-identity-storage.md §Evidence A/B/D](./v1-identity-storage.md#evidence)、[ECN-0002](../ecn/ECN-0002-password-hash.md) | 🟢 done |
+| REQ-0001-004 | v1-identity-storage M1 | `tests/integration/identity/session-and-account.test.ts`（13 条：令牌与会话 / 账号资料）、`tests/integration/identity/user-query-and-logout.test.ts`（8 条：用户查询与登出） | `tests/e2e/identity.e2e.test.ts`（刷新换发、刷新令牌不可当访问令牌、登出后失效） | [v1-identity-storage.md §Evidence A/B](./v1-identity-storage.md#evidence)、[ECN-0003](../ecn/ECN-0003-www-authenticate-realm.md) | 🟢 done |
+| REQ-0001-005 | v1-identity-storage M1 | `tests/integration/identity/session-and-account.test.ts`（账号资料）、`tests/integration/identity/user-query-and-logout.test.ts`（用户查询） | `tests/e2e/identity.e2e.test.ts`（改显示名 → 读回、`/v2/user` 批量查询） | [v1-identity-storage.md §Evidence A/B](./v1-identity-storage.md#evidence) | 🟢 done |
 | REQ-0001-026 | v1-identity-storage M1（[ECN-0001](../ecn/ECN-0001-multi-tenancy.md)） | `tests/integration/tenancy.test.ts`（7 条）、`tests/unit/tenancy_keys.test.ts`（8 条） | `tests/e2e/identity.e2e.test.ts`（多租户隔离 3 条，真实 HTTP） | [v1-identity-storage.md §Evidence B/E](./v1-identity-storage.md#evidence) | 🟢 done |
-| REQ-0001-006 | v1-identity-storage M2 | 待填 | 待填 | — | 🔴 todo |
-| REQ-0001-007 | v1-identity-storage M2 | 待填 | 待填 | — | 🔴 todo |
+| REQ-0001-006 | v1-identity-storage M2 | `tests/unit/md5.test.ts`（5 条）、`tests/integration/storage/`（12 个文件 / 74 条，其中对象侧 59 条：CRUD、权限矩阵、版本矩阵、批量原子性、游标分页） | `tests/e2e/storage.e2e.test.ts`（2 条：写→读回→md5 版本交叉验证；10,000 条翻页不重不漏） | [v1-identity-storage.md §Evidence M2-A/B/C](./v1-identity-storage.md#evidence) | 🟢 done |
+| REQ-0001-007 | v1-identity-storage M2 | `tests/integration/storage/`（索引侧 15 条：`index-write` 4 条 = 上游 4 个 t.Run、`index-list` 6 条 = 上游 4 个 t.Run + 删除 + 偏差 1、`index-cursor` 5 条 = 游标与校验边界） | 无独立 E2E（索引是运行时而接口，没有公开 REST 端点；DoD 5 要求的是 `npm test`） | [v1-identity-storage.md §Evidence M2-C/D](./v1-identity-storage.md#evidence)、[ECN-0004](../ecn/ECN-0004-storage-cursor-encoding.md)、[ECN-0005](../ecn/ECN-0005-storage-index.md) | 🟢 done |
 | REQ-0001-008 | v1-realtime-chat M3 | 待填 | 待填 | — | 🔴 todo |
 | REQ-0001-009 | v1-realtime-chat M3 | 待填 | 待填 | — | 🔴 todo |
 | REQ-0001-010 | v1-realtime-chat M4 | 待填 | 待填 | — | 🔴 todo |
@@ -131,6 +131,8 @@
 | [ECN-0001](../ecn/ECN-0001-multi-tenancy.md) | 多租户（一个 Cloudflare 账号运营多个游戏） | 已生效（M1 前落地） | REQ-0001-026 | `migrations/0001_identity.sql`、`src/domain/tenancy/store.ts`、`src/http/auth.ts`、`scripts/tenant.mjs` |
 | [ECN-0002](../ecn/ECN-0002-password-hash.md) | 密码哈希改用 PBKDF2-SHA256 | 已生效 | REQ-0001-003 | `src/domain/identity/password.ts` |
 | [ECN-0003](../ecn/ECN-0003-www-authenticate-realm.md) | 401 挑战头的 realm 用本项目命名 | 已生效 | REQ-0001-004 | `src/http/grpc.ts` |
+| [ECN-0004](../ecn/ECN-0004-storage-cursor-encoding.md) | 存储游标改用 base64url(JSON) 而不是 gob | 已生效 | REQ-0001-006, REQ-0001-007 | `src/domain/storage/cursor.ts`、`src/domain/storage/index/cursor.ts` |
+| [ECN-0005](../ecn/ECN-0005-storage-index.md) | 存储索引从 bluge 内存索引换成对权威表的声明式查询 | 已生效 | REQ-0001-007 | `migrations/0002_storage.sql`、`src/domain/storage/index/*.ts` |
 
 ## Review 记录
 
@@ -206,11 +208,48 @@
 | NOTE | e2e::readiness-heuristic | M0 的残余风险 2（就绪判定只看状态码）已在 M1 闭合：`tests/e2e/global-setup.ts` 现在要求 `GET /healthcheck` 的 body 精确等于 `{}` | 已闭合，本条从残余风险降级为观察记录 |
 | NOTE | review::M1::same-model-self-review | 本机子代理派发失败（两次都收到"没有任务正文"的回话），本轮没有 fresh 上下文 Review | 见残余风险 1；若后续环境允许派发，应补一次独立对抗式 Review |
 
+## Tashan Review - v1 / M2
+
+- reviewer_context: same-model（自评；本机无法派出独立子代理，同 M0/M1，见下方 NOTE）
+- round: 1
+- cost_profile: standard
+- verdict: pass
+- blocker_count: 0
+- major_count: 0
+- minor_count: 2（均已在提交前修复）
+- stuck_signatures: 无
+- regression_signatures: 无
+- commands_checked:
+  - `npm test` → 0（23 files / 169 tests；`tests/unit/runtime.test.ts` 仍断言 `navigator.userAgent === "Cloudflare-Workers"`，证明这 169 条跑在 workerd 里）
+  - `npm run typecheck` → 0
+  - `npm run e2e` → 0（3 files / 20 tests，110s；其中 10,000 条翻页用例实测 85s，预算 900s）
+  - `$env:MUSTER_E2E_TARGET='http://127.0.0.1:8799'; npm run e2e` → 1（20 条全 ECONNREFUSED，反证 E2E 走的是网络而不是进程内直调）
+  - `npm run conformance:matrix` → 0（`entries=263 ported=58 planned=205 exempt=0 unreasoned_exemptions=0 derived_citations=32`；M2 桶 57/57/0/0）
+  - `npm run docs:check` → 0（`problems=0`）
+  - **bluge 独立探针**（临时目录，不入仓库）：内存索引里同一 batch 内三次 `Update`（后两次同 doc id）→ `Reader.Count()` = 3；同样两次 `Update` 拆成两个 batch → 1。这条决定了"上游分页用例的第三页从哪来"
+  - 上游语义核对：`server/storage_index.go`（`Write` / `Delete` / `List` / `CreateIndex` / `mapIndexStorageFields` / `storageIndexDocumentId`）、`server/match_common.go`（`ParseQueryString` / `BlugeWalkDocument`）、`server/core_storage.go`（upsert 的 `ON CONFLICT ... DO UPDATE ... AND NOT (...)`）→ 逐条比对
+  - `git status --porcelain` 在提交后为空
+- residual_risks:
+  1. 同模型自评的橡皮图章风险（与 M0/M1 相同）。缓解：每条结论都落成可复现命令或永久门禁，不依赖"我看过觉得没问题"。
+  2. 索引查询只实现了存储索引实际用到的语法子集（[ECN-0005](../ecn/ECN-0005-storage-index.md) §偏差 4）。未实现的语法一律报 `invalid` 而不是静默降级；如果上游将来在别处复用这套索引语法，需要同步扩语法。
+  3. 10,000 条 E2E 用时 85s 是**本机**实测；更慢的机器上要调那条用例的 `timeout`（当前 900s）。
+  4. 淘汰的决胜键（ECN-0005 §偏差 2）依赖秒级时间戳：同一秒内写入多条且恰好越过淘汰线时，保留哪几条可能与上游不同（已登记）。
+
+### Findings
+
+| severity | signature | evidence | disposition |
+|---|---|---|---|
+| MINOR | index::sort::direction-only-on-last-segment | `sortExpressionForField` 把三段表达式拼成一个字符串返回，`orderFragment` 只给整串加一次方向 → `-value.sort` 实际按升序返回。由 `index-list` 的 `-value.sort` 断言抓到（返回 `[one, three]` 而不是 `[three, one]`） | 已修复（commit `46597d8`）：改成返回表达式数组、逐段加方向 |
+| MINOR | conformance::citations::method-symbol-unverified | 校验器对 `契约源: server/storage_index.go::LocalStorageIndex.List` 报"符号在上游文件里找不到"——Go 方法的声明形状是 `func (si *LocalStorageIndex) List(`，裸子串匹配认不出，会逼出"把方法引用写成不存在的东西"这种坏习惯 | 已修复（commit `46597d8`）：`scripts/conformance-matrix.mjs` 增加方法声明形状核对（方法名写错仍会被拦下） |
+| NOTE | parity::index::batch-shadowing | bluge 的 `Batch.Update` 删不掉"同批内先写入的同 id 文档"，上游 `TestLocalStorageIndex_List/paginates correctly` 的第三页正是这条残留；我们用独立探针复现（见 commands_checked） | **不复刻**（[ECN-0005](../ecn/ECN-0005-storage-index.md) §偏差 1）：它返回的是权威表里已不存在的旧值。已落成显式用例 `test_overwriting_the_same_object_in_one_batch_leaves_no_stale_entry` + 等价场景的三页分页断言 |
+| NOTE | test::isolation::shared-tenant | 同一测试文件内多个用例共用同一个 D1 租户：前一个用例失败留下的行会污染后一个（实测：`createIndex` 报重名 `AlreadyExists`、删除用例看到 3 条而不是 2 条） | 已修复：索引用例改成"每个用例独立索引名 + 独立集合名"，并在注释里写明理由 |
+| NOTE | review::M2::same-model-self-review | 与 M0/M1 同样的限制 | 见残余风险 1；环境允许时应补一次独立对抗式 Review |
+
 ## Tashan Trigger Audit
 
 ```markdown
 - expected_review_triggers: v_doc_writing_done, v_milestone_done(M0..M4)
-- actual_review_runs: 3 (v_doc_writing_done, v_milestone_done(M0) 同模型自评, v_milestone_done(M1) 同模型自评)
+- actual_review_runs: 4 (v_doc_writing_done, v_milestone_done(M0) 同模型自评, v_milestone_done(M1) 同模型自评, v_milestone_done(M2) 同模型自评)
 - skipped_triggers: 0
 - skip_reasons: 独立子代理派发不通（本机限制），降级为同模型自评 + 命令证据
 - mitigation: 每个里程碑完成前必须补 Review 记录，否则不输出完成信号；把可自动化的检查固化成脚本门禁（覆盖矩阵、文档卫生、workerd 运行时、E2E 反证），降低对人工 Review 的依赖

@@ -138,8 +138,8 @@
 | REQ-0001-003 | 设备/邮箱/自定义三种认证方式 + 服务端密钥鉴权 | P0 | 上游 `api_authenticate` 等价断言全绿；错误场景返回码逐条对齐。库内密码哈希算法改用 PBKDF2-SHA256（workerd 无 bcrypt；对外形状不变，见 [ECN-0002](../ecn/ECN-0002-password-hash.md)）。**OAuth/社交登录分支（Google/Apple/Facebook/Steam）不在 v1 范围**，随 M5 在 v2 交付（`social/google_token_audience_test.go` 的 3 条也归到 M5） |
 | REQ-0001-004 | 会话与令牌：access token、refresh token、过期与登出 | P0 | 过期令牌被拒（401）；refresh 成功换发；登出后原令牌失效。401 挑战头保留 `Bearer realm=` 形状，realm 取值用本项目命名（见 [ECN-0003](../ecn/ECN-0003-www-authenticate-realm.md)） |
 | REQ-0001-005 | 用户资料读写：用户名、显示名、头像、metadata、locale、时区、位置 | P0 | 字段级读回一致；非法用户名/重复用户名返回码对齐上游 |
-| REQ-0001-006 | 存储引擎：集合/对象 CRUD、owner 与 read/write 权限、version 乐观锁、批量操作、游标分页 | P0 | 权限矩阵用例全绿；游标 1 万条无重复无遗漏；version 冲突返回码对齐 |
-| REQ-0001-007 | 存储索引（可搜索的存储字段） | P0 | 按索引字段查询返回与上游一致的集合与顺序 |
+| REQ-0001-006 | 存储引擎：集合/对象 CRUD、owner 与 read/write 权限、version 乐观锁、批量操作、游标分页 | P0 | 权限矩阵用例全绿；游标 1 万条无重复无遗漏；version 冲突返回码对齐。本项目的游标是 base64url(JSON) 而非上游的 gob（不透明令牌，对客户端零影响，见 [ECN-0004](../ecn/ECN-0004-storage-cursor-encoding.md)） |
+| REQ-0001-007 | 存储索引（可搜索的存储字段） | P0 | 按索引字段查询返回与上游一致的集合与顺序。索引实现从"内存 bluge 索引"换成"对权威表的声明式查询"（[ECN-0005](../ecn/ECN-0005-storage-index.md)，含 4 条登记在案的偏差：上游批内残留不复刻、淘汰决胜键、并发用例轮数、查询语法子集） |
 | REQ-0001-008 | 实时协议骨架：WS 握手、Envelope 编解码、ping/pong、错误帧 | P0 | 用上游 proto 生成的编解码器互通；伪造帧返回对齐的错误码 |
 | REQ-0001-009 | 会话注册表与在线状态（status follow/unfollow/presence） | P0 | 多连接下 presence 事件不丢不重；断连清理在超时内完成 |
 | REQ-0001-010 | 频道与聊天：ROOM / GROUP / DIRECT，持久化、历史、编辑删除、presence | P0 | 上游 `api_channel` 等价断言全绿；历史分页语义一致 |

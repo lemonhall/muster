@@ -62,16 +62,20 @@
 | `src/http/endpoints.generated.ts` | 上游 91 个 REST 操作的对账表（脚本生成） |
 | `scripts/tenant.mjs` | 租户开通 CLI（生成本地/远端记录，一次性打印 server key） |
 | `src/http/routes/storage.ts` | 存储读写、列表、删除（M2） |
-| `src/domain/storage/objects.ts` | 对象 CRUD、权限判定、版本语义 |
-| `src/domain/storage/cursor.ts` | 游标编码/解码（不透明、可校验） |
-| `src/domain/storage/index.ts` | 存储索引查询编译 |
+| `src/domain/storage/objects/` | 对象 CRUD、权限判定、版本语义（6 个文件，单文件最大 176 行） |
+| `src/domain/storage/md5.ts` | 手写 MD5（workerd 无 `crypto` 的 md5 原语），版本号的唯一来源 |
+| `src/domain/storage/cursor.ts` | 对象列表游标编码/解码（不透明、可校验） |
+| `src/domain/storage/index/` | 存储索引：声明、游标、查询编译、投影、淘汰（6 个文件，单文件最大 197 行） |
+| `migrations/0002_storage.sql` | `storage_objects`（权威表）+ `storage_indexes`（索引声明）+ 批量守卫表 |
 | `tests/helpers/tenants.ts` | 测试工装：建租户、Basic/Bearer 头、请求辅助 |
-| `tests/integration/identity.test.ts` | M1 契约测试（53 条：认证 / 令牌 / 账号 / 查询 / 登出） |
+| `tests/helpers/storage-domain.ts`、`tests/helpers/storage-index.ts` | 存储/索引契约测试的公共工装 |
+| `tests/integration/identity/`（5 个文件） | M1 契约测试（53 条：认证 / 令牌 / 账号 / 查询 / 登出） |
 | `tests/integration/tenancy.test.ts` | 多租户隔离（7 条） |
 | `tests/unit/tenancy_keys.test.ts` | 每租户密钥派生（8 条） |
-| `tests/integration/storage/*.test.ts` | 存储语义与权限矩阵测试（M2） |
+| `tests/integration/storage/`（12 个文件） | M2 契约测试（对象 59 条 + 索引 15 条；单文件均 <300 行） |
+| `tests/unit/md5.test.ts` | 手写 MD5 的向量核对（5 条） |
 | `tests/e2e/identity.e2e.test.ts` | 端到端：登录 → 读资料 → 改名 → 读回 → 刷新 → 登出 + 跨租户隔离 |
-| `tests/e2e/storage.e2e.test.ts` | 端到端：写存储 → 读回 → 分页遍历（M2） |
+| `tests/e2e/storage.e2e.test.ts` | 端到端：写存储 → 读回 → md5 版本交叉验证 → 10,000 条分页遍历（M2） |
 
 ## Steps
 
@@ -166,3 +170,65 @@ E2E 的每一次 wrangler 调用都带 `--local`（迁移与租户写入见 `tes
 - 令牌：签名密钥 = `HKDF-SHA256(master, salt=tenant_id, info="muster/session"|"muster/refresh")`，
   见 `tests/unit/tenancy_keys.test.ts`（8 条，含"换租户即验签失败"）。
 - 越权：`tests/integration/tenancy.test.ts`（7 条）+ E2E 3 条。
+
+### M2-A 测试全绿（单元 + 集成，跑在本地 workerd）
+
+```
+> muster@0.1.0 test
+> vitest run --reporter=verbose
+
+ ✓ tests/unit/md5.test.ts (5)
+ ✓ tests/integration/storage/*.test.ts (12 个文件 / 74 条)
+
+ Test Files  23 passed (23)
+      Tests  169 passed (169)
+```
+
+`tests/unit/runtime.test.ts` 仍在断言 `navigator.userAgent === "Cloudflare-Workers"`，
+所以上面 169 条确实跑在 workerd 里；M2 的每一条都打在本地 D1 的同构 schema 上，
+没有任何请求离开本机。
+
+### M2-B E2E（真实 HTTP：真实 `wrangler dev --local` 进程）
+
+```
+> muster@0.1.0 e2e
+> vitest run --config vitest.e2e.config.ts
+
+[e2e] muster 本地 Worker 已就绪：http://127.0.0.1:8788 (pid=7340)
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+```
+
+其中 `tests/e2e/storage.e2e.test.ts` 2 条：
+
+1. **写 → 读回 → 版本号**：`PUT /v2/storage` 的 ack 里 `user_id` 是会话用户；
+   再用 node 的 `crypto.createHash("md5")` **独立复算** `version` 并逐字比对读回的值；
+   覆盖写之后版本号随之改变（版本号是值的指纹，不是自增计数）。
+2. **10,000 条对象翻页遍历**（M2 DoD #4）：100 条一批共 100 批写入，
+   再以 `limit=100` 翻 100 页，断言页数 = 100、总数 = 去重计数 = 10,000、
+   首尾键正确、无重复。实测约 85 秒（含拆场），单用例预算 900 秒。
+
+反证沿用 M1 的做法：把 `MUSTER_E2E_TARGET` 指向没人监听的端口时整组变红（ECONNREFUSED）。
+
+### M2-C 上游语义核对与偏差登记（逐条读源码，不是猜）
+
+| 结论 | 上游来源 | 我们的落点 | 偏差 |
+|---|---|---|---|
+| 版本号 = `%x(md5(value))`；值相同则不更新（`update_time` 不动） | `server/core_storage.go::StorageWriteObjects` | `src/domain/storage/objects/sql.ts`、`md5.ts` | 无 |
+| 一批 = 全成功或全失败 | 上游用 DB 事务；D1 无交互式事务 | `storage_batch_guard`（单行 CHECK 守卫 + `db.batch()`），见 `migrations/0002_storage.sql` | 机制不同、语义相同 |
+| 权限位缺省 1；值为 0 时整条省略 | `apigrpc/apigrpc.swagger.json`、`api.proto` | `src/wire/storage.ts` | 无 |
+| 索引是内存 bluge、查询串走 `ParseQueryString` | `server/storage_index.go`、`server/match_common.go` | 对权威表的声明式查询 | [ECN-0005](../ecn/ECN-0005-storage-index.md)（4 条偏差） |
+| 游标是 `base64url(gob)` | `server/storage_index.go`、`server/core_storage.go` | `base64url(JSON)` | [ECN-0004](../ecn/ECN-0004-storage-cursor-encoding.md) |
+| 索引 `Write` 的批内同 id 会留两条（bluge 行为） | `server/storage_index.go::Write` + bluge v0.2.2 探针复现 | **不复刻**（返回权威表里已不存在的旧值没有意义） | ECN-0005 §偏差 1 |
+
+### M2-D 覆盖矩阵：M2 桶 57/57
+
+```
+> npm run conformance:matrix
+entries=263 ported=58 planned=205 exempt=0 unreasoned_exemptions=0 derived_citations=32
+# 按里程碑：M1 1/1/0/0，M2 57/57/0/0
+```
+
+`core_storage_test.go` 54 条 + `storage_index_test.go` 3 条全部有 `溯源:` 指向我们的测试文件，
+M2 范围内不再有 `planned` 残留（DoD #6）。
