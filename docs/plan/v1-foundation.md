@@ -98,13 +98,15 @@ EXIT=1
 ```
 $ npm test
 
- ✓ 18 × tests/unit/grpc_status.test.ts（gRPC code → HTTP 状态逐条映射 + 错误体形状）
+ ✓ 19 × tests/unit（18 条 gRPC code → HTTP 状态逐条映射 + 1 条 workerd 运行时身份）
  ✓  3 × tests/integration/healthcheck.test.ts（根路径 / healthcheck / 未知路径）
 
- Test Files  2 passed (2)
-      Tests  21 passed (21)
+ Test Files  3 passed (3)
+      Tests  22 passed (22)
 EXIT=0
 ```
+
+其中 `tests/unit/runtime.test.ts` 断言 `navigator.userAgent === "Cloudflare-Workers"`——这是反作弊条款 2（"测试必须真跑在 workerd 里"）的永久化门禁：哪天依赖升级把池配置打回 node 环境，这条会立刻变红，而不是等人记得。
 
 ### C. 绿：类型检查（`npm run typecheck` → 绿）
 
@@ -157,6 +159,17 @@ docs_hygiene: files=9 requirements=25 plans=3 lines=1366 links=17 inventory_numb
 ```
 
 `mode=verify` 表示本次是**对账**（拿工作区实际清单比对 `baseline.json`），不是重新生成——上游测试数一旦漂移，脚本以非 0 退出。
+
+反证（手工编辑必须被拦）：把 `coverage-matrix.md` 里的一个测试名改掉一个字符后重跑：
+
+```
+$ npm run conformance:matrix
+docs/conformance/coverage-matrix.md 缺少完整性标记（疑似被手工编辑）。
+请删除该文件后重新运行本脚本重新生成，不要手工修补。
+EXIT=1
+```
+
+删掉该文件重新生成后，`git status` 干净 —— 说明生成物是**确定性**的，且完整性标记能识别手工修补（同一天在 `doc_hygiene_check.py` 上也做过同类反证：把 `core_storage_test.go` 的条数改成 58，脚本以退出码 1 报 `与基线（54）不一致`）。
 
 ### G. M0 边界内的未覆盖项（已知且有意）
 

@@ -31,7 +31,7 @@
 
 | 领域 | 测试函数数 | 对应里程碑 |
 |---|---:|---|
-| 存储引擎（`core_storage_test.go` 54 + `storage_index_test.go` 3） | 57 | M2 |
+| 存储引擎（`core_storage_test.go` 54 条 + `storage_index_test.go` 3 条） | 57 | M2 |
 | 匹配器 `matchmaker_test.go` | 23 | M7 |
 | 运行时扩展（`runtime_test.go` 29 + logger 类 13 + `runtime_javascript_test.go` 1） | 43 | M8 |
 | Lua 解释器与标准库扩展（`internal/gopher-lua/*`） | 76 | 后置（Lua 运行时） |
