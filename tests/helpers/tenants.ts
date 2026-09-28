@@ -84,11 +84,14 @@ export interface CallOptions {
   readonly body?: unknown;
   /** 传 `null` 表示"发一个 JSON null"，用于测上游 `in.Account == nil` 分支。 */
   readonly rawBody?: string;
+  /** 显式带一个 `x-request-id`（DoD 8 的"沿用客户端 id"那一半）。 */
+  readonly requestId?: string;
 }
 
 export function call(path: string, options: CallOptions = {}): Promise<Response> {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (options.authorization !== undefined) headers["authorization"] = options.authorization;
+  if (options.requestId !== undefined) headers["x-request-id"] = options.requestId;
   const body =
     options.rawBody !== undefined
       ? options.rawBody

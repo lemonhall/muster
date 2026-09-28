@@ -5,6 +5,7 @@ import { isParamSegment } from "./endpoints";
 import { ApiError, internal } from "./errors";
 import { Code, statusResponse } from "./grpc";
 import { resolveBearerContext, resolveServerKeyTenant } from "./auth";
+import { recordRequest, requestIdOf, withRequestId } from "./request-id";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
@@ -134,29 +135,31 @@ export class Router {
     const url = new URL(request.url);
     const method = request.method.toUpperCase();
     const pathSegments = segmentsOf(url.pathname);
+    // 请求 ID 在**最外层**就定下来：成功、失败、404、501 都要带同一个 id。
+    const requestId = requestIdOf(request);
 
     for (const route of this.#routes) {
       if (route.method !== method) continue;
       const params = matchTemplate(route.segments, pathSegments);
       if (params === null) continue;
-      return this.#invoke(route, request, url, env, params);
+      return withRequestId(await this.#invoke(route, request, url, env, params, requestId), requestId);
     }
 
     const implementedPath = this.#routes.some((route) => matchTemplate(route.segments, pathSegments) !== null);
     if (implementedPath) {
       // http.StatusText(405) === "Method Not Allowed"，经 codes.Unimplemented 反推成 501
-      return statusResponse(Code.Unimplemented, "Method Not Allowed");
+      return withRequestId(statusResponse(Code.Unimplemented, "Method Not Allowed"), requestId);
     }
 
     for (const upstream of this.#upstream.values()) {
       if (matchTemplate(upstream.segments, pathSegments) === null) continue;
       if (upstream.methods.has(method)) {
-        return statusResponse(Code.Unimplemented, "Not implemented.");
+        return withRequestId(statusResponse(Code.Unimplemented, "Not implemented."), requestId);
       }
-      return statusResponse(Code.Unimplemented, "Method Not Allowed");
+      return withRequestId(statusResponse(Code.Unimplemented, "Method Not Allowed"), requestId);
     }
 
-    return statusResponse(Code.NotFound, "Not Found");
+    return withRequestId(statusResponse(Code.NotFound, "Not Found"), requestId);
   }
 
   async #invoke(
@@ -165,25 +168,36 @@ export class Router {
     url: URL,
     env: Bindings,
     params: Record<string, string>,
+    requestId: string,
   ): Promise<Response> {
+    /** 鉴权在下面才跑，所以租户是"边解析边填"的：没解析出来就没有日志行可写。 */
+    let tenantId: string | null = null;
+    let response: Response;
     try {
       const handler = route.handler as Handler<PublicContext | AuthedContext | UserContext>;
       if (route.kind === "public") {
-        return await handler({ env, request, url, params });
-      }
-      if (route.kind === "server-key") {
+        response = await handler({ env, request, url, params });
+      } else if (route.kind === "server-key") {
         const tenantEnv = await resolveServerKeyTenant(env, request);
-        return await handler({ env, request, url, params, tenantEnv });
+        tenantId = tenantEnv.tenantId;
+        response = await handler({ env, request, url, params, tenantEnv });
+      } else {
+        const { tenantEnv, session } = await resolveBearerContext(env, request);
+        tenantId = tenantEnv.tenantId;
+        response = await handler({ env, request, url, params, tenantEnv, session });
       }
-      const { tenantEnv, session } = await resolveBearerContext(env, request);
-      return await handler({ env, request, url, params, tenantEnv, session });
     } catch (error) {
       if (error instanceof ApiError) {
-        return error.toResponse();
+        response = error.toResponse();
+      } else {
+        // 未预期的异常：对外统一是 500 Internal，细节只进日志。
+        console.error("unhandled error while serving request", error);
+        response = internal("Internal error.").toResponse();
       }
-      // 未预期的异常：对外统一是 500 Internal，细节只进日志。
-      console.error("unhandled error while serving request", error);
-      return internal("Internal error.").toResponse();
     }
+    if (tenantId !== null) {
+      await recordRequest(env, tenantId, requestId, request, response.status);
+    }
+    return response;
   }
 }
