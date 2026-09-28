@@ -10,18 +10,18 @@
 |---|---|
 | 上游 commit | `e920249a3465bea4b8ea2968020c488201b61a8e` |
 | 上游测试条目 | 263 |
-| ported | 55 |
-| planned | 208 |
+| ported | 58 |
+| planned | 205 |
 | exempt | 0 |
 | 无理由豁免 | 0 |
-| 第二证据源引用（自主契约测试） | 29 |
+| 第二证据源引用（自主契约测试） | 32 |
 
 ## 按里程碑
 
 | 里程碑 | 范围 | 条目 | ported | planned | exempt |
 |---|---|---:|---:|---:|---:|
 | M1 | 身份与账号 | 1 | 1 | 0 | 0 |
-| M2 | 存储引擎 | 57 | 54 | 3 | 0 |
+| M2 | 存储引擎 | 57 | 57 | 0 | 0 |
 | M3 | 实时协议与在线状态 | 1 | 0 | 1 | 0 |
 | M4 | 频道与聊天 | 0 | 0 | 0 | 0 |
 | M5 | 社交（好友/群组/通知/社交登录令牌校验） | 4 | 0 | 4 | 0 |
@@ -40,7 +40,7 @@
 
 | # | 状态 | 上游测试 | 文件 | 证据 / 理由 |
 |---:|---|---|---|---|
-| 1 | ported | TestWWWAuthenticateHeaderOnUnauthenticated | `server/api_test.go` | `tests/integration/identity.test.ts` |
+| 1 | ported | TestWWWAuthenticateHeaderOnUnauthenticated | `server/api_test.go` | `tests/integration/identity/base-and-auth-server.test.ts` |
 
 ### M2 存储引擎
 
@@ -100,9 +100,9 @@
 | 53 | ported | TestStorageWriteRuntimeGlobalSingleIfNoneMatchExists | `server/core_storage_test.go` | `tests/integration/storage/write-runtime.test.ts` |
 | 54 | ported | TestStorageWriteRuntimeGlobalSingleIfNoneMatchNotExists | `server/core_storage_test.go` | `tests/integration/storage/write-runtime.test.ts` |
 | 55 | ported | TestStorageWriteRuntimeUserMultiple | `server/core_storage_test.go` | `tests/integration/storage/write-runtime.test.ts` |
-| 56 | planned | TestLocalStorageIndex_Delete | `server/storage_index_test.go` | — |
-| 57 | planned | TestLocalStorageIndex_List | `server/storage_index_test.go` | — |
-| 58 | planned | TestLocalStorageIndex_Write | `server/storage_index_test.go` | — |
+| 56 | ported | TestLocalStorageIndex_Delete | `server/storage_index_test.go` | `tests/integration/storage/index-list.test.ts` |
+| 57 | ported | TestLocalStorageIndex_List | `server/storage_index_test.go` | `tests/integration/storage/index-list.test.ts` |
+| 58 | ported | TestLocalStorageIndex_Write | `server/storage_index_test.go` | `tests/integration/storage/index-write.test.ts` |
 
 ### M3 实时协议与在线状态
 
@@ -367,32 +367,35 @@
 | 上游契约源 | 我们的测试 |
 |---|---|
 | `apigrpc/apigrpc.swagger.json::/healthcheck` | `tests/integration/healthcheck.test.ts` |
-| `apigrpc/apigrpc.swagger.json::/v2/account/authenticate/device` | `tests/integration/identity.test.ts` |
-| `server/api_account.go::GetAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts` |
-| `server/api_account.go::UpdateAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts` |
-| `server/api_authenticate.go::AuthenticateCustom` | `tests/integration/identity.test.ts` |
-| `server/api_authenticate.go::AuthenticateDevice` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts`、`tests/integration/tenancy.test.ts` |
-| `server/api_authenticate.go::AuthenticateEmail` | `tests/integration/identity.test.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/account/authenticate/device` | `tests/helpers/identity-fixtures.ts` |
+| `server/api_account.go::GetAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
+| `server/api_account.go::UpdateAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
+| `server/api_authenticate.go::AuthenticateCustom` | `tests/helpers/identity-fixtures.ts` |
+| `server/api_authenticate.go::AuthenticateDevice` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts`、`tests/integration/tenancy.test.ts` |
+| `server/api_authenticate.go::AuthenticateEmail` | `tests/helpers/identity-fixtures.ts` |
 | `server/api_authenticate.go::generateRefreshToken` | `tests/unit/tenancy_keys.test.ts` |
-| `server/api_session.go::SessionLogout` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts` |
-| `server/api_session.go::SessionRefresh` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts` |
-| `server/api_user.go::GetUsers` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts` |
+| `server/api_session.go::SessionLogout` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
+| `server/api_session.go::SessionRefresh` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
+| `server/api_user.go::GetUsers` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api.go::grpcGatewayRouter` | `tests/e2e/toolchain.e2e.test.ts`、`tests/integration/healthcheck.test.ts` |
 | `server/api.go::handleRoutingError` | `tests/e2e/toolchain.e2e.test.ts`、`tests/integration/healthcheck.test.ts` |
-| `server/api.go::parseBasicAuth` | `tests/integration/identity.test.ts` |
-| `server/api.go::securityInterceptorFunc` | `tests/e2e/identity.e2e.test.ts`、`tests/integration/identity.test.ts`、`tests/integration/tenancy.test.ts` |
-| `server/api.go::wwwAuthenticateFixWriter` | `tests/integration/identity.test.ts` |
-| `server/core_account.go::UpdateAccounts` | `tests/integration/identity.test.ts` |
-| `server/core_authenticate.go::AuthenticateDevice` | `tests/integration/identity.test.ts` |
-| `server/core_authenticate.go::AuthenticateEmail` | `tests/integration/identity.test.ts` |
-| `server/core_session.go::SessionLogout` | `tests/integration/identity.test.ts`、`tests/unit/tenancy_keys.test.ts` |
-| `server/core_session.go::SessionRefresh` | `tests/integration/identity.test.ts` |
+| `server/api.go::parseBasicAuth` | `tests/helpers/identity-fixtures.ts` |
+| `server/api.go::securityInterceptorFunc` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts`、`tests/integration/tenancy.test.ts` |
+| `server/api.go::wwwAuthenticateFixWriter` | `tests/helpers/identity-fixtures.ts` |
+| `server/core_account.go::UpdateAccounts` | `tests/helpers/identity-fixtures.ts` |
+| `server/core_authenticate.go::AuthenticateDevice` | `tests/helpers/identity-fixtures.ts` |
+| `server/core_authenticate.go::AuthenticateEmail` | `tests/helpers/identity-fixtures.ts` |
+| `server/core_session.go::SessionLogout` | `tests/helpers/identity-fixtures.ts`、`tests/unit/tenancy_keys.test.ts` |
+| `server/core_session.go::SessionRefresh` | `tests/helpers/identity-fixtures.ts` |
 | `server/core_storage.go::StorageDeleteObjects` | `tests/helpers/storage-domain.ts` |
 | `server/core_storage.go::storageListObjects` | `tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::StorageListObjects` | `tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::storagePrepBatch` | `tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::StorageReadObjects` | `tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::StorageWriteObjects` | `tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
+| `server/storage_index.go::LocalStorageIndex.List` | `tests/integration/storage/index-list.test.ts`、`tests/integration/storage/index-write.test.ts` |
+| `server/storage_index.go::LocalStorageIndex.mapIndexStorageFields` | `tests/integration/storage/index-write.test.ts` |
+| `server/storage_index.go::LocalStorageIndex.Write` | `tests/integration/storage/index-write.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=260025a0f2f6a56595e5add363619a398143163dabe8b556f7b3df42c322c39a -->
+<!-- integrity: body_sha256=49034e9351b8cb0a6e2d1813d84008eac11bdb203f78ef61e0033d608611fe66 -->

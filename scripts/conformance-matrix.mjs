@@ -65,6 +65,20 @@ function parseRefs(raw) {
   return refs;
 }
 
+/**
+ * 上游符号是否真的出现在文件里。
+ *
+ * 支持两种写法：包级符号（`StorageWriteObjects`）直接子串匹配；方法用
+ * `接收者类型.方法名`（`LocalStorageIndex.List`），匹配 `func (si *LocalStorageIndex) List(` 这种
+ * 声明形状——比裸子串更严：方法名写错照样会被拦下，但不必把接收者变量名也抄进来。
+ */
+function symbolPresent(text, symbol) {
+  if (text.includes(symbol)) return true;
+  const dot = symbol.lastIndexOf(".");
+  if (dot <= 0) return false;
+  return text.includes(`${symbol.slice(0, dot)}) ${symbol.slice(dot + 1)}(`);
+}
+
 const baseline = readJson(baselineFile, "先跑 `npm run conformance:inventory` 生成清单与基线。");
 const exemptions = readJson(exemptionsFile, "豁免清单缺失；可以留空但不能缺文件。");
 const scope = readJson(scopeFile, "里程碑归属表缺失。");
@@ -147,7 +161,7 @@ for (const abs of walkFiles(testsDir, (p) => p.endsWith(".ts"))) {
         problems.push(`${where} 的契约源指向不存在的上游文件：${ref.file}`);
       } else {
         const text = fs.readFileSync(upstreamPath, "utf8");
-        if (!text.includes(ref.symbol)) {
+        if (!symbolPresent(text, ref.symbol)) {
           problems.push(`${where} 的契约源符号在上游文件里找不到：${ref.file}::${ref.symbol}`);
         } else {
           bucket.verified = true;
