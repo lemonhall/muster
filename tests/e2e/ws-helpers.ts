@@ -3,6 +3,12 @@ import { create } from "@bufbuild/protobuf";
 import { RpcSchema } from "../../src/proto/api/api_pb";
 import {
   EnvelopeSchema,
+  MatchCreateSchema,
+  MatchDataSendSchema,
+  MatchJoinSchema,
+  MatchLeaveSchema,
+  MatchmakerAddSchema,
+  MatchmakerRemoveSchema,
   PingSchema,
   StatusFollowSchema,
   StatusUnfollowSchema,
@@ -132,6 +138,84 @@ export function statusUpdate(cid: string, status?: string): Envelope {
 /** 一个 M3 还没接通的类型（M6 会接通）：用来验证"错误帧仍带 cid 且随后断开"。 */
 export function rpc(cid: string): Envelope {
   return create(EnvelopeSchema, { cid, message: { case: "rpc", value: create(RpcSchema, { id: "e2e" }) } });
+}
+
+/* ------------------------------------------------------------------ *
+ * M7：匹配与对局的帧。E2E 只造客户端**能发**的那六种；`matchmaker_matched`
+ * 与 `match_presence_event` 是服务端推的，只能等不能发。
+ * ------------------------------------------------------------------ */
+
+export function matchmakerAdd(
+  cid: string,
+  input: {
+    readonly minCount: number;
+    readonly maxCount: number;
+    readonly query?: string;
+    readonly strings?: Readonly<Record<string, string>>;
+    readonly numbers?: Readonly<Record<string, number>>;
+  },
+): Envelope {
+  return create(EnvelopeSchema, {
+    cid,
+    message: {
+      case: "matchmakerAdd",
+      value: create(MatchmakerAddSchema, {
+        minCount: input.minCount,
+        maxCount: input.maxCount,
+        query: input.query ?? "*",
+        stringProperties: { ...(input.strings ?? {}) },
+        numericProperties: { ...(input.numbers ?? {}) },
+      }),
+    },
+  });
+}
+
+export function matchmakerRemove(cid: string, ticket: string): Envelope {
+  return create(EnvelopeSchema, {
+    cid,
+    message: { case: "matchmakerRemove", value: create(MatchmakerRemoveSchema, { ticket }) },
+  });
+}
+
+/** 建一场**中继**对局（`name` 给了就是 v5 派生；权威对局客户端建不了）。 */
+export function matchCreate(cid: string, name = ""): Envelope {
+  return create(EnvelopeSchema, {
+    cid,
+    message: { case: "matchCreate", value: create(MatchCreateSchema, { name }) },
+  });
+}
+
+export function matchJoin(cid: string, target: { readonly token?: string; readonly matchId?: string }): Envelope {
+  const id =
+    target.matchId !== undefined
+      ? { case: "matchId" as const, value: target.matchId }
+      : { case: "token" as const, value: target.token ?? "" };
+  return create(EnvelopeSchema, {
+    cid,
+    message: { case: "matchJoin", value: create(MatchJoinSchema, { id, metadata: {} }) },
+  });
+}
+
+export function matchLeave(cid: string, matchId: string): Envelope {
+  return create(EnvelopeSchema, {
+    cid,
+    message: { case: "matchLeave", value: create(MatchLeaveSchema, { matchId }) },
+  });
+}
+
+export function matchDataSend(cid: string, matchId: string, opCode: bigint, data: string): Envelope {
+  return create(EnvelopeSchema, {
+    cid,
+    message: {
+      case: "matchDataSend",
+      value: create(MatchDataSendSchema, {
+        matchId,
+        opCode,
+        data: new TextEncoder().encode(data),
+        reliable: true,
+      }),
+    },
+  });
 }
 
 export function presenceKeys(envelope: Envelope): { joins: string[]; leaves: string[] } {

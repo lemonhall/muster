@@ -137,6 +137,10 @@ export async function setup(): Promise<void> {
       // 主密钥由命令行注入：仓库里不放真密钥，E2E 也不需要 .dev.vars 存在。
       "--var",
       `SESSION_ENCRYPTION_KEY:${e2eSessionKey}`,
+      // 匹配器的闹钟周期（上游 `matchmaker.interval_sec` 的毫秒版）。默认 15 秒，
+      // E2E 等不起，调到 200ms——这样成局是"几秒内必然发生"，而不是"看运气"。
+      "--var",
+      "MATCHMAKER_INTERVAL_MS:200",
       "--log-level",
       "warn",
       "--show-interactive-dev-session=false",
