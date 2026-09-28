@@ -64,7 +64,7 @@
 4. **红**：写 M2 测试（CRUD/version 冲突/权限矩阵/批量原子性/游标 1 万条）。
 5. **绿**：实现存储域逻辑 + 索引查询，跑到绿。
 6. **E2E（M2）**：10,000 条对象分页遍历断言无重复无遗漏。
-7. **覆盖矩阵回填**：把 `core_storage_test.go` 55 + `storage_index_test.go` 3 的每条状态从 `planned` 推进到 `ported` 或 `exempt(理由)`。
+7. **覆盖矩阵回填**：把 `core_storage_test.go` 54 + `storage_index_test.go` 3 的每条状态从 `planned` 推进到 `ported` 或 `exempt(理由)`。
 
 ## Risks
 

@@ -23,7 +23,7 @@
 | REST 面 | 77 条路径 / 91 个操作 | `apigrpc/apigrpc.swagger.json` |
 | 实时协议面 | 1 个 `Envelope` + 51 个消息类型 | `vendor/.../rtapi/realtime.proto` |
 | 公开 API 消息定义 | 120 个 message | `vendor/.../api/api.proto` |
-| 上游测试套件 | 40 个 `*_test.go`，14,816 行，266 个 `Test*` 函数（分布在 36 个文件；`t.Run` 子用例仅 35 处，说明粒度就是函数级） | `server/`, `internal/`, `social/`, `console/` |
+| 上游测试套件 | 40 个 `*_test.go`，14,856 行，263 个 `Test*` 函数（分布在 36 个文件；`t.Run` 子用例仅 35 处，说明粒度就是函数级） | `docs/conformance/upstream-inventory.md`（脚本生成） |
 | 上游测试方式 | 真实进程 + 真实数据库（Postgres 16.8）+ `go test -race ./...`，由 `docker-compose-tests.yml` 编排 | `docker-compose-tests.yml`, `.github/workflows/tests.yaml` |
 | 上游测试形态 | 起真实 HTTP/WS 服务端后按客户端面断言（`httptest` + `TEST_DB_URL` 指向真实库） | `server/api_test.go:NewDB/NewAPIServer` |
 
@@ -31,17 +31,22 @@
 
 | 领域 | 测试函数数 | 对应里程碑 |
 |---|---:|---|
-| 存储引擎（`core_storage_test.go` 55 + `storage_index_test.go` 3） | 58 | M2 |
-| 匹配器 `matchmaker_test.go` | 37 | M7 |
+| 存储引擎（`core_storage_test.go` 54 + `storage_index_test.go` 3） | 57 | M2 |
+| 匹配器 `matchmaker_test.go` | 23 | M7 |
 | 运行时扩展（`runtime_test.go` 29 + logger 类 13 + `runtime_javascript_test.go` 1） | 43 | M8 |
-| Lua 解释器与标准库扩展（`internal/gopher-lua/*`） | 89 | 后置（Lua 运行时） |
+| Lua 解释器与标准库扩展（`internal/gopher-lua/*`） | 76 | 后置（Lua 运行时） |
 | 排行榜（rank cache 9 + scheduler 3 + api 1） | 13 | M6 |
 | 对局注册与公共逻辑（`match_registry_test.go` 11 + `match_presence_test.go` 1） | 12 | M7 |
 | 钱包 `core_wallet_test.go` | 7 | M6 |
-| 算法内部（`internal/skiplist` 11 + `internal/cronexpr` 8） | 19 | 按需（我们自己的数据结构/定时器） |
+| 算法内部（`internal/skiplist` 3 + `internal/cronexpr` 6） | 9 | 按需（我们自己的数据结构/定时器） |
 | 锦标赛（core 4 + api 1） | 5 | M6 |
 | 账号/REST 面（`api_test.go`、`social/google_token_audience_test.go`） | 4 | M1 |
-| 其他（config、metrics、shutdown、socket_ws、party、friend、satori、console ACL） | 16 | 分散 |
+| 其他（config、metrics、shutdown、socket_ws、party、friend、satori、console ACL） | 14 | 分散 |
+
+> **统计口径**：上表数字全部来自 `docs/conformance/upstream-inventory.md`（由 `npm run conformance:inventory` 生成，不手写）。
+> `npm run docs:check` 会把文档里出现的「NNN 个 `Test*`」「NNN 个 `*_test.go`」与本文件的实际统计对账，对不上就失败。
+> 这道闸门有具体来历：最初的 266 是手工统计的，而 PowerShell 的 `Select-String` 默认大小写不敏感，
+> 把 `func testScriptDir(...)` 这类**小写**辅助函数也当成了测试函数，于是虚高 3 条；正确值是 263。
 
 **这条分布对我们的启示（必须写进计划，不能回避）**：上游测试的重心在**存储引擎、匹配器、运行时、算法内部**；REST/身份面的单元测试反而很薄（`api_test.go` 只有 1 个测试函数，因为 REST 是由 proto 生成的，主要靠集成面覆盖）。因此身份与协议层的对齐**不能只靠搬运**，必须补上第二证据源：
 

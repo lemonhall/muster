@@ -26,7 +26,7 @@
 | 1 | 契约测试 ≥3 条通过：`GET /` → 200；`GET /healthcheck` → 200 且 body 精确等于 `{}`；未知路径 → 404 且为 JSON 错误体 | `npm test` | 退出码 0，输出含 3 条契约用例名 |
 | 2 | 类型检查无错误 | `npm run typecheck` | 退出码 0 |
 | 3 | E2E 独立通道：真实启动本地 Worker 进程，经 HTTP 访问（不是直接 import 处理器函数） | `npm run e2e` | 退出码 0，日志含实际监听地址 |
-| 4 | 上游测试清单脚本可生成 266 条目的清单，并记录上游 commit SHA | `npm run conformance:inventory` | 生成 `docs/conformance/upstream-inventory.md`，条目数 = 266 |
+| 4 | 上游测试清单脚本可生成 263 条目的清单，并记录上游 commit SHA | `npm run conformance:inventory` | 生成 `docs/conformance/upstream-inventory.md`，条目数 = 263 |
 | 5 | 覆盖矩阵脚本：每条上游测试必须出现在矩阵中，状态 ∈ {ported, planned, exempt(带理由)}，无理由豁免数为 0 | `npm run conformance:matrix` | 退出码 0，输出 `unreasoned_exemptions=0` |
 | 6 | 文档卫生检查：需求编号连续、计划含 PRD Trace、无模糊词、内部链接无断链 | `python scripts/doc_hygiene_check.py --root .` | 退出码 0 |
 
@@ -65,7 +65,7 @@
 | 3 | 批量写 100 条 = 全部成功或全部失败（无部分写入） | 同上 | 断言全绿 |
 | 4 | 游标分页：造 10,000 条对象，翻页遍历无重复、无遗漏、总数一致 | `npm run e2e` | 退出码 0，断言 total 与去重计数相等 |
 | 5 | 存储索引查询返回集合与顺序与上游一致（多字段 AND/OR、排序、游标） | `npm test` | 断言全绿 |
-| 6 | 覆盖矩阵中 `core_storage_test.go`（55 条）与 `storage_index_test.go`（3 条）相关条目状态不再为 `planned` | `npm run conformance:matrix` | 无 `planned` 残留于 M2 范围 |
+| 6 | 覆盖矩阵中 `core_storage_test.go`（54 条）与 `storage_index_test.go`（3 条）相关条目状态不再为 `planned` | `npm run conformance:matrix` | 无 `planned` 残留于 M2 范围 |
 
 ### M3 实时协议骨架与在线状态（REQ-0001-008/009）
 
@@ -93,7 +93,7 @@
 | 2 | 持久化频道消息在断开重连后可读到（历史），非持久化频道不落盘 | 同上 | 断言全绿 |
 | 3 | 消息编辑/删除：仅发送者可改删；他人操作返回对齐错误 | 同上 | 断言全绿 |
 | 4 | E2E：两个客户端进同一 ROOM，互发 10 条消息，顺序与内容完全一致，第三个客户端后进可读历史 | `npm run e2e` | 退出码 0 |
-| 5 | 覆盖矩阵中 `api_channel` 与频道相关条目状态不再为 `planned` | `npm run conformance:matrix` | 无 `planned` 残留于 M4 范围 |
+| 5 | M4 没有可搬运的上游测试（上游没有频道 API 的测试文件，见 `milestone-scope.json` 里 M4 的说明），对齐证据改由第二证据源承担：矩阵的「第二证据源」段必须出现至少一条频道相关的 swagger 路径引用 | `npm run conformance:matrix` | 第二证据源段含 `/v2/channel` 路径引用 |
 
 ## 计划索引
 
@@ -107,8 +107,8 @@
 
 | Req ID | v1 计划 | 单元/集成测试 | E2E | 证据 | 状态 |
 |---|---|---|---|---|---|
-| REQ-0001-001 | v1-foundation Step1-4 | `tests/unit/*`、`tests/integration/*` | `tests/e2e/toolchain.e2e.test.ts` | 待填 | 🔴 todo |
-| REQ-0001-002 | v1-foundation Step1-2 | `tests/integration/healthcheck.test.ts` | `tests/e2e/toolchain.e2e.test.ts` | 待填 | 🔴 todo |
+| REQ-0001-001 | v1-foundation Step1-4 | `tests/unit/grpc_status.test.ts`（18 条）、`tests/integration/healthcheck.test.ts`（3 条） | `tests/e2e/toolchain.e2e.test.ts`（4 条） | [v1-foundation.md §Evidence A–E](./v1-foundation.md#evidence) | 🟢 done |
+| REQ-0001-002 | v1-foundation Step1-4 | `tests/integration/healthcheck.test.ts`（3 条：根路径 / healthcheck / 未知路径） | `tests/e2e/toolchain.e2e.test.ts`（4 条，含 501 语义） | [v1-foundation.md §Evidence A–E](./v1-foundation.md#evidence) | 🟢 done |
 | REQ-0001-003 | v1-identity-storage M1 | 待填 | 待填 | — | 🔴 todo |
 | REQ-0001-004 | v1-identity-storage M1 | 待填 | 待填 | — | 🔴 todo |
 | REQ-0001-005 | v1-identity-storage M1 | 待填 | 待填 | — | 🔴 todo |

@@ -71,4 +71,97 @@
 
 ## Evidence
 
-（执行时回填：红的输出、绿的输出、各脚本输出）
+执行环境：2026-09-28 21:35（CST），Windows 11 + PowerShell 7，Node v24.12.0，npm 11.11.1，**本机无 Docker、无外部数据库**。上游基线 commit `e920249a3465bea4b8ea2968020c488201b61a8e`。
+
+### A. 反证红：契约测试不是空转（`npm test` → 红）
+
+探针：临时从 `src/index.ts` 摘掉 `GET /` 与 `GET /healthcheck` 两条注册，再跑集成测试（探针跑完即删除，`src/index.ts` 已恢复原状，`git diff` 中不含该文件）。
+
+```
+$ npx vitest run tests/integration/healthcheck.test.ts --reporter=verbose
+
+ × tests/integration/healthcheck.test.ts > M0 契约: 根路径与健康检查 > test_get_root_returns_200 15ms
+   → expected 404 to be 200 // Object.is equality
+ × tests/integration/healthcheck.test.ts > M0 契约: 根路径与健康检查 > test_get_healthcheck_returns_200_with_empty_json_object 5ms
+   → expected 404 to be 200 // Object.is equality
+ ✓ tests/integration/healthcheck.test.ts > M0 契约: 根路径与健康检查 > test_get_unknown_path_returns_404_with_grpc_status_body 4ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+EXIT=1
+```
+
+失败是**具名**的（用例名 + 期望值 vs 实际值），且只有被摘掉实现的那两条变红、404 那条保持绿——说明断言指向具体行为，不是笼统报错。
+
+### B. 绿：单元 + 集成，运行在真实 workerd（`npm test` → 绿）
+
+```
+$ npm test
+
+ ✓ 18 × tests/unit/grpc_status.test.ts（gRPC code → HTTP 状态逐条映射 + 错误体形状）
+ ✓  3 × tests/integration/healthcheck.test.ts（根路径 / healthcheck / 未知路径）
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+EXIT=0
+```
+
+### C. 绿：类型检查（`npm run typecheck` → 绿）
+
+```
+$ npm run typecheck
+> tsc --noEmit
+EXIT=0
+```
+
+### D. 绿：E2E 走真实 HTTP（`npm run e2e` → 绿）
+
+```
+$ npm run e2e
+
+[e2e] muster 本地 Worker 已就绪：http://127.0.0.1:8788 (pid=39972)
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+EXIT=0
+```
+
+`pid=39972` 是 global-setup 真起出来的 `wrangler dev` 子进程（teardown 用 `taskkill /T /F` 连 workerd 一起收掉）。
+
+### E. 反证：E2E 不是进程内直调处理器函数
+
+```
+$ $env:MUSTER_E2E_TARGET='http://127.0.0.1:8799'; npm run e2e
+
+ TypeError: fetch failed
+ Caused by: Error: connect ECONNREFUSED 127.0.0.1:8799
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+EXIT=1
+```
+
+同一个测试文件、同一份代码，只把目标地址换成一个没人监听的端口就整片变红——如果 E2E 是 import 处理器函数做进程内调用，这不可能发生。这是"M0 的 E2E 确实走了网络"的直接证据。
+
+### F. 一致性工装（全部退出码 0）
+
+```
+$ npm run conformance:inventory
+upstream_files=40 upstream_tests=263 upstream_subtest_calls=35 upstream_commit=e920249a3465bea4b8ea2968020c488201b61a8e mode=verify
+
+$ npm run conformance:matrix
+entries=263 ported=0 planned=263 exempt=0 unreasoned_exemptions=0 derived_citations=5
+
+$ npm run docs:check
+docs_hygiene: files=9 requirements=25 plans=3 lines=1366 links=17 inventory_numbers=4 problems=0
+```
+
+`mode=verify` 表示本次是**对账**（拿工作区实际清单比对 `baseline.json`），不是重新生成——上游测试数一旦漂移，脚本以非 0 退出。
+
+### G. M0 边界内的未覆盖项（已知且有意）
+
+| 项 | 状态 | 说明 |
+|---|---|---|
+| Cloudflare 线上部署验收 | 未做 | 本机无 Docker、也没有现成 CF 账号资源；M0 按"本地 workerd 验证"设计，线上验收留给后续版本 |
+| 覆盖矩阵 `ported=0` | 预期 | M0 只立地基，不搬业务测试；`planned=263` 就是全部待搬清单 |
+| CI 云门禁 | 未做 | 按计划 CI 在 v2 引入，M0 的等价物是"每次改动手工跑这套命令" |
