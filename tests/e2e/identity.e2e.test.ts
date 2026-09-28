@@ -161,7 +161,11 @@ describe("M1 E2E: 设备认证与账号（真实 HTTP）", () => {
     const { session } = await authenticateDevice(e2eTenant, freshDeviceId());
 
     // 上游有、本项目还没实现的域 → 诚实地说"这条路有、我们还没做"，不假装 404。
-    const notImplemented = await call("/v2/channel/room-1", {
+    //
+    // 这个例子**必须随里程碑更新**：M1 时这里写的是 `/v2/channel/room-1`，M4 接通频道之后
+    // 它变成 400 `Invalid channel ID.`（路由认得，只是 id 不合法），这条断言当场过期。
+    // 现在拿好友域当例子（REQ-0001-011，M5 之前不该被接通）。
+    const notImplemented = await call("/v2/friend", {
       authorization: `Bearer ${session.token}`,
     });
     await expectStatus(notImplemented, 501, 12, "Not implemented.");

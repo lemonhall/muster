@@ -142,7 +142,7 @@
 | REQ-0001-007 | 存储索引（可搜索的存储字段） | P0 | 按索引字段查询返回与上游一致的集合与顺序。索引实现从"内存 bluge 索引"换成"对权威表的声明式查询"（[ECN-0005](../ecn/ECN-0005-storage-index.md)，含 4 条登记在案的偏差：上游批内残留不复刻、淘汰决胜键、并发用例轮数、查询语法子集） |
 | REQ-0001-008 | 实时协议骨架：WS 握手、Envelope 编解码、ping/pong、错误帧 | P0 | 用上游 proto 生成的编解码器互通；伪造帧返回对齐的错误码。载体是 Durable Object（[ECN-0006](../ecn/ECN-0006-realtime-on-durable-objects.md)）：`/ws` 与 REST 同 Worker，连接挂在会话分片 DO 上 |
 | REQ-0001-009 | 会话注册表与在线状态（status follow/unfollow/presence） | P0 | 多连接下 presence 事件不丢不重；断连清理在超时内完成。状态从上游的进程内 map 换成每租户一个注册表 DO（[ECN-0006](../ecn/ECN-0006-realtime-on-durable-objects.md)，含 5 条登记在案的偏差：保活方式、会话 id、M3 未接通的消息类型、多节点一致性、驱逐恢复的测试覆盖） |
-| REQ-0001-010 | 频道与聊天：ROOM / GROUP / DIRECT，持久化、历史、编辑删除、presence | P0 | 上游 `api_channel` 等价断言全绿；历史分页语义一致 |
+| REQ-0001-010 | 频道与聊天：ROOM / GROUP / DIRECT，持久化、历史、编辑删除、presence | P0 | 上游 `api_channel` 等价断言全绿；历史分页语义一致。频道成员与消息从上游的进程内 tracker + Postgres 单表换成**每频道一个 DO**（[ECN-0007](../ecn/ECN-0007-channels-on-durable-objects.md)，含 7 条登记在案的偏差：游标编码、时间戳精度与单调性、私聊请求通知后置 M5、群组成员资格后置 M5、巡检闹钟、单点上限、断开清理的尽力而为语义） |
 | REQ-0001-011 | 好友 / 关注 / 拉黑 | P1 | 上游 `core_friend` 等价断言全绿 |
 | REQ-0001-012 | 群组：创建、加入、角色、踢人、封禁、列表 | P1 | 上游 `api_group` 等价断言全绿 |
 | REQ-0001-013 | 通知与收件箱 | P1 | 通知列表/删除语义与上游一致 |

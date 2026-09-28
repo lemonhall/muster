@@ -60,10 +60,10 @@
 2. ~~**绿**：引入 proto 生成编解码器 + 实现 `/ws` 与 `ping`/`pong`/`error`，跑到绿。~~ ✅
 3. ~~**红**：写会话注册表与状态订阅测试（两连接 presence 不丢不重、断连清理）。~~ ✅
 4. ~~**绿**：实现会话分片 DO + 注册表 DO + 状态订阅，跑到绿；`npm run e2e` 覆盖 M3 场景。~~ ✅
-5. **红**：写频道测试（三类 join/leave/presence、持久化开关、编辑删除权限）。
-6. **绿**：实现频道 DO 与消息路径，跑到绿。
-7. **E2E（M4）**：两客户端 ROOM 互发 10 条 + 第三客户端读历史。
-8. **覆盖矩阵回填**：`api_channel` 与频道相关条目推进状态。
+5. ~~**红**：写频道测试（三类 join/leave/presence、持久化开关、编辑删除权限）。~~ ✅（6 个文件 66 条）
+6. ~~**绿**：实现频道 DO 与消息路径，跑到绿。~~ ✅
+7. ~~**E2E（M4）**：两客户端 ROOM 互发 10 条 + 第三客户端读历史。~~ ✅（3 条，含非持久化房间）
+8. ~~**覆盖矩阵回填**：`api_channel` 与频道相关条目推进状态。~~ ✅（第二证据源段出现 `/v2/channel/{channelId}`）
 
 ## Risks
 
@@ -124,3 +124,49 @@
 
 环境证据：E2E 日志打印 `[e2e] muster 本地 Worker 已就绪：http://127.0.0.1:8788`，
 目标进程是 `wrangler dev --local`（数据落在 `.wrangler/state`），**不连接任何 Cloudflare 账号资源**。
+
+### M4-A 频道标识符与帧校验（REQ-0001-010）
+
+`npx vitest run tests/integration/channel` → 退出码 0（**6 files / 66 tests**：
+`ids` 14 / `validation` 16 / `join` 8 / `messages` 10 / `presence` 6 / `history` 12）。
+
+- **频道 id 的两条路**：`buildChannelId`（建频道，查控制字符与合法 UTF-8）与 `channelIdToStream`
+  （解析，只查 1..64 字节）是**分开**的，因为上游 `BuildChannelId` 比 `ChannelIdToStream` 严。
+  合并两者会让一句本该是"你得先加入这个频道"的话变成"频道 id 非法"。
+- **字节不是字符**：64 字节边界由两条钉住——64 个 ASCII 过、65 个不过；多字节房间名按字节数算。
+- **校验顺序**（`validation`）：join 的 target 先于查库；send 的频道 id 先于 content；
+  update/remove 的 **message id 先于频道 id**；service 失败回 `BAD_INPUT` 并**关连接**，
+  运行时失败保留自己的错误码。
+- **content 必须是 JSON 对象**：数组与标量都拒。E2E 首版就是写成了裸字符串，被拒并关连接——
+  这条现在同时钉在集成测试与 E2E 工装的注释里。
+
+### M4-B 频道语义（REQ-0001-010）
+
+- **join**：三类频道的回执形状、`self` 与 `presences` 的差别（**新加入者看不到自己**）、
+  重复 join 会把该成员算进快照（上游那段特判）、hidden 成员不进快照与事件、
+  非持久化 join 回 `persistence=false`、群组 join 被拒并关连接。
+- **消息**：广播给其他成员、回执给发送者，且**发送者先收到自己那条广播再收到回执**；
+  改删只有发送者本人能做（他人的操作回 `Could not find message to update in channel history`）；
+  非持久化频道的 send 与 update 都不碰历史；hidden 成员照收广播。
+- **presence**：leave 回空信封并广播 leave、重复 leave 是安静回执、hidden 成员离开不广播、
+  **关连接摘掉该会话在所有频道的 presence**（一条连接进两个频道 → 两条 leave）、
+  同一房间名在另一个租户是另一个频道。
+- **历史**：完整线格式（包装类型 `code` 与 `persistent` 恒在线上）、`limit` 缺省 **1**、
+  正反两个方向的翻页与回退、跨频道与跨方向的游标被拒、`limit` 越界、频道 id 非法、
+  房间任何人可读、私聊外人读不到（`Channel not found.`）、群组（`Group not found.`）、未鉴权 401。
+
+### M4-C 端到端（REQ-0001-010，M4 DoD 4）
+
+`npm run e2e` → 退出码 0；`tests/e2e/realtime-chat.e2e.test.ts`（3 条）跑在真实
+`wrangler dev --local` 进程上：
+
+1. 两个客户端进同一个 ROOM，交替互发 10 条：**两边各自看到的 content 序列与 message_id 序列
+   逐位相同**，发送者在两者之间交替、`channel_id` 一致、10 条都带 `persistent`；
+2. 第三个客户端后进：join 时看到房里已有的两位，再用
+   `GET /v2/channel/{channelId}?limit=100` 读到同一份历史（顺序、`message_id`、发送者、用户名、
+   `room_name`、`persistent` 全部对齐）；
+3. 非持久化房间：广播照发（帧上 `persistent=false`），历史里连 `messages` 字段都不出现。
+
+时间预算：本地 `wrangler dev` 的 ProxyWorker 每个往返约 1.4s（M2 Review 的记录），所以这一组用例
+按分钟给预算（`{ timeout: 180_000 }`），单文件实测 103s。工装另加了 error 帧的 `code` 与 `message`
+渲染（`tests/e2e/ws-helpers.ts`）：E2E 失败时先看清服务端说了什么，再谈定位。

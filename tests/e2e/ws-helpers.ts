@@ -89,7 +89,13 @@ export async function waitForFrame(
 }
 
 function describe(envelope: Envelope): string {
-  return `${envelope.message.case ?? "(空)"}${envelope.cid === "" ? "" : ` cid=${envelope.cid}`}`;
+  const cid = envelope.cid === "" ? "" : ` cid=${envelope.cid}`;
+  // 错误帧必须把 code 与 message 也打出来：只说"收到一帧 error"，排查就从读日志变成猜。
+  if (envelope.message.case === "error") {
+    const error = envelope.message.value;
+    return `error code=${error.code} message=${error.message}${cid}`;
+  }
+  return `${envelope.message.case ?? "(空)"}${cid}`;
 }
 
 export function ping(cid: string): Envelope {

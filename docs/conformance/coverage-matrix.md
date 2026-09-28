@@ -372,7 +372,7 @@
 |---|---|
 | `apigrpc/apigrpc.swagger.json::/healthcheck` | `tests/integration/healthcheck.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/account/authenticate/device` | `tests/helpers/identity-fixtures.ts` |
-| `apigrpc/apigrpc.swagger.json::/v2/channel/{channelId}` | `tests/integration/channel/history.test.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/channel/{channelId}` | `tests/e2e/realtime-chat.e2e.test.ts`、`tests/integration/channel/history.test.ts` |
 | `server/api_account.go::GetAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_account.go::UpdateAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_authenticate.go::AuthenticateCustom` | `tests/helpers/identity-fixtures.ts` |
@@ -394,7 +394,7 @@
 | `server/core_channel.go::BuildChannelId` | `tests/integration/channel/ids.test.ts` |
 | `server/core_channel.go::ChannelIdToStream` | `tests/integration/channel/ids.test.ts` |
 | `server/core_channel.go::ChannelMessageSend` | `tests/integration/channel/messages.test.ts` |
-| `server/core_channel.go::ChannelMessagesList` | `tests/integration/channel/history.test.ts` |
+| `server/core_channel.go::ChannelMessagesList` | `tests/e2e/realtime-chat.e2e.test.ts`、`tests/integration/channel/history.test.ts` |
 | `server/core_channel.go::StreamToChannelId` | `tests/integration/channel/ids.test.ts` |
 | `server/core_session.go::SessionLogout` | `tests/helpers/identity-fixtures.ts`、`tests/unit/tenancy_keys.test.ts` |
 | `server/core_session.go::SessionRefresh` | `tests/helpers/identity-fixtures.ts` |
@@ -407,7 +407,7 @@
 | `server/pipeline_channel.go::Pipeline.channelJoin` | `tests/integration/channel/join.test.ts`、`tests/integration/channel/validation.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelLeave` | `tests/integration/channel/validation.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelMessageRemove` | `tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
-| `server/pipeline_channel.go::Pipeline.channelMessageSend` | `tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
+| `server/pipeline_channel.go::Pipeline.channelMessageSend` | `tests/e2e/realtime-chat.e2e.test.ts`、`tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelMessageUpdate` | `tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
 | `server/pipeline_ping.go::Pipeline.ping` | `tests/integration/realtime/pipeline-basics.test.ts` |
 | `server/pipeline_ping.go::Pipeline.pong` | `tests/integration/realtime/pipeline-basics.test.ts` |
@@ -432,4 +432,4 @@
 | `server/tracker.go::StreamModeChannel` | `tests/integration/channel/ids.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=eb65450048d38554f3cd86328ff9e8c08cd0881467c1f536981076d0069a77a7 -->
+<!-- integrity: body_sha256=5f5bbf4640f526e793fa2c19a16d38bcc0e0b363d50fce36875ef3060e8bd277 -->

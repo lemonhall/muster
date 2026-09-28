@@ -4,7 +4,7 @@
 |---|---|
 | 版本 | v1 |
 | 日期 | 2026-09-28 |
-| 状态 | 计划完成，执行中 |
+| 状态 | 已完成（v1 = M0–M4，全部门禁绿；完成信号见各里程碑 Evidence 与 Review 记录） |
 | 成本档位 | `standard`（普通功能交付，最多 3 轮 Review） |
 | 愿景 | [../prd/VISION.md](../prd/VISION.md) |
 | 需求基线 | [PRD-0001](../prd/PRD-0001-muster-parity.md) |
@@ -90,13 +90,13 @@
 
 **DoD**
 
-| # | DoD | 验证命令 | 预期 |
-|---|---|---|---|
-| 1 | 三类频道的 join/leave 与 presence 事件语义对齐上游 | `npm test` | 断言全绿 |
-| 2 | 持久化频道消息在断开重连后可读到（历史），非持久化频道不落盘 | 同上 | 断言全绿 |
-| 3 | 消息编辑/删除：仅发送者可改删；他人操作返回对齐错误 | 同上 | 断言全绿 |
-| 4 | E2E：两个客户端进同一 ROOM，互发 10 条消息，顺序与内容完全一致，第三个客户端后进可读历史 | `npm run e2e` | 退出码 0 |
-| 5 | M4 没有可搬运的上游测试（上游没有频道 API 的测试文件，见 `milestone-scope.json` 里 M4 的说明），对齐证据改由第二证据源承担：矩阵的「第二证据源」段必须出现至少一条频道相关的 swagger 路径引用 | `npm run conformance:matrix` | 第二证据源段含 `/v2/channel` 路径引用 |
+| # | DoD | 验证命令 | 预期 | 状态 |
+|---|---|---|---|---|
+| 1 | 三类频道的 join/leave 与 presence 事件语义对齐上游 | `npm test` | 断言全绿 | ✅ done |
+| 2 | 持久化频道消息在断开重连后可读到（历史），非持久化频道不落盘 | 同上 | 断言全绿 | ✅ done |
+| 3 | 消息编辑/删除：仅发送者可改删；他人操作返回对齐错误 | 同上 | 断言全绿 | ✅ done |
+| 4 | E2E：两个客户端进同一 ROOM，互发 10 条消息，顺序与内容完全一致，第三个客户端后进可读历史 | `npm run e2e` | 退出码 0 | ✅ done |
+| 5 | M4 没有可搬运的上游测试（上游没有频道 API 的测试文件，见 `milestone-scope.json` 里 M4 的说明），对齐证据改由第二证据源承担：矩阵的「第二证据源」段必须出现至少一条频道相关的 swagger 路径引用 | `npm run conformance:matrix` | 第二证据源段含 `/v2/channel` 路径引用 | ✅ done |
 
 ## 计划索引
 
@@ -120,7 +120,7 @@
 | REQ-0001-007 | v1-identity-storage M2 | `tests/integration/storage/`（索引侧 15 条：`index-write` 4 条 = 上游 4 个 t.Run、`index-list` 6 条 = 上游 4 个 t.Run + 删除 + 偏差 1、`index-cursor` 5 条 = 游标与校验边界） | 无独立 E2E（索引是运行时而接口，没有公开 REST 端点；DoD 5 要求的是 `npm test`） | [v1-identity-storage.md §Evidence M2-C/D](./v1-identity-storage.md#evidence)、[ECN-0004](../ecn/ECN-0004-storage-cursor-encoding.md)、[ECN-0005](../ecn/ECN-0005-storage-index.md) | 🟢 done |
 | REQ-0001-008 | v1-realtime-chat M3 | `tests/integration/realtime/envelope.test.ts`（8 条）、`handshake.test.ts`（7 条）、`pipeline-basics.test.ts`（7 条）、`session-lifecycle.test.ts`（7 条中的元数据/心跳组） | `tests/e2e/realtime.e2e.test.ts`（5 条中的两种线格式 ping/pong 与未接通类型） | [v1-realtime-chat.md §Evidence M3-A/C](./v1-realtime-chat.md#evidence)、[ECN-0006](../ecn/ECN-0006-realtime-on-durable-objects.md) | 🟢 done |
 | REQ-0001-009 | v1-realtime-chat M3 | `tests/integration/realtime/pipeline-status.test.ts`（13 条）、`registry.test.ts`（7 条：真实 DO + 真实 WebSocket）、`session-lifecycle.test.ts`（7 条：心跳 / 兜底清理 / 幂等清理） | `tests/e2e/realtime.e2e.test.ts`（订阅 → 状态变更 → 上下线通知；后到订阅者的当前快照） | [v1-realtime-chat.md §Evidence M3-B/C](./v1-realtime-chat.md#evidence)、[ECN-0006](../ecn/ECN-0006-realtime-on-durable-objects.md) | 🟢 done |
-| REQ-0001-010 | v1-realtime-chat M4 | 待填 | 待填 | — | 🔴 todo |
+| REQ-0001-010 | v1-realtime-chat M4 | `tests/integration/channel/`（6 个文件 / 66 条：`ids` 14 条 = 频道 id 构造与解析、字节级限长、解析比建频道更宽松；`validation` 16 条 = 五类帧的校验顺序与错误码；`join` 8 条 = 三类频道 join/leave、看不见自己、hidden、persistence；`messages` 10 条 = 广播与回执顺序、改删权限、非持久化不落盘；`presence` 6 条 = leave 事件、幂等 leave、hidden 离开、断开清理、跨租户同名房间；`history` 12 条 = 线格式、limit 缺省 1、正反翻页、游标、准入、未鉴权） | `tests/e2e/realtime-chat.e2e.test.ts`（3 条：两客户端同房间互发 10 条且顺序与内容一致、第三个客户端后进读历史、非持久化房间不落盘） | [v1-realtime-chat.md §Evidence M4-A/B/C](./v1-realtime-chat.md#evidence)、[ECN-0007](../ecn/ECN-0007-channels-on-durable-objects.md) | 🟢 done |
 
 > 任何 `待填` / `—` 都是断链，禁止在存在断链的情况下宣称对应需求已交付。
 
@@ -134,6 +134,7 @@
 | [ECN-0004](../ecn/ECN-0004-storage-cursor-encoding.md) | 存储游标改用 base64url(JSON) 而不是 gob | 已生效 | REQ-0001-006, REQ-0001-007 | `src/domain/storage/cursor.ts`、`src/domain/storage/index/cursor.ts` |
 | [ECN-0005](../ecn/ECN-0005-storage-index.md) | 存储索引从 bluge 内存索引换成对权威表的声明式查询 | 已生效 | REQ-0001-007 | `migrations/0002_storage.sql`、`src/domain/storage/index/*.ts` |
 | [ECN-0006](../ecn/ECN-0006-realtime-on-durable-objects.md) | 实时层建在 Durable Object 上（会话分片 + 每租户注册表） | 已生效 | REQ-0001-008, REQ-0001-009 | `src/durable/{session-shard,session-registry,session-store}.ts`、`src/realtime/*.ts`、`src/http/routes/socket.ts`、`wrangler.jsonc` |
+| [ECN-0007](../ecn/ECN-0007-channels-on-durable-objects.md) | 频道与会话内聊天建在"每频道一个 Durable Object"上 | 已生效 | REQ-0001-010 | `src/durable/{channel,channel-core,channel-members,channel-messages,channel-history,channel-access,channel-fanout,session-channels}.ts`、`src/realtime/{channel,channel-ids,channel-cursor,pipeline-channel}.ts`、`src/http/routes/channel.ts`、`wrangler.jsonc` |
 
 ## Tashan Review 记录
 
@@ -145,16 +146,36 @@
 | M1 | [../reviews/v1-M1.md](../reviews/v1-M1.md) |
 | M2 | [../reviews/v1-M2.md](../reviews/v1-M2.md) |
 | M3 | [../reviews/v1-M3.md](../reviews/v1-M3.md) |
+| M4 | [../reviews/v1-M4.md](../reviews/v1-M4.md) |
+
 ## Tashan Trigger Audit
 
 ```markdown
 - expected_review_triggers: v_doc_writing_done, v_milestone_done(M0..M4)
-- actual_review_runs: 5 (v_doc_writing_done, v_milestone_done(M0) 同模型自评, v_milestone_done(M1) 同模型自评, v_milestone_done(M2) 同模型自评, v_milestone_done(M3) 同模型自评)
+- actual_review_runs: 6 (v_doc_writing_done, v_milestone_done(M0) 同模型自评, v_milestone_done(M1) 同模型自评, v_milestone_done(M2) 同模型自评, v_milestone_done(M3) 同模型自评, v_milestone_done(M4) 同模型自评)
 - skipped_triggers: 0
 - skip_reasons: 独立子代理派发不通（本机限制），降级为同模型自评 + 命令证据
 - mitigation: 每个里程碑完成前必须补 Review 记录，否则不输出完成信号；把可自动化的检查固化成脚本门禁（覆盖矩阵、文档卫生、workerd 运行时、E2E 反证），降低对人工 Review 的依赖
 ```
 
-## 差异列表（v1 结束后回填）
+## 差异列表（v1 结束时回填）
 
-待填。
+v1 与上游的**全部**刻意差异都登记在 ECN 里，这里只做索引与"客户端看不看得见"的分类。
+
+| ECN | 差异 | 客户端可见？ | 处置 |
+|---|---|---|---|
+| [ECN-0001](../ecn/ECN-0001-multi-tenancy.md) | 一个部署运营多个游戏：数据按租户隔离，每租户一套 server key 与签名密钥 | 可见（请求必须带本租户的 server key） | 已生效；上游没有对应能力，属**增强** |
+| [ECN-0002](../ecn/ECN-0002-password-hash.md) | 密码哈希用 PBKDF2-SHA256 而不是 bcrypt | 不可见 | 已生效；代价是**不能**把上游库里的密码哈希直接搬过来 |
+| [ECN-0003](../ecn/ECN-0003-www-authenticate-realm.md) | 401 挑战头的 realm 用本项目命名 | 可见（仅文案差异） | 已生效 |
+| [ECN-0004](../ecn/ECN-0004-storage-cursor-encoding.md) | 存储游标是 base64url(JSON) 而不是 gob | 不可见（游标不透明） | 已生效；代价是本项目与上游的游标不能互换 |
+| [ECN-0005](../ecn/ECN-0005-storage-index.md) | 存储索引从内存索引换成对权威表的声明式查询 | 不可见 | 已生效 |
+| [ECN-0006](../ecn/ECN-0006-realtime-on-durable-objects.md) | 实时层建在 DO 上（会话分片 + 每租户注册表）；保活从 WS 控制帧换成心跳 + 巡检 | 部分可见（收不到服务端控制帧 ping，也不会因为长时间不出声被断开） | 已生效；含 5 条子偏差 |
+| [ECN-0007](../ecn/ECN-0007-channels-on-durable-objects.md) | 频道建在"每频道一个 DO"上；消息时间戳毫秒且频道内单调；巡检闹钟 | 部分可见（同毫秒连发时时间戳被推后；私聊首次加入少一条通知） | 已生效；含 7 条子偏差 |
+
+两处**临时**状态也一并说清，免得被读成"永远如此"：
+
+1. M3 那条"未接通的消息类型一律 `UNRECOGNIZED_PAYLOAD` + 关连接"（ECN-0006 偏差 3）已经不是全貌：
+   M4 把频道五类帧接通了；对局、派对、RPC、流等类型仍留待后续里程碑（M6–M8）。
+2. v1 全程只在**本地 workerd** 上验证，没有部署到真实 Cloudflare 账号（E2E 不许碰远端资源的预算约束），
+   因此 DO 的休眠/唤醒、真实边缘的跨实例投递时延、平台驱逐后的恢复这三件事仍属未验证，
+   逐条登记在 [v1-M3.md](../reviews/v1-M3.md) 与 [v1-M4.md](../reviews/v1-M4.md) 的残余风险里。
