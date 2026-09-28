@@ -10,7 +10,8 @@ import fs from "node:fs";
 // 这一条直接对应计划里的反作弊条款：清单与矩阵一旦被手工编辑导致条目缺失，
 // 脚本必须以非 0 退出。
 const MARKER = "integrity";
-const FOOTER_PATTERN = new RegExp(`\\n<!-- ${MARKER}: body_sha256=([0-9a-f]{64}) -->\\n?$`);
+const FOOTER_PREFIX = `\n<!-- ${MARKER}: body_sha256=`;
+const FOOTER_PATTERN = new RegExp(`${FOOTER_PREFIX}([0-9a-f]{64}) -->\\n$`);
 
 export function sha256(text) {
   return createHash("sha256").update(text, "utf8").digest("hex");
@@ -32,7 +33,8 @@ export function verifyIntegrity(file) {
   if (match === null) {
     return { ok: false, existed: true, reason: "缺少完整性标记（疑似被手工编辑）" };
   }
-  const body = text.slice(0, match.index);
+  // 标记行之前的那个换行属于正文末尾，必须一起参与哈希，否则校验与写入会对不上。
+  const body = text.slice(0, match.index + 1);
   if (sha256(body) !== match[1]) {
     return { ok: false, existed: true, reason: "正文与完整性标记不一致（疑似被手工编辑）" };
   }

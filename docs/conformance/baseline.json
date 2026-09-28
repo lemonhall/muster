@@ -1,0 +1,1068 @@
+{
+  "schema": 1,
+  "upstream": {
+    "commit": "e920249a3465bea4b8ea2968020c488201b61a8e",
+    "commit_date": "2026-09-22T16:16:45+01:00",
+    "commit_subject": "Return 404 on console directory listings. (#2561)"
+  },
+  "totals": {
+    "files": 40,
+    "tests": 263,
+    "subtest_calls": 35,
+    "lines": 14856
+  },
+  "entries": [
+    {
+      "file": "console/acl/acl_test.go",
+      "name": "Test_Permission"
+    },
+    {
+      "file": "internal/cronexpr/cronexpr_test.go",
+      "name": "TestBackwardExpressions"
+    },
+    {
+      "file": "internal/cronexpr/cronexpr_test.go",
+      "name": "TestExpressions"
+    },
+    {
+      "file": "internal/cronexpr/cronexpr_test.go",
+      "name": "TestInterval_Interval60Issue"
+    },
+    {
+      "file": "internal/cronexpr/cronexpr_test.go",
+      "name": "TestNextN"
+    },
+    {
+      "file": "internal/cronexpr/cronexpr_test.go",
+      "name": "TestNextN_every5min"
+    },
+    {
+      "file": "internal/cronexpr/cronexpr_test.go",
+      "name": "TestZero"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckBool"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckChannel"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckFunction"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckInt"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckInt64"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckNumber"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckOption"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckString"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckTable"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckThread"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckType"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckTypes"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestCheckUserData"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestLoadFileForEmptyFile"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestLoadFileForShebang"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestOptBool"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestOptChannel"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestOptFunction"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestOptInt"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestOptInt64"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestOptNumber"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestOptString"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestOptTable"
+    },
+    {
+      "file": "internal/gopher-lua/auxlib_test.go",
+      "name": "TestOptUserData"
+    },
+    {
+      "file": "internal/gopher-lua/channellib_test.go",
+      "name": "TestCancelChannelReceive"
+    },
+    {
+      "file": "internal/gopher-lua/channellib_test.go",
+      "name": "TestCancelChannelReceive2"
+    },
+    {
+      "file": "internal/gopher-lua/channellib_test.go",
+      "name": "TestChannelMake"
+    },
+    {
+      "file": "internal/gopher-lua/channellib_test.go",
+      "name": "TestChannelSelect1"
+    },
+    {
+      "file": "internal/gopher-lua/channellib_test.go",
+      "name": "TestChannelSelect2"
+    },
+    {
+      "file": "internal/gopher-lua/channellib_test.go",
+      "name": "TestChannelSelect3"
+    },
+    {
+      "file": "internal/gopher-lua/channellib_test.go",
+      "name": "TestChannelSelect4"
+    },
+    {
+      "file": "internal/gopher-lua/channellib_test.go",
+      "name": "TestChannelSelectError"
+    },
+    {
+      "file": "internal/gopher-lua/channellib_test.go",
+      "name": "TestChannelSendReceive1"
+    },
+    {
+      "file": "internal/gopher-lua/mathlib_test.go",
+      "name": "TestMathRandom"
+    },
+    {
+      "file": "internal/gopher-lua/mathlib_test.go",
+      "name": "TestMathRandomConcurrencyRace"
+    },
+    {
+      "file": "internal/gopher-lua/mathlib_test.go",
+      "name": "TestMathRandomSeeded"
+    },
+    {
+      "file": "internal/gopher-lua/mathlib_test.go",
+      "name": "TestMathRandomUnseeded"
+    },
+    {
+      "file": "internal/gopher-lua/script_test.go",
+      "name": "TestGlua"
+    },
+    {
+      "file": "internal/gopher-lua/script_test.go",
+      "name": "TestLocalVarFree"
+    },
+    {
+      "file": "internal/gopher-lua/script_test.go",
+      "name": "TestLua"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestCallStackOverflowWhenAutoGrow"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestCallStackOverflowWhenFixed"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestConcat"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestContextCancel"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestContextTimeout"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestContextWithCroutine"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestCoroutineApi1"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestGetAndReplace"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestLStateIsClosed"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestObjLen"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestPCall"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestPCallAfterFail"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestRegistryAutoGrow"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestRegistryFixedOverflow"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestRemove"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestSkipOpenLibs"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestToChannel"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestToFunction"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestToInt"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestToInt64"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestToNumber"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestToString"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestToTable"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestToUserData"
+    },
+    {
+      "file": "internal/gopher-lua/state_test.go",
+      "name": "TestUninitializedVarAccess"
+    },
+    {
+      "file": "internal/gopher-lua/table_test.go",
+      "name": "TestTableAppend"
+    },
+    {
+      "file": "internal/gopher-lua/table_test.go",
+      "name": "TestTableForEach"
+    },
+    {
+      "file": "internal/gopher-lua/table_test.go",
+      "name": "TestTableInsert"
+    },
+    {
+      "file": "internal/gopher-lua/table_test.go",
+      "name": "TestTableLen"
+    },
+    {
+      "file": "internal/gopher-lua/table_test.go",
+      "name": "TestTableLenType"
+    },
+    {
+      "file": "internal/gopher-lua/table_test.go",
+      "name": "TestTableMaxN"
+    },
+    {
+      "file": "internal/gopher-lua/table_test.go",
+      "name": "TestTableNewLTable"
+    },
+    {
+      "file": "internal/gopher-lua/table_test.go",
+      "name": "TestTableRawGetH"
+    },
+    {
+      "file": "internal/gopher-lua/table_test.go",
+      "name": "TestTableRawSetH"
+    },
+    {
+      "file": "internal/gopher-lua/table_test.go",
+      "name": "TestTableRawSetInt"
+    },
+    {
+      "file": "internal/gopher-lua/table_test.go",
+      "name": "TestTableRemove"
+    },
+    {
+      "file": "internal/satori/satori_test.go",
+      "name": "TestSatoriClient_EventsPublish"
+    },
+    {
+      "file": "internal/satori/satori_test.go",
+      "name": "TestSatoriClientMemory"
+    },
+    {
+      "file": "internal/skiplist/skiplist_chaos_test.go",
+      "name": "TestSkiplistChaos"
+    },
+    {
+      "file": "internal/skiplist/skiplist_test.go",
+      "name": "TestInt"
+    },
+    {
+      "file": "internal/skiplist/skiplist_test.go",
+      "name": "TestRank"
+    },
+    {
+      "file": "server/api_leaderboard_test.go",
+      "name": "TestApiLeaderboard"
+    },
+    {
+      "file": "server/api_test.go",
+      "name": "TestWWWAuthenticateHeaderOnUnauthenticated"
+    },
+    {
+      "file": "server/api_tournament_test.go",
+      "name": "TestApiTournamentHaystack"
+    },
+    {
+      "file": "server/config_test.go",
+      "name": "TestGoogleAuthConfigCloneCopiesClientIDs"
+    },
+    {
+      "file": "server/config_test.go",
+      "name": "TestParseArgsGoogleAuthClientIDs"
+    },
+    {
+      "file": "server/console_user_add_acl_test.go",
+      "name": "TestAddUserRejectsInvalidACLBeforeSideEffects"
+    },
+    {
+      "file": "server/console_user_add_acl_test.go",
+      "name": "TestValidateConsoleUserACLGrant"
+    },
+    {
+      "file": "server/console_user_reset_password_acl_test.go",
+      "name": "TestResetUserPasswordAuthorizesTargetACLBeforeUpdate"
+    },
+    {
+      "file": "server/console_user_reset_password_acl_test.go",
+      "name": "TestValidateConsoleUserTargetACL"
+    },
+    {
+      "file": "server/core_friend_test.go",
+      "name": "TestServer_ListFriendsOfFriends"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestNonOCCAuthoritative"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestNonOCCNonAuthoritative"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestOCCNotExistsAuthoritative"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestOCCNotExistsNonAuthoritative"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestOCCWriteAuthoritative"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestOCCWriteNonAuthoritative"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestOCCWriteSameValueCorrectVersionSuccess"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestOCCWriteSameValueWithOutdatedVersionFail"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageFetchPipelineGlobalPrivate"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageFetchPipelineUserOtherPublic"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageFetchPipelineUserOtherPublicMixed"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageFetchPipelineUserOtherRead"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageFetchPipelineUserPrivate"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageFetchPipelineUserPublic"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageFetchPipelineUserRead"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageFetchRuntimeGlobalPrivate"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageFetchRuntimeMixed"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageFetchRuntimeUserPrivate"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageListNoRepeats"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageListPipelineUserOther"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageListPipelineUserSelf"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageListRuntimeUser"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageOverrwriteEmptyAndNonEmptyVersions"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageReadObjectsAllDistinctArgs"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageReadObjectsOneDistinctArg"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageReadObjectsSameArgs"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageReadObjectsTwoDistinctArgs"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageRemovePipelineUserDenied"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageRemovePipelineUserWrite"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageRemoveRuntimeGlobalIfMatch"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageRemoveRuntimeGlobalIfMatchNotExists"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageRemoveRuntimeGlobalIfMatchRejected"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageRemoveRuntimeGlobalPrivate"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageRemoveRuntimeGlobalPublic"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageRemoveRuntimeUserPrivate"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageRemoveRuntimeUserPublic"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWritePipelineIfMatchExists"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWritePipelineIfMatchExistsFail"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWritePipelineIfMatchNotExists"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWritePipelineIfNoneMatchExists"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWritePipelineIfNoneMatchNotExists"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWritePipelinePermissionFail"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWritePipelineUserMultiple"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWritePipelineUserMultipleSameKey"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWritePipelineUserSingle"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWriteRuntimeGlobalMultipleIfMatchNotExists"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWriteRuntimeGlobalMultipleSameKey"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWriteRuntimeGlobalSingle"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWriteRuntimeGlobalSingleIfMatchExists"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWriteRuntimeGlobalSingleIfMatchExistsFail"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWriteRuntimeGlobalSingleIfMatchNotExists"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWriteRuntimeGlobalSingleIfNoneMatchExists"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWriteRuntimeGlobalSingleIfNoneMatchNotExists"
+    },
+    {
+      "file": "server/core_storage_test.go",
+      "name": "TestStorageWriteRuntimeUserMultiple"
+    },
+    {
+      "file": "server/core_tournament_test.go",
+      "name": "TestTournamentEveryDayMonThruFri"
+    },
+    {
+      "file": "server/core_tournament_test.go",
+      "name": "TestTournamentEveryFourteenDaysFromFirst"
+    },
+    {
+      "file": "server/core_tournament_test.go",
+      "name": "TestTournamentNowIsBeforeStart"
+    },
+    {
+      "file": "server/core_tournament_test.go",
+      "name": "TestTournamentNowIsResetTime"
+    },
+    {
+      "file": "server/core_wallet_test.go",
+      "name": "TestUpdateWalletMultiUser"
+    },
+    {
+      "file": "server/core_wallet_test.go",
+      "name": "TestUpdateWalletRepeatedSingleUser"
+    },
+    {
+      "file": "server/core_wallet_test.go",
+      "name": "TestUpdateWalletSingleUser"
+    },
+    {
+      "file": "server/core_wallet_test.go",
+      "name": "TestUpdateWalletsMultiUser"
+    },
+    {
+      "file": "server/core_wallet_test.go",
+      "name": "TestUpdateWalletsMultiUserSharedChangeset"
+    },
+    {
+      "file": "server/core_wallet_test.go",
+      "name": "TestUpdateWalletsMultiUserSharedChangesetDeductions"
+    },
+    {
+      "file": "server/core_wallet_test.go",
+      "name": "TestUpdateWalletsSingleUser"
+    },
+    {
+      "file": "server/leaderboard_rank_cache_test.go",
+      "name": "TestLocalLeaderboardRankCache_Delete"
+    },
+    {
+      "file": "server/leaderboard_rank_cache_test.go",
+      "name": "TestLocalLeaderboardRankCache_DeleteLeaderboard"
+    },
+    {
+      "file": "server/leaderboard_rank_cache_test.go",
+      "name": "TestLocalLeaderboardRankCache_ExpirySeparation"
+    },
+    {
+      "file": "server/leaderboard_rank_cache_test.go",
+      "name": "TestLocalLeaderboardRankCache_Fill"
+    },
+    {
+      "file": "server/leaderboard_rank_cache_test.go",
+      "name": "TestLocalLeaderboardRankCache_Insert_Ascending"
+    },
+    {
+      "file": "server/leaderboard_rank_cache_test.go",
+      "name": "TestLocalLeaderboardRankCache_Insert_Descending"
+    },
+    {
+      "file": "server/leaderboard_rank_cache_test.go",
+      "name": "TestLocalLeaderboardRankCache_Insert_Existing"
+    },
+    {
+      "file": "server/leaderboard_rank_cache_test.go",
+      "name": "TestLocalLeaderboardRankCache_LeaderboardSeparation"
+    },
+    {
+      "file": "server/leaderboard_rank_cache_test.go",
+      "name": "TestLocalLeaderboardRankCache_TrimExpired"
+    },
+    {
+      "file": "server/leaderboard_scheduler_test.go",
+      "name": "TestLeaderboardScheduler"
+    },
+    {
+      "file": "server/leaderboard_scheduler_test.go",
+      "name": "TestLeaderboardSchedulerEndedTournamentHidesLiveExpiry"
+    },
+    {
+      "file": "server/leaderboard_scheduler_test.go",
+      "name": "TestLeaderboardSchedulerEndedTournamentHidesSuccessorExpiry"
+    },
+    {
+      "file": "server/match_presence_test.go",
+      "name": "TestMatchPresenceList"
+    },
+    {
+      "file": "server/match_registry_test.go",
+      "name": "TestEncode"
+    },
+    {
+      "file": "server/match_registry_test.go",
+      "name": "TestEncodeDecode"
+    },
+    {
+      "file": "server/match_registry_test.go",
+      "name": "TestEncodeDecodePresences"
+    },
+    {
+      "file": "server/match_registry_test.go",
+      "name": "TestMatchRegistryAuthoritativeMatchAndJoin"
+    },
+    {
+      "file": "server/match_registry_test.go",
+      "name": "TestMatchRegistryAuthoritativeMatchAndListAllMatchesWithQueryStar"
+    },
+    {
+      "file": "server/match_registry_test.go",
+      "name": "TestMatchRegistryAuthoritativeMatchAndListMatches"
+    },
+    {
+      "file": "server/match_registry_test.go",
+      "name": "TestMatchRegistryAuthoritativeMatchAndListMatchesWithQuerying"
+    },
+    {
+      "file": "server/match_registry_test.go",
+      "name": "TestMatchRegistryAuthoritativeMatchAndListMatchesWithQueryingAndBoost"
+    },
+    {
+      "file": "server/match_registry_test.go",
+      "name": "TestMatchRegistryAuthoritativeMatchAndListMatchesWithQueryingArrays"
+    },
+    {
+      "file": "server/match_registry_test.go",
+      "name": "TestMatchRegistryAuthoritativeMatchAndListMatchesWithTokenizableLabel"
+    },
+    {
+      "file": "server/match_registry_test.go",
+      "name": "TestMatchRegistryListMatchesAfterLabelsUpdate"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestGroupIndexes"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddAndMatchAuthoritative"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddAndRemove"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddButNotMatch"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddButNotMatchOnRange"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddButNotMatchOnRangeAndValue"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddMultipleAndSomeMatch"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddMultipleAndSomeMatchOptionalTextAlteringScore"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddMultipleAndSomeMatchWithBoost"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddOnly"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddRemoveNotMatch"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddRemoveRepeated"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddWithBasicMatch"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddWithMatchOnRange"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddWithMatchOnRangeAndValue"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerAddWithMatchOnStar"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerMaxPartyTracking"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerMaxSessionTracking"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerPropertyRegexSubmatch"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerPropertyRegexSubmatchMultiple"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerRequireMutualMatch"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerRequireMutualMatchLarger"
+    },
+    {
+      "file": "server/matchmaker_test.go",
+      "name": "TestMatchmakerRequireMutualMatchLargerReversed"
+    },
+    {
+      "file": "server/metrics_test.go",
+      "name": "TestMetricsCounterAddNegativeDoesNotPanic"
+    },
+    {
+      "file": "server/party_handler_test.go",
+      "name": "TestPartyMatchmakerAddAndRemove"
+    },
+    {
+      "file": "server/runtime_go_logger_test.go",
+      "name": "TestGoLoggerDebug"
+    },
+    {
+      "file": "server/runtime_go_logger_test.go",
+      "name": "TestGoLoggerError"
+    },
+    {
+      "file": "server/runtime_go_logger_test.go",
+      "name": "TestGoLoggerFields"
+    },
+    {
+      "file": "server/runtime_go_logger_test.go",
+      "name": "TestGoLoggerInfo"
+    },
+    {
+      "file": "server/runtime_go_logger_test.go",
+      "name": "TestGoLoggerWarn"
+    },
+    {
+      "file": "server/runtime_go_logger_test.go",
+      "name": "TestGoLoggerWithField"
+    },
+    {
+      "file": "server/runtime_go_logger_test.go",
+      "name": "TestGoLoggerWithFields"
+    },
+    {
+      "file": "server/runtime_javascript_logger_test.go",
+      "name": "TestJsLoggerDebug"
+    },
+    {
+      "file": "server/runtime_javascript_logger_test.go",
+      "name": "TestJsLoggerError"
+    },
+    {
+      "file": "server/runtime_javascript_logger_test.go",
+      "name": "TestJsLoggerInfo"
+    },
+    {
+      "file": "server/runtime_javascript_logger_test.go",
+      "name": "TestJsLoggerWarn"
+    },
+    {
+      "file": "server/runtime_javascript_logger_test.go",
+      "name": "TestJsLoggerWithField"
+    },
+    {
+      "file": "server/runtime_javascript_logger_test.go",
+      "name": "TestJsLoggerWithFields"
+    },
+    {
+      "file": "server/runtime_javascript_test.go",
+      "name": "TestJsObjectFreeze"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeAes128"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeBase16"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeBase64"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeBcryptCompare"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeBcryptHash"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeBit32"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeDisallowStandardLibs"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeGroupTests"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeHTTPRequest"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeJson"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeMD5Hash"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeNotificationsDelete"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeNotificationSend"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeNotificationsSend"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeRegisterRPCWithPayload"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeRegisterRPCWithPayloadEndToEnd"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeReqAfterHook"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeReqBeforeHook"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeReqBeforeHookDisallowed"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeRequireEval"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeRequireFile"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeRequirePreload"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeRTBeforeHook"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeRTBeforeHookDisallow"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeSampleScript"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeSHA256Hash"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeStorageRead"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeStorageWrite"
+    },
+    {
+      "file": "server/runtime_test.go",
+      "name": "TestRuntimeWalletWrite"
+    },
+    {
+      "file": "server/shutdown_test.go",
+      "name": "TestServer_HandleShutdown"
+    },
+    {
+      "file": "server/socket_ws_test.go",
+      "name": "TestWebSocketRejectsSessionAfterLogout"
+    },
+    {
+      "file": "server/storage_index_test.go",
+      "name": "TestLocalStorageIndex_Delete"
+    },
+    {
+      "file": "server/storage_index_test.go",
+      "name": "TestLocalStorageIndex_List"
+    },
+    {
+      "file": "server/storage_index_test.go",
+      "name": "TestLocalStorageIndex_Write"
+    },
+    {
+      "file": "social/google_token_audience_test.go",
+      "name": "TestCheckGoogleTokenDoesNotExchangeMalformedJWT"
+    },
+    {
+      "file": "social/google_token_audience_test.go",
+      "name": "TestCheckGoogleTokenPreservesAuthorizationCodeFlow"
+    },
+    {
+      "file": "social/google_token_audience_test.go",
+      "name": "TestCheckGoogleTokenValidatesAudience"
+    }
+  ]
+}

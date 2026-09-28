@@ -1,0 +1,112 @@
+{
+  "schema": 1,
+  "note": "把上游测试文件归到一个里程碑。覆盖矩阵据此给出每个里程碑的进展汇总，M1~M4 的 DoD 里「本里程碑范围内不得残留 planned」才有机器判据。一个文件只能出现一次；上游新增文件后本文件必须同步，否则 conformance:matrix 会以非 0 退出。",
+  "buckets": [
+    {
+      "id": "M1",
+      "title": "身份与账号",
+      "files": ["server/api_test.go", "social/google_token_audience_test.go"]
+    },
+    {
+      "id": "M2",
+      "title": "存储引擎",
+      "files": ["server/core_storage_test.go", "server/storage_index_test.go"]
+    },
+    {
+      "id": "M3",
+      "title": "实时协议与在线状态",
+      "files": ["server/socket_ws_test.go"]
+    },
+    {
+      "id": "M4",
+      "title": "频道与聊天",
+      "files": [],
+      "note": "上游没有针对频道 API 的独立测试文件，这一块的证据必须来自第二证据源（客户端 SDK 黑盒验收 + proto/swagger 推导的契约测试），不能靠搬运。"
+    },
+    {
+      "id": "M5",
+      "title": "社交（好友/群组/通知）",
+      "files": ["server/core_friend_test.go"]
+    },
+    {
+      "id": "M6",
+      "title": "经济与竞技（钱包/排行榜/锦标赛）",
+      "files": [
+        "server/core_wallet_test.go",
+        "server/core_tournament_test.go",
+        "server/api_tournament_test.go",
+        "server/api_leaderboard_test.go",
+        "server/leaderboard_rank_cache_test.go",
+        "server/leaderboard_scheduler_test.go"
+      ]
+    },
+    {
+      "id": "M7",
+      "title": "匹配与对局",
+      "files": [
+        "server/matchmaker_test.go",
+        "server/match_registry_test.go",
+        "server/match_presence_test.go",
+        "server/match_common_test.go"
+      ]
+    },
+    {
+      "id": "M8",
+      "title": "派对与运行时扩展",
+      "files": [
+        "server/party_handler_test.go",
+        "server/runtime_test.go",
+        "server/runtime_javascript_test.go",
+        "server/runtime_go_logger_test.go",
+        "server/runtime_javascript_logger_test.go"
+      ]
+    },
+    {
+      "id": "M9",
+      "title": "管理台与运维面",
+      "files": [
+        "console/acl/acl_test.go",
+        "server/console_user_add_acl_test.go",
+        "server/console_user_reset_password_acl_test.go"
+      ]
+    },
+    {
+      "id": "MX",
+      "title": "横切（配置/指标/关停/流管理）",
+      "files": [
+        "server/config_test.go",
+        "server/metrics_test.go",
+        "server/shutdown_test.go",
+        "server/stream_manager_test.go"
+      ]
+    },
+    {
+      "id": "LUA",
+      "title": "Lua 运行时（后置，不属于 v1~v4 的 P0/P1）",
+      "files": [
+        "internal/gopher-lua/state_test.go",
+        "internal/gopher-lua/auxlib_test.go",
+        "internal/gopher-lua/table_test.go",
+        "internal/gopher-lua/channellib_test.go",
+        "internal/gopher-lua/script_test.go",
+        "internal/gopher-lua/mathlib_test.go",
+        "internal/gopher-lua/testutils_test.go"
+      ]
+    },
+    {
+      "id": "ALG",
+      "title": "上游内部算法（本项目按自己的数据结构重写，只对齐可观测行为）",
+      "files": [
+        "internal/skiplist/skiplist_test.go",
+        "internal/skiplist/skiplist_chaos_test.go",
+        "internal/cronexpr/cronexpr_test.go",
+        "internal/cronexpr/example_test.go"
+      ]
+    },
+    {
+      "id": "NS",
+      "title": "非目标（上游商业控制台的数据面）",
+      "files": ["internal/satori/satori_test.go"]
+    }
+  ]
+}

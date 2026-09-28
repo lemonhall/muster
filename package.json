@@ -6,7 +6,7 @@
   "description": "Cloudflare-native multiplayer game backend (independent implementation, protocol-compatible with the upstream open-source game backend).",
   "scripts": {
     "dev": "wrangler dev",
-    "test": "vitest run",
+    "test": "vitest run --reporter=verbose",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "e2e": "vitest run --config vitest.e2e.config.ts",
