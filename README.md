@@ -93,6 +93,10 @@ npm run docs:check              # 文档卫生检查
 拆成 `identity.e2e.test.ts` / `tenancy.e2e.test.ts`，共用工装落在 `http-helpers.ts`）。
 拆的是职责，不是删测试或删注释。
 
+长文档同样拆：一个里程碑一份记录，别把整条链路堆进一个 md
+（先例：里程碑 Review 记录从 `docs/plan/v1-index.md` 拆到 `docs/reviews/v1-M*.md`，
+索引只留一张指针表）。
+
 以下文件**整体豁免**（都是"拆了就废掉"的整块）：
 
 | 文件 | 为什么是整块 |

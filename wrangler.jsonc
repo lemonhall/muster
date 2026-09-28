@@ -17,10 +17,24 @@
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations"
     }
+  ],
+
+  // M3：持久对象。会话分片一个 WebSocket 一个实例；会话注册表每租户一个实例。
+  // 都用 SQLite 后端（`new_sqlite_classes`），本地跑在 workerd 里，不产生账单。
+  "durable_objects": {
+    "bindings": [
+      { "name": "SESSION_SHARD", "class_name": "SessionShard" },
+      { "name": "SESSION_REGISTRY", "class_name": "SessionRegistry" }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "m3-sessions",
+      "new_sqlite_classes": ["SessionShard", "SessionRegistry"]
+    }
   ]
 
   // Bindings are introduced milestone by milestone:
-  //   M3: Durable Object namespaces (session shard, session registry)
   //   M4: Durable Object namespace (channel)
   //   secrets（如 SESSION_ENCRYPTION_KEY）不进仓库：本地用 --var 或 .dev.vars，
   //   线上用 `wrangler secret put`。缺了它认证端点会明确报错，而不是悄悄用一个弱默认值。

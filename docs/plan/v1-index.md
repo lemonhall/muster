@@ -78,7 +78,7 @@
 
 | # | DoD | 验证命令 | 预期 |
 |---|---|---|---|
-| 1 | 用上游 `realtime.proto` 生成的编解码器完成往返，字节级可解析 | `npm test` | 断言全绿（含 51 消息类型的编解码冒烟） |
+| 1 | 用上游 `realtime.proto` 生成的编解码器完成往返，字节级可解析 | `npm test` | 断言全绿（含 `Envelope` 全部 50 个消息类型的编解码冒烟 + 与独立实现 `protobufjs` 的黄金向量逐字节比对） |
 | 2 | 未带合法 token 的握手被拒；伪造/截断帧返回对齐的错误码（`BAD_INPUT` / `UNRECOGNIZED_PAYLOAD`） | 同上 | 断言全绿 |
 | 3 | `ping` → `pong` 往返，`cid` 原样回带 | 同上 | 断言全绿 |
 | 4 | 同一用户两条连接：A 订阅 B 的状态 → B 上线/下线各产生一次 presence 事件（不丢不重） | `npm run e2e` | 退出码 0 |
@@ -118,8 +118,8 @@
 | REQ-0001-026 | v1-identity-storage M1（[ECN-0001](../ecn/ECN-0001-multi-tenancy.md)） | `tests/integration/tenancy.test.ts`（7 条）、`tests/unit/tenancy_keys.test.ts`（8 条） | `tests/e2e/identity.e2e.test.ts`（多租户隔离 3 条，真实 HTTP） | [v1-identity-storage.md §Evidence B/E](./v1-identity-storage.md#evidence) | 🟢 done |
 | REQ-0001-006 | v1-identity-storage M2 | `tests/unit/md5.test.ts`（5 条）、`tests/integration/storage/`（12 个文件 / 74 条，其中对象侧 59 条：CRUD、权限矩阵、版本矩阵、批量原子性、游标分页） | `tests/e2e/storage.e2e.test.ts`（2 条：写→读回→md5 版本交叉验证；10,000 条翻页不重不漏） | [v1-identity-storage.md §Evidence M2-A/B/C](./v1-identity-storage.md#evidence) | 🟢 done |
 | REQ-0001-007 | v1-identity-storage M2 | `tests/integration/storage/`（索引侧 15 条：`index-write` 4 条 = 上游 4 个 t.Run、`index-list` 6 条 = 上游 4 个 t.Run + 删除 + 偏差 1、`index-cursor` 5 条 = 游标与校验边界） | 无独立 E2E（索引是运行时而接口，没有公开 REST 端点；DoD 5 要求的是 `npm test`） | [v1-identity-storage.md §Evidence M2-C/D](./v1-identity-storage.md#evidence)、[ECN-0004](../ecn/ECN-0004-storage-cursor-encoding.md)、[ECN-0005](../ecn/ECN-0005-storage-index.md) | 🟢 done |
-| REQ-0001-008 | v1-realtime-chat M3 | 待填 | 待填 | — | 🔴 todo |
-| REQ-0001-009 | v1-realtime-chat M3 | 待填 | 待填 | — | 🔴 todo |
+| REQ-0001-008 | v1-realtime-chat M3 | `tests/integration/realtime/envelope.test.ts`（8 条）、`handshake.test.ts`（7 条）、`pipeline-basics.test.ts`（7 条）、`session-lifecycle.test.ts`（7 条中的元数据/心跳组） | `tests/e2e/realtime.e2e.test.ts`（5 条中的两种线格式 ping/pong 与未接通类型） | [v1-realtime-chat.md §Evidence M3-A/C](./v1-realtime-chat.md#evidence)、[ECN-0006](../ecn/ECN-0006-realtime-on-durable-objects.md) | 🟢 done |
+| REQ-0001-009 | v1-realtime-chat M3 | `tests/integration/realtime/pipeline-status.test.ts`（13 条）、`registry.test.ts`（7 条：真实 DO + 真实 WebSocket）、`session-lifecycle.test.ts`（7 条：心跳 / 兜底清理 / 幂等清理） | `tests/e2e/realtime.e2e.test.ts`（订阅 → 状态变更 → 上下线通知；后到订阅者的当前快照） | [v1-realtime-chat.md §Evidence M3-B/C](./v1-realtime-chat.md#evidence)、[ECN-0006](../ecn/ECN-0006-realtime-on-durable-objects.md) | 🟢 done |
 | REQ-0001-010 | v1-realtime-chat M4 | 待填 | 待填 | — | 🔴 todo |
 
 > 任何 `待填` / `—` 都是断链，禁止在存在断链的情况下宣称对应需求已交付。
@@ -133,123 +133,23 @@
 | [ECN-0003](../ecn/ECN-0003-www-authenticate-realm.md) | 401 挑战头的 realm 用本项目命名 | 已生效 | REQ-0001-004 | `src/http/grpc.ts` |
 | [ECN-0004](../ecn/ECN-0004-storage-cursor-encoding.md) | 存储游标改用 base64url(JSON) 而不是 gob | 已生效 | REQ-0001-006, REQ-0001-007 | `src/domain/storage/cursor.ts`、`src/domain/storage/index/cursor.ts` |
 | [ECN-0005](../ecn/ECN-0005-storage-index.md) | 存储索引从 bluge 内存索引换成对权威表的声明式查询 | 已生效 | REQ-0001-007 | `migrations/0002_storage.sql`、`src/domain/storage/index/*.ts` |
+| [ECN-0006](../ecn/ECN-0006-realtime-on-durable-objects.md) | 实时层建在 Durable Object 上（会话分片 + 每租户注册表） | 已生效 | REQ-0001-008, REQ-0001-009 | `src/durable/{session-shard,session-registry,session-store}.ts`、`src/realtime/*.ts`、`src/http/routes/socket.ts`、`wrangler.jsonc` |
 
-## Review 记录
+## Tashan Review 记录
 
-## Tashan Review - v1 / M0
+每个里程碑的 Review 记录单独成文（单文件体量约束，见全局宪法《单个文件长度》）：
 
-- reviewer_context: same-model（**非** fresh 上下文，见下方 NOTE 与残余风险）
-- round: 1
-- cost_profile: standard
-- verdict: pass
-- blocker_count: 0
-- major_count: 1（已修复）
-- stuck_signatures: 无
-- regression_signatures: 无
-- commands_checked:
-  - `npm test` → 0（3 files / 22 tests，含 workerd 运行时身份门禁）
-  - `npm run typecheck` → 0
-  - `npm run e2e` → 0（1 file / 4 tests，日志含真实监听地址）
-  - `MUSTER_E2E_TARGET=http://127.0.0.1:8799 npm run e2e` → 1（4 条全 ECONNREFUSED，反证 E2E 非进程内直调）
-  - `npm run conformance:inventory` → 0（`upstream_tests=263 mode=verify`）
-  - `npm run conformance:matrix` → 0（`unreasoned_exemptions=0`）；伪造手工编辑后再跑 → 1
-  - `npm run docs:check` → 0（`problems=0`）；把单文件计数改错后再跑 → 1
-  - 上游语义核对：`server/api.go`（`grpcGatewayRouter` / `handleRoutingError`）、`vendor/.../runtime/errors.go`（`HTTPStatusFromCode`，含 `FailedPrecondition → 400` 的原文注释）→ 与实现一致
-  - 统计复核：由 `baseline.json` 聚合得 40 个测试文件 / 263 个 `Test*` / 存储 54+3=57，与文档数字一致
-- residual_risks:
-  1. 本轮 Review 是**同模型自评**，存在橡皮图章风险；缓解：所有关键结论都落成可复现命令与永久化门禁，而非"我看过觉得没问题"。
-  2. E2E 就绪判定只看 `GET /healthcheck` 是否 200，理论上可能被半启动状态骗过（当前不可复现）；M1 的 E2E 会额外断言 JSON body，届时该项自然收敛。
-  3. 无线上部署验收（本机无 Docker、无 Cloudflare 资源），M0 的"能跑"仅指本地 workerd + 真实 HTTP。
-
-### Findings
-
-| severity | signature | evidence | disposition |
-|---|---|---|---|
-| MAJOR | docs::v1-identity-storage::stale-test-count | 该文件原写"存储……58 条"，而 `baseline.json` 聚合为 `core_storage_test.go` 54 + `storage_index_test.go` 3 = 57 | 已修：改为具名计数；并给 `doc_hygiene_check.py` 新增"单文件计数对账"闸门（反证：改成 58 → 退出码 1） |
-| MINOR | artifacts::docs/conformance/upstream-inventory.md::local-path-leak | 生成物表头写入作者本地绝对路径（含用户名），而该文件进公共仓库 | 已修：只写相对本仓库的路径 `../nakama`，重新生成后 `git status` 干净 |
-| MINOR | verification::M0-anti-cheat-2::manual-only-gate | 反作弊条款 2「测试必须跑在 workerd」此前没有任何自动化检查 | 已修：新增 `tests/unit/runtime.test.ts`，断言 `navigator.userAgent === "Cloudflare-Workers"` |
-| NOTE | review::M0::same-model-self-review | 派出的独立 reviewer 子代理两次未收到任务正文（其回话为"任务还没来"），本轮无法获得 fresh 上下文 | 已记录残余风险 1；Review 结论全部以命令证据支撑 |
-| NOTE | e2e::tests-e2e-global-setup::readiness-heuristic | 就绪判定仅 `res.status === 200`，不校验 body | 携带至 M1 处理（见残余风险 2） |
-
-## Tashan Review - v1 / M1
-
-- reviewer_context: same-model（自评；本机无法派出独立子代理——两次尝试的子代理都没收到任务正文，见下方 NOTE）
-- round: 1
-- cost_profile: standard
-- verdict: pass
-- blocker_count: 0
-- major_count: 0
-- stuck_signatures: 无
-- regression_signatures: 无
-- commands_checked:
-  - `npm test` → 0（6 files / 90 tests；`tests/unit/runtime.test.ts` 断言 `navigator.userAgent === "Cloudflare-Workers"`，证明这 90 条确实跑在 workerd 里）
-  - `npm run typecheck` → 0
-  - `npm run e2e` → 0（2 files / 18 tests，含多租户隔离 3 条；日志含真实监听地址 `http://127.0.0.1:8788`）
-  - `$env:MUSTER_E2E_TARGET='http://127.0.0.1:8799'; npm run e2e` → 1（18 条全 ECONNREFUSED，反证 E2E 走的是网络而不是进程内直调）
-  - `npm run conformance:inventory` → 0（`upstream_files=40 upstream_tests=263 upstream_commit=e920249a...` mode=verify）
-  - `npm run conformance:matrix` → 0（`entries=263 ported=1 planned=262 exempt=0 unreasoned_exemptions=0`；M1 桶 1/1/0/0 → 本里程碑范围无 `planned` 残留）
-  - `npm run docs:check` → 0（`files=12 requirements=26 plans=3 lines=1774 links=40 problems=0`）
-  - 上游语义核对：`server/api.go`（`securityInterceptorFunc`/`parseBasicAuth`/`parseBearerAuth`/`wwwAuthenticateFixWriter`/`handleRoutingError`）、`server/api_authenticate.go::AuthenticateEmail`、`server/core_authenticate.go::AuthenticateEmail|AuthenticateUsername`、`server/api_session.go::SessionRefresh|SessionLogout`、`server/api_account.go::GetAccount`、`server/core_account.go::GetAccount`、`server/api_user.go`、`apigrpc/apigrpc.swagger.json` → 状态码、错误消息、字段名、校验顺序逐条比对，未发现不一致
-  - 多租户隔离核查：`rg -n "prepare\(" src/domain/identity/store.ts src/domain/tenancy/store.ts` → 所有用户/身份/资料的 SELECT/INSERT/UPDATE 都带 `tenant_id`；唯一按 `token_id` 全局查改的是 `sessions`，已按下方 MINOR 处置
-  - 目录卫生：`git status --porcelain` 在提交后为空
-- residual_risks:
-  1. 本轮 Review 是**同模型自评**：本机派出独立子代理两次都失败（子代理回复"没收到任务正文"），因此没有新鲜上下文的对抗式检查。缓解：结论全部落成可复现命令与永久化门禁（覆盖矩阵脚本、文档卫生脚本、workerd 运行时门禁、E2E 反证），不依赖"我看过"。
-  2. 没有线上部署验收：受"测试不得依赖 Cloudflare 远端资源"的约束，M1 的"能跑"指的是本地 workerd + 真实 HTTP。
-  3. `GET /v2/user` 的 `facebook_ids` 参数永远返回空集合（社交登录后置到 v2，M1 不可能有 facebook 身份）。这不是掩盖：上游"查不到"的响应形状同样是空集合，v2 补身份来源即可。
-
-### Findings
-
-| severity | signature | evidence | disposition |
-|---|---|---|---|
-| MINOR | tenancy::sessions::missing-tenant-predicate | `src/domain/identity/store.ts` 的 `findSession`/`revokeSession` 只按 `token_id` 全局查改；跨租户隔离真正依赖的是"令牌签名密钥按租户派生"这一层，数据库层缺纵深防御 | 已修复（commit `22e139b`）：`insertSession` 的冲突分支加 `WHERE sessions.tenant_id/user_id = <传入值>`，写成 0 行即抛错；`findSession`/`revokeSession` 谓词加 `tenant_id`；90 条测试仍全绿 |
-| MINOR | dod::M1::email-duplicate-409-wrong | M1 DoD #3 原写"邮箱认证重复注册 → 冲突码与上游一致（409）"，而上游 `server/core_authenticate.go::AuthenticateEmail` 对已存在邮箱是**校验密码后登录**（200/401），409 只出现在**用户名**撞车 | 已改写 DoD #3 为"用户名撞车 → 409；同邮箱二次认证走登录；错密码 → 401"，并在 `tests/integration/identity.test.ts` 的两条对应用例中钉住 |
-| MINOR | conformance::M1-scope::google-token-tests-misbucketed | `social/google_token_audience_test.go`（3 条）原本挂在 M1 桶，但 PRD 与 v1 计划都把 OAuth/社交登录后置到 v2——留在 M1 只会逼出"提前做 v2"或"把对外可观测行为当豁免"两种坏结果 | 已重归类到 M5 桶，并在 `milestone-scope.json` 的 M1/M5 条目里写明理由、同步 PRD（REQ-0001-003 备注 + §7 里程碑表） |
-| NOTE | parity::account::verify-time-and-wallet | 核对上游 `core_account.go::GetAccount`：邮箱建号**不写** `verify_time`（INSERT 只有 id/username/email/password/create_time/update_time）；`wallet` 是建表默认 `{}`；`ApiServer.GetAccount` 显式清空 `DisableTime` | 已核对，未发现偏差：`src/wire/identity.ts` 不发 `disable_time`、`verify_time` 仅在非 0 时发、`wallet` 固定 `"{}"` |
-| NOTE | e2e::readiness-heuristic | M0 的残余风险 2（就绪判定只看状态码）已在 M1 闭合：`tests/e2e/global-setup.ts` 现在要求 `GET /healthcheck` 的 body 精确等于 `{}` | 已闭合，本条从残余风险降级为观察记录 |
-| NOTE | review::M1::same-model-self-review | 本机子代理派发失败（两次都收到"没有任务正文"的回话），本轮没有 fresh 上下文 Review | 见残余风险 1；若后续环境允许派发，应补一次独立对抗式 Review |
-
-## Tashan Review - v1 / M2
-
-- reviewer_context: same-model（自评；本机无法派出独立子代理，同 M0/M1，见下方 NOTE）
-- round: 1
-- cost_profile: standard
-- verdict: pass
-- blocker_count: 0
-- major_count: 0
-- minor_count: 2（均已在提交前修复）
-- stuck_signatures: 无
-- regression_signatures: 无
-- commands_checked:
-  - `npm test` → 0（23 files / 169 tests；`tests/unit/runtime.test.ts` 仍断言 `navigator.userAgent === "Cloudflare-Workers"`，证明这 169 条跑在 workerd 里）
-  - `npm run typecheck` → 0
-  - `npm run e2e` → 0（3 files / 20 tests，110s；其中 10,000 条翻页用例实测 85s，预算 900s）
-  - `$env:MUSTER_E2E_TARGET='http://127.0.0.1:8799'; npm run e2e` → 1（20 条全 ECONNREFUSED，反证 E2E 走的是网络而不是进程内直调）
-  - `npm run conformance:matrix` → 0（`entries=263 ported=58 planned=205 exempt=0 unreasoned_exemptions=0 derived_citations=32`；M2 桶 57/57/0/0）
-  - `npm run docs:check` → 0（`problems=0`）
-  - **bluge 独立探针**（临时目录，不入仓库）：内存索引里同一 batch 内三次 `Update`（后两次同 doc id）→ `Reader.Count()` = 3；同样两次 `Update` 拆成两个 batch → 1。这条决定了"上游分页用例的第三页从哪来"
-  - 上游语义核对：`server/storage_index.go`（`Write` / `Delete` / `List` / `CreateIndex` / `mapIndexStorageFields` / `storageIndexDocumentId`）、`server/match_common.go`（`ParseQueryString` / `BlugeWalkDocument`）、`server/core_storage.go`（upsert 的 `ON CONFLICT ... DO UPDATE ... AND NOT (...)`）→ 逐条比对
-  - `git status --porcelain` 在提交后为空
-- residual_risks:
-  1. 同模型自评的橡皮图章风险（与 M0/M1 相同）。缓解：每条结论都落成可复现命令或永久门禁，不依赖"我看过觉得没问题"。
-  2. 索引查询只实现了存储索引实际用到的语法子集（[ECN-0005](../ecn/ECN-0005-storage-index.md) §偏差 4）。未实现的语法一律报 `invalid` 而不是静默降级；如果上游将来在别处复用这套索引语法，需要同步扩语法。
-  3. 10,000 条 E2E 用时 85s 是**本机**实测；更慢的机器上要调那条用例的 `timeout`（当前 900s）。
-  4. 淘汰的决胜键（ECN-0005 §偏差 2）依赖秒级时间戳：同一秒内写入多条且恰好越过淘汰线时，保留哪几条可能与上游不同（已登记）。
-
-### Findings
-
-| severity | signature | evidence | disposition |
-|---|---|---|---|
-| MINOR | index::sort::direction-only-on-last-segment | `sortExpressionForField` 把三段表达式拼成一个字符串返回，`orderFragment` 只给整串加一次方向 → `-value.sort` 实际按升序返回。由 `index-list` 的 `-value.sort` 断言抓到（返回 `[one, three]` 而不是 `[three, one]`） | 已修复（commit `46597d8`）：改成返回表达式数组、逐段加方向 |
-| MINOR | conformance::citations::method-symbol-unverified | 校验器对 `契约源: server/storage_index.go::LocalStorageIndex.List` 报"符号在上游文件里找不到"——Go 方法的声明形状是 `func (si *LocalStorageIndex) List(`，裸子串匹配认不出，会逼出"把方法引用写成不存在的东西"这种坏习惯 | 已修复（commit `46597d8`）：`scripts/conformance-matrix.mjs` 增加方法声明形状核对（方法名写错仍会被拦下） |
-| NOTE | parity::index::batch-shadowing | bluge 的 `Batch.Update` 删不掉"同批内先写入的同 id 文档"，上游 `TestLocalStorageIndex_List/paginates correctly` 的第三页正是这条残留；我们用独立探针复现（见 commands_checked） | **不复刻**（[ECN-0005](../ecn/ECN-0005-storage-index.md) §偏差 1）：它返回的是权威表里已不存在的旧值。已落成显式用例 `test_overwriting_the_same_object_in_one_batch_leaves_no_stale_entry` + 等价场景的三页分页断言 |
-| NOTE | test::isolation::shared-tenant | 同一测试文件内多个用例共用同一个 D1 租户：前一个用例失败留下的行会污染后一个（实测：`createIndex` 报重名 `AlreadyExists`、删除用例看到 3 条而不是 2 条） | 已修复：索引用例改成"每个用例独立索引名 + 独立集合名"，并在注释里写明理由 |
-| NOTE | review::M2::same-model-self-review | 与 M0/M1 同样的限制 | 见残余风险 1；环境允许时应补一次独立对抗式 Review |
-
+| 里程碑 | Review 记录 |
+|---|---|
+| M0 | [../reviews/v1-M0.md](../reviews/v1-M0.md) |
+| M1 | [../reviews/v1-M1.md](../reviews/v1-M1.md) |
+| M2 | [../reviews/v1-M2.md](../reviews/v1-M2.md) |
+| M3 | [../reviews/v1-M3.md](../reviews/v1-M3.md) |
 ## Tashan Trigger Audit
 
 ```markdown
 - expected_review_triggers: v_doc_writing_done, v_milestone_done(M0..M4)
-- actual_review_runs: 4 (v_doc_writing_done, v_milestone_done(M0) 同模型自评, v_milestone_done(M1) 同模型自评, v_milestone_done(M2) 同模型自评)
+- actual_review_runs: 5 (v_doc_writing_done, v_milestone_done(M0) 同模型自评, v_milestone_done(M1) 同模型自评, v_milestone_done(M2) 同模型自评, v_milestone_done(M3) 同模型自评)
 - skipped_triggers: 0
 - skip_reasons: 独立子代理派发不通（本机限制），降级为同模型自评 + 命令证据
 - mitigation: 每个里程碑完成前必须补 Review 记录，否则不输出完成信号；把可自动化的检查固化成脚本门禁（覆盖矩阵、文档卫生、workerd 运行时、E2E 反证），降低对人工 Review 的依赖

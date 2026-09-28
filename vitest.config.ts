@@ -26,6 +26,9 @@ export default defineConfig(async () => {
     test: {
       include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
       setupFiles: ["./tests/setup.ts"],
+      // 守夜人：见 tests/port-guard.ts。占住 undici 的禁用端口，免得 miniflare
+      // 随机抽到它们时整个测试文件"启动失败"（Errors 1 error，而不是断言红）。
+      globalSetup: ["./tests/port-guard.ts"],
     },
   };
 });

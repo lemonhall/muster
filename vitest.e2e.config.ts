@@ -13,8 +13,27 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["tests/e2e/**/*.e2e.test.ts"],
-    globalSetup: ["tests/e2e/global-setup.ts"],
+    // 第一个是守夜人（tests/port-guard.ts）：`wrangler dev` 给 UserWorker 分配的也是随机端口，
+    // 抽到 undici 的禁用端口时，整条 HTTP 通道会以 500 的形式随机变红。
+    globalSetup: ["./tests/port-guard.ts", "./tests/e2e/global-setup.ts"],
     testTimeout: 30_000,
     hookTimeout: 150_000,
+    /**
+     * **文件串行**。这不是图省事，是本地 `wrangler dev` 的硬限制：
+     * 所有 E2E 文件共用同一个 dev server，而 dev server 前面那层 ProxyWorker
+     * 同时扛着"5 个测试文件 × 各自的用例 + 实时测试的长连接"时，会丢掉到
+     * UserWorker 的连接并抛 `Network connection lost`（重试耗尽后表现为 500）。
+     *
+     * 实测记录（2026-09-28，M3 收尾）：
+     *  - 并发跑 5 个文件：8 个用例红（6 × `expected 500 to be 200`、2 ×
+     *    WebSocket 用例 30s 超时）；服务端日志全是 `Error inside ProxyWorker ...
+     *    Network connection lost`。
+     *  - 单跑其中任何一个文件：全绿。
+     *  - 串行跑全部：全绿（见 M3 Review 的 evidence）。
+     *
+     * 这是**测试工装**的并发上限，不是被测代码的缺陷；要让 E2E 结论可信，
+     * 就不能让基础设施的抖动混进断言。
+     */
+    fileParallelism: false,
   },
 });

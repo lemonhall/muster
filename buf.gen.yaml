@@ -1,0 +1,10 @@
+# 代码生成配置：**唯一**的编解码器来源是 `proto/` 下那两个从上游逐字抄来的 .proto。
+#
+# 手写近似实现是被禁止的（见 docs/plan/v1-realtime-chat.md）：协议一旦靠"照着写一遍"，
+# 出错时无法判断是谁错了。用上游 proto + 官方生成器，字节级差异就只剩生成器版本一个问题。
+version: v1
+plugins:
+  - plugin: es
+    out: src/proto
+    opt:
+      - target=ts

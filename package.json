@@ -14,17 +14,25 @@
     "tenant:list": "node scripts/tenant.mjs list",
     "conformance:inventory": "node scripts/upstream-inventory.mjs",
     "conformance:matrix": "node scripts/conformance-matrix.mjs",
+    "proto:gen": "buf generate proto --template buf.gen.yaml",
     "docs:check": "python scripts/doc_hygiene_check.py --root ."
   },
   "devDependencies": {
+    "@bufbuild/buf": "^1.73.0",
+    "@bufbuild/protoc-gen-es": "^2.15.0",
     "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@cloudflare/workers-types": "^5.20260928.1",
     "@types/node": "^22.20.4",
+    "protobufjs-cli": "^2.7.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11",
     "wrangler": "^4.142.0"
   },
   "overrides": {
     "miniflare": "5.20260926.0-alpha"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.15.0",
+    "protobufjs": "^8.8.0"
   }
 }

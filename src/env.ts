@@ -1,3 +1,6 @@
+import type { SessionRegistry } from "./durable/session-registry";
+import type { SessionShard } from "./durable/session-shard";
+
 /**
  * 本 Worker 的绑定类型。
  *
@@ -17,6 +20,13 @@ export interface Bindings extends Env {
    * 测试由 vitest 池注入固定值。缺失时认证端点会明确报 500，而不是退回一个弱默认值。
    */
   SESSION_ENCRYPTION_KEY: string;
+
+  /**
+   * M3：一条 WebSocket 一个的会话分片 + 每租户一个的会话注册表。
+   * 都是 Durable Object，本地开发与测试跑在 workerd 内，不连线上资源。
+   */
+  SESSION_SHARD: DurableObjectNamespace<SessionShard>;
+  SESSION_REGISTRY: DurableObjectNamespace<SessionRegistry>;
 }
 
 /**

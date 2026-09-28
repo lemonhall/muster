@@ -14,11 +14,11 @@
 |---|---|
 | 上游 commit | `e920249a3465bea4b8ea2968020c488201b61a8e` |
 | 上游测试条目 | 263 |
-| ported | 58 |
-| planned | 205 |
+| ported | 59 |
+| planned | 204 |
 | exempt | 0 |
 | 无理由豁免 | 0 |
-| 第二证据源引用（自主契约测试） | 32 |
+| 第二证据源引用（自主契约测试） | 46 |
 
 ## 按里程碑
 
@@ -26,7 +26,7 @@
 |---|---|---:|---:|---:|---:|
 | M1 | 身份与账号 | 1 | 1 | 0 | 0 |
 | M2 | 存储引擎 | 57 | 57 | 0 | 0 |
-| M3 | 实时协议与在线状态 | 1 | 0 | 1 | 0 |
+| M3 | 实时协议与在线状态 | 1 | 1 | 0 | 0 |
 | M4 | 频道与聊天 | 0 | 0 | 0 | 0 |
 | M5 | 社交（好友/群组/通知/社交登录令牌校验） | 4 | 0 | 4 | 0 |
 | M6 | 经济与竞技（钱包/排行榜/锦标赛） | 25 | 0 | 25 | 0 |
@@ -112,7 +112,7 @@
 
 | # | 状态 | 上游测试 | 文件 | 证据 / 理由 |
 |---:|---|---|---|---|
-| 59 | planned | TestWebSocketRejectsSessionAfterLogout | `server/socket_ws_test.go` | — |
+| 59 | ported | TestWebSocketRejectsSessionAfterLogout | `server/socket_ws_test.go` | `tests/integration/realtime/handshake.test.ts` |
 
 ### M5 社交（好友/群组/通知/社交登录令牌校验）
 
@@ -397,9 +397,23 @@
 | `server/core_storage.go::storagePrepBatch` | `tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::StorageReadObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::StorageWriteObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
+| `server/pipeline_ping.go::Pipeline.ping` | `tests/integration/realtime/pipeline-basics.test.ts` |
+| `server/pipeline_ping.go::Pipeline.pong` | `tests/integration/realtime/pipeline-basics.test.ts` |
+| `server/pipeline_status.go::Pipeline.statusFollow` | `tests/e2e/realtime.e2e.test.ts`、`tests/integration/realtime/pipeline-status.test.ts` |
+| `server/pipeline_status.go::Pipeline.statusUnfollow` | `tests/integration/realtime/pipeline-status.test.ts` |
+| `server/pipeline_status.go::Pipeline.statusUpdate` | `tests/integration/realtime/pipeline-status.test.ts` |
+| `server/pipeline.go::Pipeline.ProcessRequest` | `tests/integration/realtime/pipeline-basics.test.ts` |
+| `server/session_ws.go::sessionWS.maybeResetPingTimer` | `tests/integration/realtime/session-lifecycle.test.ts` |
+| `server/session_ws.go::sessionWS.pingNow` | `tests/integration/realtime/session-lifecycle.test.ts` |
+| `server/socket_ws.go::extractClientAddressFromRequest` | `tests/integration/realtime/handshake.test.ts` |
+| `server/socket_ws.go::NewSocketWsAcceptor` | `tests/e2e/realtime.e2e.test.ts`、`tests/integration/realtime/envelope.test.ts`、`tests/integration/realtime/handshake.test.ts`、`tests/integration/realtime/registry.test.ts` |
+| `server/status_registry.go::LocalStatusRegistry.Follow` | `tests/integration/realtime/registry.test.ts` |
+| `server/status_registry.go::LocalStatusRegistry.Queue` | `tests/e2e/realtime.e2e.test.ts`、`tests/integration/realtime/registry.test.ts` |
 | `server/storage_index.go::LocalStorageIndex.List` | `tests/integration/storage/index-list.test.ts`、`tests/integration/storage/index-write.test.ts` |
 | `server/storage_index.go::LocalStorageIndex.mapIndexStorageFields` | `tests/integration/storage/index-write.test.ts` |
 | `server/storage_index.go::LocalStorageIndex.Write` | `tests/integration/storage/index-write.test.ts` |
+| `server/tracker.go::LocalTracker.TrackMulti` | `tests/integration/realtime/registry.test.ts` |
+| `server/tracker.go::LocalTracker.Untrack` | `tests/integration/realtime/registry.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=e4cf04b9483975bddef1b834d9f77aa7941424933f5945fe7f8a2df5483ec805 -->
+<!-- integrity: body_sha256=aefbfe4e3984a9572dccf472d68cf8be263f0f94a3c9b187aa12e6cd9b6e9e15 -->

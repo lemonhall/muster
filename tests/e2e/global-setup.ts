@@ -150,6 +150,13 @@ export async function setup(): Promise<void> {
 
   child.stdout?.on("data", (chunk) => captured.push(String(chunk)));
   child.stderr?.on("data", (chunk) => captured.push(String(chunk)));
+  // 默认只把子进程输出攒在内存里（就绪失败时随错误一起抛出）。排查 500 / 超时时
+  // 用 `MUSTER_E2E_VERBOSE=1` 把它实时打到测试输出里，否则服务端只能靠猜。
+  if (process.env.MUSTER_E2E_VERBOSE === "1") {
+    const echo = (chunk: unknown) => process.stdout.write(`[e2e:server] ${String(chunk)}`);
+    child.stdout?.on("data", echo);
+    child.stderr?.on("data", echo);
+  }
 
   try {
     await waitForReady(baseUrl, captured);

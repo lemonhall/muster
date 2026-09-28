@@ -1,0 +1,6 @@
+# 上游 proto 的模块根。`realtime.proto` 里 `import "api/api.proto"` 就落在这个根下，
+# 所以这里不需要额外配置 import 路径。
+#
+# 这份配置只服务一件事：由上游 .proto 生成本工程的编解码器（`npm run proto:gen`）。
+# google/protobuf/*.proto 由 buf 自带（well-known types），不需要 vendored 一份。
+version: v1

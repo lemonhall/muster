@@ -2,7 +2,12 @@ import type { Bindings } from "./env";
 import { JSON_CONTENT_TYPE } from "./http/grpc";
 import { Router } from "./http/router";
 import { registerIdentityRoutes } from "./http/routes/identity";
+import { registerSocketRoutes } from "./http/routes/socket";
 import { registerStorageRoutes } from "./http/routes/storage";
+
+// Durable Object 的类必须从入口模块导出，`wrangler.jsonc` 里的 migrations 才找得到它们。
+export { SessionRegistry } from "./durable/session-registry";
+export { SessionShard } from "./durable/session-shard";
 
 /**
  * Worker 入口：只负责把请求交给路由表，不放任何业务逻辑。
@@ -31,6 +36,7 @@ router.handlePublic(
 
 registerIdentityRoutes(router);
 registerStorageRoutes(router);
+registerSocketRoutes(router);
 
 export default {
   fetch(request: Request, env: Bindings): Response | Promise<Response> {
