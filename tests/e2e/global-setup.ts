@@ -1,4 +1,5 @@
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
@@ -8,34 +9,92 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 /** 监听端口。测试侧用同一个变量算出 base URL，两边不会漂移。 */
 export const e2ePort = process.env.MUSTER_E2E_PORT ?? "8788";
 
+/**
+ * E2E 用的测试租户。固定的 id/key 与固定的主密钥，让 E2E 结论可复现：
+ * 任何一次运行看到的都是同一个租户，而不是"上一轮留下的那个"。
+ *
+ * 这两个值只存在于本地 workerd 的 `.wrangler/state` 里，**不指向任何 Cloudflare 账号资源**。
+ */
+export const e2eTenant = {
+  id: "11111111-1111-4111-8111-111111111111",
+  name: "e2e",
+  serverKey: "e2e-server-key-do-not-use-in-production",
+};
+
+/**
+ * 第二个租户。存在的唯一目的：让"多租户真的隔离"这条结论**在真实 HTTP 通道上**被验证，
+ * 而不是只在单元/集成测试里成立。没有它，跨租户越权就没有 E2E 证据。
+ */
+export const e2eTenantB = {
+  id: "22222222-2222-4222-8222-222222222222",
+  name: "e2e-b",
+  serverKey: "e2e-tenant-b-server-key-do-not-use-in-production",
+};
+
+export const e2eSessionKey = "e2e-only-session-encryption-key";
+
 const readyTimeoutMs = 90_000;
 const pollIntervalMs = 250;
 
 let child: ChildProcess | undefined;
+const captured: string[] = [];
 
-async function waitForReady(baseUrl: string, captured: string[]): Promise<void> {
+function wranglerPath(): string {
+  return path.join(repoRoot, "node_modules", "wrangler", "bin", "wrangler.js");
+}
+
+function runWrangler(args: string[]): string {
+  return execFileSync(process.execPath, [wranglerPath(), ...args], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    env: { ...process.env, CI: "true", WRANGLER_SEND_METRICS: "false" },
+  });
+}
+
+/**
+ * 准备本地 D1：先应用迁移，再写入 E2E 租户。
+ *
+ * 全部是 `--local`：数据落在 `.wrangler/state`，不连线上数据库，
+ * 因此这套 E2E **不产生任何 Cloudflare 账单**。
+ */
+function prepareLocalDatabase(): void {
+  runWrangler(["d1", "migrations", "apply", "muster", "--local"]);
+  const now = Math.floor(Date.now() / 1000);
+  for (const tenant of [e2eTenant, e2eTenantB]) {
+    const keyHash = createHash("sha256").update(tenant.serverKey, "utf8").digest("hex");
+    const statement =
+      "INSERT OR REPLACE INTO tenants (id, name, server_key_hash, create_time, disable_time) VALUES " +
+      `('${tenant.id}', '${tenant.name}', '${keyHash}', ${now}, 0);`;
+    runWrangler(["d1", "execute", "muster", "--local", "--command", statement, "--yes"]);
+  }
+}
+
+async function waitForReady(baseUrl: string, log: string[]): Promise<void> {
   const deadline = Date.now() + readyTimeoutMs;
   let lastError = "no attempt made";
   while (Date.now() < deadline) {
     try {
       const res = await fetch(`${baseUrl}/healthcheck`);
-      if (res.status === 200) {
+      // 就绪判定要看**内容**：只看 200 会被"路由还没挂上、外层先给了个 200"骗过去。
+      // 真实的 healthcheck 一定是 `{}`（google.protobuf.Empty 的 protojson 形状）。
+      const body = res.status === 200 ? await res.text() : "";
+      if (res.status === 200 && body === "{}") {
         return;
       }
-      lastError = `GET /healthcheck -> ${res.status}`;
+      lastError = `GET /healthcheck -> ${res.status} ${JSON.stringify(body)}`;
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
     }
     if (child?.exitCode !== null && child?.exitCode !== undefined) {
       throw new Error(
-        `wrangler dev 在就绪前退出，退出码 ${child.exitCode}\n--- 子进程输出 ---\n${captured.join("")}`,
+        `wrangler dev 在就绪前退出，退出码 ${child.exitCode}\n--- 子进程输出 ---\n${log.join("")}`,
       );
     }
     await delay(pollIntervalMs);
   }
   throw new Error(
     `${readyTimeoutMs}ms 内没等到 ${baseUrl}/healthcheck 就绪（最后一次失败：${lastError}）\n` +
-      `--- 子进程输出 ---\n${captured.join("")}`,
+      `--- 子进程输出 ---\n${log.join("")}`,
   );
 }
 
@@ -58,8 +117,10 @@ function killTree(pid: number): void {
 
 export async function setup(): Promise<void> {
   const baseUrl = `http://127.0.0.1:${e2ePort}`;
-  const wranglerBin = path.join(repoRoot, "node_modules", "wrangler", "bin", "wrangler.js");
-  const captured: string[] = [];
+  const wranglerBin = wranglerPath();
+
+  // 迁移 + 租户登记都走本地 D1（`--local`），不碰任何线上资源。
+  prepareLocalDatabase();
 
   child = spawn(
     process.execPath,
@@ -73,6 +134,9 @@ export async function setup(): Promise<void> {
       "--inspector-port",
       String(Number(e2ePort) + 1000),
       "--local",
+      // 主密钥由命令行注入：仓库里不放真密钥，E2E 也不需要 .dev.vars 存在。
+      "--var",
+      `SESSION_ENCRYPTION_KEY:${e2eSessionKey}`,
       "--log-level",
       "warn",
       "--show-interactive-dev-session=false",
