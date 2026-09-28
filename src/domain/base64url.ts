@@ -16,11 +16,21 @@ export function toBase64Url(text: string): string {
 }
 
 export function fromBase64Url(value: string): string {
+  return new TextDecoder().decode(fromBase64UrlBytes(value));
+}
+
+/**
+ * base64url → 原始字节。
+ *
+ * 游标只需要文本，但 JWS 的签名段是**二进制**：先解成文本再编码回去会毁掉它
+ * （0x80 以上的字节在 UTF-8 解码时会被替换成 U+FFFD）。所以两个入口分开。
+ */
+export function fromBase64UrlBytes(value: string): Uint8Array {
   const padded = value.replace(/-/g, "+").replace(/_/g, "/");
   const binary = atob(padded.padEnd(Math.ceil(padded.length / 4) * 4, "="));
   const bytes = new Uint8Array(binary.length);
   for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-  return new TextDecoder().decode(bytes);
+  return bytes;
 }
 
 /** 上限只是为了让"有人拿 1MB 的串当游标"这件事在解析前就被挡住。 */

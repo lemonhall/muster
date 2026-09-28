@@ -51,7 +51,7 @@
 | `src/domain/base64url.ts` | 各域共用的 base64url 编解码与游标长度上限 |
 | `src/domain/groups/{store,cursor,service,access}.ts` | 群组与成员边、游标、角色权限矩阵、频道准入 |
 | `src/domain/notifications/{store,cursor,service}.ts` | 通知的写入、列表、删除、游标 |
-| `src/domain/social/google/{jwt,verify,token}.ts` | RS256 验签、aud/azp 规则、授权码流程 |
+| `src/domain/social/google/{jwt,verify,certs,profile,token,auth-code,authenticate,config}.ts` | RS256 验签（WebCrypto + JWKS 缓存）、aud/azp 规则、授权码流程、账号映射与运营者配置 |
 | `src/http/routes/{friend,group,notification,authenticate-social}.ts` | REST 端点 |
 | `src/wire/{friend,group,notification}.ts` | protojson 线格式 |
 | `src/realtime/notifications.ts` + `src/durable/session-registry.ts` | 通知的实时帧与"按用户推送"的注册表入口 |

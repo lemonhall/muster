@@ -147,6 +147,9 @@ export interface NewUser {
   readonly now: number;
   readonly email?: string;
   readonly passwordHash?: string;
+  /** 社交登录会把提供商给的资料写进来（Google 的名字与头像）；普通注册留空。 */
+  readonly displayName?: string;
+  readonly avatarUrl?: string;
 }
 
 /**
@@ -163,8 +166,8 @@ export async function createUserWithIdentity(
   await db.batch([
     db
       .prepare(
-        `INSERT INTO users (tenant_id, id, username, email, password_hash, create_time, update_time)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)`,
+        `INSERT INTO users (tenant_id, id, username, email, password_hash, display_name, avatar_url, create_time, update_time)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)`,
       )
       .bind(
         input.tenantId,
@@ -172,6 +175,8 @@ export async function createUserWithIdentity(
         input.username,
         input.email ?? null,
         input.passwordHash ?? null,
+        input.displayName ?? "",
+        input.avatarUrl ?? "",
         input.now,
       ),
     db
@@ -192,6 +197,25 @@ export function linkIdentity(
   return db
     .prepare("INSERT INTO user_identity (tenant_id, provider, provider_id, user_id) VALUES (?1, ?2, ?3, ?4)")
     .bind(tenantId, provider, providerId, userId)
+    .run();
+}
+
+/**
+ * 单独写邮箱。
+ *
+ * 为什么不是建号时一起写：上游对"Google 账号带回来的邮箱已经被别人用了"的处置是
+ * **警告并跳过**，账号照样建；把邮箱放进建号语句会让这一条撞唯一键时连账号都建不出来。
+ * 所以邮箱落库必须是建号之后的独立一步，调用方自己决定怎么吞这个冲突。
+ */
+export function setUserEmail(
+  db: D1Database,
+  tenantId: string,
+  userId: string,
+  email: string,
+): Promise<D1Result> {
+  return db
+    .prepare("UPDATE users SET email = ?1 WHERE tenant_id = ?2 AND id = ?3")
+    .bind(email, tenantId, userId)
     .run();
 }
 

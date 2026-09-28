@@ -135,7 +135,7 @@
 |---|---|---|---|
 | REQ-0001-001 | 项目骨架：仓库、wrangler 配置、workerd 测试运行时、覆盖率与文档卫生脚本 | P0 | `npm test` 退出码 0；`npm run typecheck` 退出码 0；无 Docker 依赖 |
 | REQ-0001-002 | 健康检查与根路径，与上游语义一致 | P0 | `GET /healthcheck` 返回 200 且 body 为 `{}`；`GET /` 返回 200 |
-| REQ-0001-003 | 设备/邮箱/自定义三种认证方式 + 服务端密钥鉴权 | P0 | 上游 `api_authenticate` 等价断言全绿；错误场景返回码逐条对齐。库内密码哈希算法改用 PBKDF2-SHA256（workerd 无 bcrypt；对外形状不变，见 [ECN-0002](../ecn/ECN-0002-password-hash.md)）。**OAuth/社交登录分支（Google/Apple/Facebook/Steam）不在 v1 范围**，随 M5 在 v2 交付（`social/google_token_audience_test.go` 的 3 条也归到 M5） |
+| REQ-0001-003 | 设备/邮箱/自定义三种认证方式 + 服务端密钥鉴权 | P0 | 上游 `api_authenticate` 等价断言全绿；错误场景返回码逐条对齐。库内密码哈希算法改用 PBKDF2-SHA256（workerd 无 bcrypt；对外形状不变，见 [ECN-0002](../ecn/ECN-0002-password-hash.md)）。**OAuth/社交登录分支的 Google 一半在 M5 交付**（`social/google_token_audience_test.go` 的 3 条全部搬运）；证书来源从 X.509 PEM 端点换成 JWKS、缓存按 TTL 而非 `NotAfter`（[ECN-0009](../ecn/ECN-0009-google-id-token.md)，含 3 条登记在案的偏差）。Apple / Facebook / Steam / GameCenter 的真实凭据交换仍不在范围内，只留"未配置"守卫 |
 | REQ-0001-004 | 会话与令牌：access token、refresh token、过期与登出 | P0 | 过期令牌被拒（401）；refresh 成功换发；登出后原令牌失效。401 挑战头保留 `Bearer realm=` 形状，realm 取值用本项目命名（见 [ECN-0003](../ecn/ECN-0003-www-authenticate-realm.md)） |
 | REQ-0001-005 | 用户资料读写：用户名、显示名、头像、metadata、locale、时区、位置 | P0 | 字段级读回一致；非法用户名/重复用户名返回码对齐上游 |
 | REQ-0001-006 | 存储引擎：集合/对象 CRUD、owner 与 read/write 权限、version 乐观锁、批量操作、游标分页 | P0 | 权限矩阵用例全绿；游标 1 万条无重复无遗漏；version 冲突返回码对齐。本项目的游标是 base64url(JSON) 而非上游的 gob（不透明令牌，对客户端零影响，见 [ECN-0004](../ecn/ECN-0004-storage-cursor-encoding.md)） |

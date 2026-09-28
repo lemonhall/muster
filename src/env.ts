@@ -34,6 +34,18 @@ export interface Bindings extends Env {
    * 与持久化消息历史都住在这个 DO 里（单点定序）。
    */
   CHANNEL: DurableObjectNamespace<Channel>;
+
+  /**
+   * M5：Google 登录。四个都是**可选**的，缺省行为在 `src/domain/social/google/config.ts`
+   * 里写死成一张清单（空 client id = 不校验 aud/azp；没有 secret+endpoint = 不启用授权码流程）。
+   *
+   * 与 `SESSION_ENCRYPTION_KEY` 同类：不进 `wrangler.jsonc` 的公开 vars，
+   * 本地用 `.dev.vars`、线上用 `wrangler secret put`。
+   */
+  GOOGLE_CLIENT_IDS?: string;
+  GOOGLE_CLIENT_SECRET?: string;
+  GOOGLE_TOKEN_ENDPOINT?: string;
+  GOOGLE_JWKS_URL?: string;
 }
 
 /**

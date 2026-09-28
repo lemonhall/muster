@@ -114,7 +114,7 @@ Facebook 的 app secret、Steam 的 publisher key），在没有凭据的环境�
 
 ## 处置方式
 
-- [ ] PRD 已同步更新（REQ-0001-003 的偏差备注）
-- [ ] vN 计划已同步更新（ECN 索引、M5 追溯矩阵、M5 Review 记录）
-- [ ] 追溯矩阵已同步更新（M5 的第二证据源引用 `/v2/account/authenticate/google`）
-- [ ] 相关测试已同步更新（Google token 用例随本 ECN 落地）
+- [x] PRD 已同步更新（REQ-0001-003 的偏差备注）
+- [x] vN 计划已同步更新（ECN 索引、M5 追溯矩阵指向本文件）
+- [ ] 追溯矩阵已同步更新（M5 的第二证据源引用 `/v2/account/authenticate/google`）——随 M5 收尾统一回填
+- [x] 相关测试已同步更新（`tests/integration/social/` 的 Google 三件套：token 矩阵、授权码流程、证书缓存）
