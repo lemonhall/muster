@@ -245,3 +245,15 @@ export async function ask(target: TestSocket, envelope: Envelope): Promise<Envel
   sendFrame(target, envelope);
   return await waitForFrame(target, (frame) => frame.cid === envelope.cid);
 }
+
+/**
+ * 给某个 DO stub 发一条 RPC 并解析 JSON。给"测试直接驱动对局/匹配器 DO"用
+ * （`/create`、`/label`、`/meta` 这些没有对应的帧）。
+ */
+export async function matchPost(
+  stub: DurableObjectStub,
+  path: string,
+  body: unknown,
+): Promise<Record<string, unknown>> {
+  return (await doPost(stub, path, body)) as Record<string, unknown>;
+}

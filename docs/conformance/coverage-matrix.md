@@ -14,11 +14,11 @@
 |---|---|
 | 上游 commit | `e920249a3465bea4b8ea2968020c488201b61a8e` |
 | 上游测试条目 | 263 |
-| ported | 107 |
-| planned | 155 |
+| ported | 122 |
+| planned | 140 |
 | exempt | 1 |
 | 无理由豁免 | 0 |
-| 第二证据源引用（自主契约测试） | 108 |
+| 第二证据源引用（自主契约测试） | 123 |
 
 ## 按里程碑
 
@@ -30,7 +30,7 @@
 | M4 | 频道与聊天 | 0 | 0 | 0 | 0 |
 | M5 | 社交（好友/群组/通知/社交登录令牌校验） | 4 | 4 | 0 | 0 |
 | M6 | 经济与竞技（钱包/排行榜/锦标赛） | 25 | 24 | 0 | 1 |
-| M7 | 匹配与对局 | 35 | 20 | 15 | 0 |
+| M7 | 匹配与对局 | 35 | 35 | 0 | 0 |
 | M8 | 派对与运行时扩展 | 44 | 0 | 44 | 0 |
 | M9 | 管理台与运维面 | 5 | 0 | 5 | 0 |
 | MX | 横切（配置/指标/关停/流管理） | 4 | 0 | 4 | 0 |
@@ -157,21 +157,21 @@
 
 | # | 状态 | 上游测试 | 文件 | 证据 / 理由 |
 |---:|---|---|---|---|
-| 89 | planned | TestMatchPresenceList | `server/match_presence_test.go` | — |
-| 90 | planned | TestEncode | `server/match_registry_test.go` | — |
-| 91 | planned | TestEncodeDecode | `server/match_registry_test.go` | — |
-| 92 | planned | TestEncodeDecodePresences | `server/match_registry_test.go` | — |
-| 93 | planned | TestMatchRegistryAuthoritativeMatchAndJoin | `server/match_registry_test.go` | — |
-| 94 | planned | TestMatchRegistryAuthoritativeMatchAndListAllMatchesWithQueryStar | `server/match_registry_test.go` | — |
-| 95 | planned | TestMatchRegistryAuthoritativeMatchAndListMatches | `server/match_registry_test.go` | — |
-| 96 | planned | TestMatchRegistryAuthoritativeMatchAndListMatchesWithQuerying | `server/match_registry_test.go` | — |
-| 97 | planned | TestMatchRegistryAuthoritativeMatchAndListMatchesWithQueryingAndBoost | `server/match_registry_test.go` | — |
-| 98 | planned | TestMatchRegistryAuthoritativeMatchAndListMatchesWithQueryingArrays | `server/match_registry_test.go` | — |
-| 99 | planned | TestMatchRegistryAuthoritativeMatchAndListMatchesWithTokenizableLabel | `server/match_registry_test.go` | — |
-| 100 | planned | TestMatchRegistryListMatchesAfterLabelsUpdate | `server/match_registry_test.go` | — |
+| 89 | ported | TestMatchPresenceList | `server/match_presence_test.go` | `tests/unit/match/presence.test.ts` |
+| 90 | ported | TestEncode | `server/match_registry_test.go` | `tests/integration/match/roundtrip.test.ts` |
+| 91 | ported | TestEncodeDecode | `server/match_registry_test.go` | `tests/integration/match/roundtrip.test.ts` |
+| 92 | ported | TestEncodeDecodePresences | `server/match_registry_test.go` | `tests/integration/match/roundtrip.test.ts` |
+| 93 | ported | TestMatchRegistryAuthoritativeMatchAndJoin | `server/match_registry_test.go` | `tests/integration/match/registry.test.ts` |
+| 94 | ported | TestMatchRegistryAuthoritativeMatchAndListAllMatchesWithQueryStar | `server/match_registry_test.go` | `tests/integration/match/registry.test.ts` |
+| 95 | ported | TestMatchRegistryAuthoritativeMatchAndListMatches | `server/match_registry_test.go` | `tests/integration/match/registry.test.ts` |
+| 96 | ported | TestMatchRegistryAuthoritativeMatchAndListMatchesWithQuerying | `server/match_registry_test.go` | `tests/integration/match/registry.test.ts` |
+| 97 | ported | TestMatchRegistryAuthoritativeMatchAndListMatchesWithQueryingAndBoost | `server/match_registry_test.go` | `tests/unit/matchmaker/pool.test.ts` |
+| 98 | ported | TestMatchRegistryAuthoritativeMatchAndListMatchesWithQueryingArrays | `server/match_registry_test.go` | `tests/integration/match/registry.test.ts` |
+| 99 | ported | TestMatchRegistryAuthoritativeMatchAndListMatchesWithTokenizableLabel | `server/match_registry_test.go` | `tests/integration/match/registry.test.ts` |
+| 100 | ported | TestMatchRegistryListMatchesAfterLabelsUpdate | `server/match_registry_test.go` | `tests/integration/match/registry.test.ts` |
 | 101 | ported | TestGroupIndexes | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
-| 102 | planned | TestMatchmakerAddAndMatchAuthoritative | `server/matchmaker_test.go` | — |
-| 103 | ported | TestMatchmakerAddAndRemove | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
+| 102 | ported | TestMatchmakerAddAndMatchAuthoritative | `server/matchmaker_test.go` | `tests/integration/matchmaker/rounds.test.ts` |
+| 103 | ported | TestMatchmakerAddAndRemove | `server/matchmaker_test.go` | `tests/integration/matchmaker/pipeline.test.ts`、`tests/unit/matchmaker/matching.test.ts` |
 | 104 | ported | TestMatchmakerAddButNotMatch | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
 | 105 | ported | TestMatchmakerAddButNotMatchOnRange | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
 | 106 | ported | TestMatchmakerAddButNotMatchOnRangeAndValue | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
@@ -180,13 +180,13 @@
 | 109 | ported | TestMatchmakerAddMultipleAndSomeMatchWithBoost | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
 | 110 | ported | TestMatchmakerAddOnly | `server/matchmaker_test.go` | `tests/unit/matchmaker/pool.test.ts` |
 | 111 | ported | TestMatchmakerAddRemoveNotMatch | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
-| 112 | ported | TestMatchmakerAddRemoveRepeated | `server/matchmaker_test.go` | `tests/unit/matchmaker/pool.test.ts` |
+| 112 | ported | TestMatchmakerAddRemoveRepeated | `server/matchmaker_test.go` | `tests/integration/matchmaker/pipeline.test.ts`、`tests/unit/matchmaker/pool.test.ts` |
 | 113 | ported | TestMatchmakerAddWithBasicMatch | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
 | 114 | ported | TestMatchmakerAddWithMatchOnRange | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
 | 115 | ported | TestMatchmakerAddWithMatchOnRangeAndValue | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
 | 116 | ported | TestMatchmakerAddWithMatchOnStar | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
-| 117 | planned | TestMatchmakerMaxPartyTracking | `server/matchmaker_test.go` | — |
-| 118 | planned | TestMatchmakerMaxSessionTracking | `server/matchmaker_test.go` | — |
+| 117 | ported | TestMatchmakerMaxPartyTracking | `server/matchmaker_test.go` | `tests/unit/matchmaker/tracking.test.ts` |
+| 118 | ported | TestMatchmakerMaxSessionTracking | `server/matchmaker_test.go` | `tests/integration/matchmaker/rounds.test.ts` |
 | 119 | ported | TestMatchmakerPropertyRegexSubmatch | `server/matchmaker_test.go` | `tests/unit/matchmaker/pool.test.ts` |
 | 120 | ported | TestMatchmakerPropertyRegexSubmatchMultiple | `server/matchmaker_test.go` | `tests/unit/matchmaker/pool.test.ts` |
 | 121 | ported | TestMatchmakerRequireMutualMatch | `server/matchmaker_test.go` | `tests/unit/matchmaker/matching.test.ts` |
@@ -399,6 +399,8 @@
 | `server/api_group.go::ListUserGroups` | `tests/integration/groups/listing-members.test.ts` |
 | `server/api_group.go::UpdateGroup` | `tests/integration/groups/lifecycle.test.ts` |
 | `server/api_leaderboard.go::ListLeaderboardRecords` | `tests/e2e/competitive.e2e.test.ts` |
+| `server/api_match.go::ApiServer.ListMatches` | `tests/integration/match/rest.test.ts` |
+| `server/api_matchmaker.go::ApiServer.GetMatchmakerStats` | `tests/integration/match/rest.test.ts` |
 | `server/api_notification.go::DeleteNotifications` | `tests/integration/notifications/delete.test.ts` |
 | `server/api_notification.go::ListNotifications` | `tests/e2e/social.e2e.test.ts`、`tests/integration/notifications/list.test.ts` |
 | `server/api_session.go::SessionLogout` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
@@ -450,11 +452,24 @@
 | `server/core_storage.go::storagePrepBatch` | `tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::StorageReadObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::StorageWriteObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
+| `server/match_presence.go::MatchPresenceList.Join` | `tests/unit/match/presence.test.ts` |
+| `server/match_presence.go::MatchPresenceList.Leave` | `tests/unit/match/presence.test.ts` |
+| `server/match_registry.go::LocalMatchRegistry.JoinAttempt` | `tests/integration/match/registry.test.ts`、`tests/integration/match/roundtrip.test.ts` |
+| `server/match_registry.go::LocalMatchRegistry.ListMatches` | `tests/integration/match/registry.test.ts`、`tests/unit/match/catalog.test.ts`、`tests/unit/match/store.test.ts` |
+| `server/match_registry.go::LocalMatchRegistry.UpdateMatchLabel` | `tests/integration/match/registry.test.ts`、`tests/unit/match/store.test.ts` |
+| `server/matchmaker.go::LocalMatchmaker.Add` | `tests/integration/matchmaker/rounds.test.ts`、`tests/unit/matchmaker/tracking.test.ts` |
+| `server/matchmaker.go::LocalMatchmaker.Process` | `tests/integration/matchmaker/rounds.test.ts`、`tests/unit/match/token.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelJoin` | `tests/integration/channel/dm-request.test.ts`、`tests/integration/channel/join.test.ts`、`tests/integration/channel/validation.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelLeave` | `tests/integration/channel/validation.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelMessageRemove` | `tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelMessageSend` | `tests/e2e/realtime-chat.e2e.test.ts`、`tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelMessageUpdate` | `tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
+| `server/pipeline_match.go::Pipeline.matchCreate` | `tests/integration/match/pipeline.test.ts`、`tests/unit/uuid.test.ts` |
+| `server/pipeline_match.go::Pipeline.matchDataSend` | `tests/integration/match/pipeline.test.ts`、`tests/unit/match/data.test.ts` |
+| `server/pipeline_match.go::Pipeline.matchJoin` | `tests/integration/match/pipeline.test.ts`、`tests/unit/match/ids.test.ts`、`tests/unit/match/token.test.ts` |
+| `server/pipeline_match.go::Pipeline.matchLeave` | `tests/integration/match/pipeline.test.ts`、`tests/unit/match/ids.test.ts` |
+| `server/pipeline_matchmaker.go::Pipeline.matchmakerAdd` | `tests/integration/matchmaker/pipeline.test.ts` |
+| `server/pipeline_matchmaker.go::Pipeline.matchmakerRemove` | `tests/integration/matchmaker/pipeline.test.ts` |
 | `server/pipeline_ping.go::Pipeline.ping` | `tests/integration/realtime/pipeline-basics.test.ts` |
 | `server/pipeline_ping.go::Pipeline.pong` | `tests/integration/realtime/pipeline-basics.test.ts` |
 | `server/pipeline_status.go::Pipeline.statusFollow` | `tests/e2e/realtime.e2e.test.ts`、`tests/integration/realtime/pipeline-status.test.ts` |
@@ -478,4 +493,4 @@
 | `server/tracker.go::StreamModeChannel` | `tests/integration/channel/ids.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=eddc4aec380d146da27b083102d186b37b8edf8d6b95d51bfe90da548eb6b53d -->
+<!-- integrity: body_sha256=90ed1543cccb0183f6eadcf1aee1d890387dd449f9c9d7af6732ba26f976a1a9 -->

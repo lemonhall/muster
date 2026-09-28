@@ -25,7 +25,7 @@
  * REQ-0001-018
  */
 
-import { fromBase64UrlBytes, toBase64Url } from "../base64url";
+import { fromBase64UrlBytes, toBase64Url, toBase64UrlBytes } from "../base64url";
 import { deriveTenantSessionKey } from "../identity/token";
 import type { Bindings } from "../../env";
 import { requireSessionEncryptionKey } from "../../env";
@@ -61,7 +61,7 @@ export async function signMatchToken(
     exp: nowSec + MATCH_TOKEN_TTL_SECONDS,
   })}`;
   const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(signingInput));
-  return `${signingInput}.${toBase64Url(String.fromCharCode(...new Uint8Array(signature)))}`;
+  return `${signingInput}.${toBase64UrlBytes(new Uint8Array(signature))}`;
 }
 
 /**

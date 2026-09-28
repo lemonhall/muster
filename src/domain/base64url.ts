@@ -8,11 +8,21 @@
  * 之所以单独成文件：存储、好友、群组、通知四处都要用，抄四遍就是四个走样的机会。
  */
 
-export function toBase64Url(text: string): string {
-  const bytes = new TextEncoder().encode(text);
+/**
+ * 字节 → base64url（无填充）。
+ *
+ * 与下面那个文本版分开的原因和 `fromBase64UrlBytes` 对称：**签名是二进制**，
+ * 先 `String.fromCharCode` 走一趟再让文本版按 UTF-8 编码回去，0x80 以上的字节
+ * 会被编成两个字节，签名就毁了。凡是"手上有 `Uint8Array`"的场合都必须走这个入口。
+ */
+export function toBase64UrlBytes(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+export function toBase64Url(text: string): string {
+  return toBase64UrlBytes(new TextEncoder().encode(text));
 }
 
 export function fromBase64Url(value: string): string {
