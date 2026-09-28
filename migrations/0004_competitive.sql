@@ -89,3 +89,10 @@ CREATE INDEX leaderboard_record_list_idx
 -- “某人在这期里有没有记录”与 owner 记录查询。
 CREATE INDEX leaderboard_record_owner_idx
   ON leaderboard_record (tenant_id, leaderboard_id, owner_id, expiry_time);
+
+-- 写入守卫：钱包的 CAS 批次靠它拿到"要么全成、要么全回滚"。
+--
+-- 用法是 `INSERT INTO write_guard (ok) SELECT 0 WHERE (SELECT changes()) = 0`：
+-- 上一条 UPDATE 影响 0 行（说明有人抢先改了钱包）时这条 INSERT 会写出 0，
+-- 违反 CHECK 约束，于是整个 batch 回滚。正常路径下它一行都不写，这张表永远是空的。
+CREATE TABLE write_guard (ok INTEGER NOT NULL CHECK (ok = 1));

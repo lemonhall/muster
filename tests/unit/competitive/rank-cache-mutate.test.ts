@@ -9,7 +9,9 @@ import { SortOrder } from "../../../src/domain/competitive/leaderboard/definitio
  * `Fill` 的返回值容易被误读：它不是"填了几条"，而是**这一期缓存里的总条目数**
  * （上游 `rankCache.cache.Len()`），对外就是 `rank_count`。所以这里连返回值一起断言。
  *
- * 溯源: server/leaderboard_rank_cache_test.go::TestLocalLeaderboardRankCache_Delete, TestLocalLeaderboardRankCache_DeleteLeaderboard, TestLocalLeaderboardRankCache_Fill
+ * 溯源: server/leaderboard_rank_cache_test.go::TestLocalLeaderboardRankCache_Delete
+ * 溯源: server/leaderboard_rank_cache_test.go::TestLocalLeaderboardRankCache_DeleteLeaderboard
+ * 溯源: server/leaderboard_rank_cache_test.go::TestLocalLeaderboardRankCache_Fill
  */
 
 const id = (): string => crypto.randomUUID().toUpperCase();

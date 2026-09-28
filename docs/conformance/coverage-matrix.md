@@ -14,8 +14,8 @@
 |---|---|
 | 上游 commit | `e920249a3465bea4b8ea2968020c488201b61a8e` |
 | 上游测试条目 | 263 |
-| ported | 63 |
-| planned | 200 |
+| ported | 85 |
+| planned | 178 |
 | exempt | 0 |
 | 无理由豁免 | 0 |
 | 第二证据源引用（自主契约测试） | 100 |
@@ -29,7 +29,7 @@
 | M3 | 实时协议与在线状态 | 1 | 1 | 0 | 0 |
 | M4 | 频道与聊天 | 0 | 0 | 0 | 0 |
 | M5 | 社交（好友/群组/通知/社交登录令牌校验） | 4 | 4 | 0 | 0 |
-| M6 | 经济与竞技（钱包/排行榜/锦标赛） | 25 | 0 | 25 | 0 |
+| M6 | 经济与竞技（钱包/排行榜/锦标赛） | 25 | 22 | 3 | 0 |
 | M7 | 匹配与对局 | 35 | 0 | 35 | 0 |
 | M8 | 派对与运行时扩展 | 44 | 0 | 44 | 0 |
 | M9 | 管理台与运维面 | 5 | 0 | 5 | 0 |
@@ -129,29 +129,29 @@
 |---:|---|---|---|---|
 | 64 | planned | TestApiLeaderboard | `server/api_leaderboard_test.go` | — |
 | 65 | planned | TestApiTournamentHaystack | `server/api_tournament_test.go` | — |
-| 66 | planned | TestTournamentEveryDayMonThruFri | `server/core_tournament_test.go` | — |
-| 67 | planned | TestTournamentEveryFourteenDaysFromFirst | `server/core_tournament_test.go` | — |
-| 68 | planned | TestTournamentNowIsBeforeStart | `server/core_tournament_test.go` | — |
-| 69 | planned | TestTournamentNowIsResetTime | `server/core_tournament_test.go` | — |
-| 70 | planned | TestUpdateWalletMultiUser | `server/core_wallet_test.go` | — |
-| 71 | planned | TestUpdateWalletRepeatedSingleUser | `server/core_wallet_test.go` | — |
-| 72 | planned | TestUpdateWalletSingleUser | `server/core_wallet_test.go` | — |
-| 73 | planned | TestUpdateWalletsMultiUser | `server/core_wallet_test.go` | — |
-| 74 | planned | TestUpdateWalletsMultiUserSharedChangeset | `server/core_wallet_test.go` | — |
-| 75 | planned | TestUpdateWalletsMultiUserSharedChangesetDeductions | `server/core_wallet_test.go` | — |
-| 76 | planned | TestUpdateWalletsSingleUser | `server/core_wallet_test.go` | — |
-| 77 | planned | TestLocalLeaderboardRankCache_Delete | `server/leaderboard_rank_cache_test.go` | — |
-| 78 | planned | TestLocalLeaderboardRankCache_DeleteLeaderboard | `server/leaderboard_rank_cache_test.go` | — |
-| 79 | planned | TestLocalLeaderboardRankCache_ExpirySeparation | `server/leaderboard_rank_cache_test.go` | — |
-| 80 | planned | TestLocalLeaderboardRankCache_Fill | `server/leaderboard_rank_cache_test.go` | — |
-| 81 | planned | TestLocalLeaderboardRankCache_Insert_Ascending | `server/leaderboard_rank_cache_test.go` | — |
-| 82 | planned | TestLocalLeaderboardRankCache_Insert_Descending | `server/leaderboard_rank_cache_test.go` | — |
-| 83 | planned | TestLocalLeaderboardRankCache_Insert_Existing | `server/leaderboard_rank_cache_test.go` | — |
-| 84 | planned | TestLocalLeaderboardRankCache_LeaderboardSeparation | `server/leaderboard_rank_cache_test.go` | — |
-| 85 | planned | TestLocalLeaderboardRankCache_TrimExpired | `server/leaderboard_rank_cache_test.go` | — |
+| 66 | ported | TestTournamentEveryDayMonThruFri | `server/core_tournament_test.go` | `tests/unit/competitive/tournament-deadlines.test.ts` |
+| 67 | ported | TestTournamentEveryFourteenDaysFromFirst | `server/core_tournament_test.go` | `tests/unit/competitive/tournament-deadlines.test.ts` |
+| 68 | ported | TestTournamentNowIsBeforeStart | `server/core_tournament_test.go` | `tests/unit/competitive/tournament-deadlines.test.ts` |
+| 69 | ported | TestTournamentNowIsResetTime | `server/core_tournament_test.go` | `tests/unit/competitive/tournament-deadlines.test.ts` |
+| 70 | ported | TestUpdateWalletMultiUser | `server/core_wallet_test.go` | `tests/integration/competitive/wallet.test.ts` |
+| 71 | ported | TestUpdateWalletRepeatedSingleUser | `server/core_wallet_test.go` | `tests/integration/competitive/wallet.test.ts` |
+| 72 | ported | TestUpdateWalletSingleUser | `server/core_wallet_test.go` | `tests/integration/competitive/wallet.test.ts` |
+| 73 | ported | TestUpdateWalletsMultiUser | `server/core_wallet_test.go` | `tests/integration/competitive/wallet.test.ts` |
+| 74 | ported | TestUpdateWalletsMultiUserSharedChangeset | `server/core_wallet_test.go` | `tests/integration/competitive/wallet.test.ts` |
+| 75 | ported | TestUpdateWalletsMultiUserSharedChangesetDeductions | `server/core_wallet_test.go` | `tests/integration/competitive/wallet.test.ts` |
+| 76 | ported | TestUpdateWalletsSingleUser | `server/core_wallet_test.go` | `tests/integration/competitive/wallet.test.ts` |
+| 77 | ported | TestLocalLeaderboardRankCache_Delete | `server/leaderboard_rank_cache_test.go` | `tests/unit/competitive/rank-cache-mutate.test.ts` |
+| 78 | ported | TestLocalLeaderboardRankCache_DeleteLeaderboard | `server/leaderboard_rank_cache_test.go` | `tests/unit/competitive/rank-cache-mutate.test.ts` |
+| 79 | ported | TestLocalLeaderboardRankCache_ExpirySeparation | `server/leaderboard_rank_cache_test.go` | `tests/unit/competitive/rank-cache-lifecycle.test.ts` |
+| 80 | ported | TestLocalLeaderboardRankCache_Fill | `server/leaderboard_rank_cache_test.go` | `tests/unit/competitive/rank-cache-mutate.test.ts` |
+| 81 | ported | TestLocalLeaderboardRankCache_Insert_Ascending | `server/leaderboard_rank_cache_test.go` | `tests/unit/competitive/rank-cache-insert.test.ts` |
+| 82 | ported | TestLocalLeaderboardRankCache_Insert_Descending | `server/leaderboard_rank_cache_test.go` | `tests/unit/competitive/rank-cache-insert.test.ts` |
+| 83 | ported | TestLocalLeaderboardRankCache_Insert_Existing | `server/leaderboard_rank_cache_test.go` | `tests/unit/competitive/rank-cache-insert.test.ts` |
+| 84 | ported | TestLocalLeaderboardRankCache_LeaderboardSeparation | `server/leaderboard_rank_cache_test.go` | `tests/unit/competitive/rank-cache-lifecycle.test.ts` |
+| 85 | ported | TestLocalLeaderboardRankCache_TrimExpired | `server/leaderboard_rank_cache_test.go` | `tests/unit/competitive/rank-cache-lifecycle.test.ts` |
 | 86 | planned | TestLeaderboardScheduler | `server/leaderboard_scheduler_test.go` | — |
-| 87 | planned | TestLeaderboardSchedulerEndedTournamentHidesLiveExpiry | `server/leaderboard_scheduler_test.go` | — |
-| 88 | planned | TestLeaderboardSchedulerEndedTournamentHidesSuccessorExpiry | `server/leaderboard_scheduler_test.go` | — |
+| 87 | ported | TestLeaderboardSchedulerEndedTournamentHidesLiveExpiry | `server/leaderboard_scheduler_test.go` | `tests/unit/competitive/leaderboard-scheduler.test.ts` |
+| 88 | ported | TestLeaderboardSchedulerEndedTournamentHidesSuccessorExpiry | `server/leaderboard_scheduler_test.go` | `tests/unit/competitive/leaderboard-scheduler.test.ts` |
 
 ### M7 匹配与对局
 
@@ -470,4 +470,4 @@
 | `server/tracker.go::StreamModeChannel` | `tests/integration/channel/ids.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=76a94e703e1a61c31730498a27699154760cb4773548b157104399cd4e154bf6 -->
+<!-- integrity: body_sha256=b088f6ccd45626634e85a9c96536f6d50116e3647482e387bd4e503a5125aedc -->

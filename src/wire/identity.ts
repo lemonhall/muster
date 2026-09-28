@@ -74,8 +74,9 @@ export function userBody(user: UserBodySource, online = false): Record<string, u
 }
 
 /**
- * Account 消息。`wallet` 上游默认是 `"{}"`（表示"没有任何货币"）——
- * 钱包本身是 M6 的功能，这里如实表示"还没有钱包数据"，不是假装有钱包。
+ * Account 消息。`wallet` 是 `users.wallet` 那一列的原始 JSON 文本：上游把它当
+ * **字符串**发出去（客户端自己 `JSON.parse`），所以这里也照发文本；
+ * 默认值是 `"{}"`（表示"没有任何货币"）。
  *
  * `disable_time` **不发**：上游 `ApiServer.GetAccount` 在返回前显式把它清成 nil
  * （源码原话："User-facing account retrieval does not expose disable time for now."），
@@ -94,7 +95,7 @@ export function accountBody(user: UserRow, identities: readonly IdentityRow[]): 
 
   return {
     user: userBody(user),
-    wallet: "{}",
+    wallet: user.wallet === "" ? "{}" : user.wallet,
     ...(user.email === null || user.email === "" ? {} : { email: user.email }),
     ...(devices.length === 0 ? {} : { devices: devices.map((device) => ({ id: device.provider_id })) }),
     ...(custom === undefined ? {} : { custom_id: custom.provider_id }),

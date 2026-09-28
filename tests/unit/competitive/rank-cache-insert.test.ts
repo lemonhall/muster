@@ -10,7 +10,9 @@ import { SortOrder } from "../../../src/domain/competitive/leaderboard/definitio
  * 更大才覆盖，否则保持原样。用例逐条搬运自 `leaderboard_rank_cache_test.go`，
  * 断言的是**名次数值**（外部可观测的那部分），不是跳表内部结构。
  *
- * 溯源: server/leaderboard_rank_cache_test.go::TestLocalLeaderboardRankCache_Insert_Ascending, TestLocalLeaderboardRankCache_Insert_Descending, TestLocalLeaderboardRankCache_Insert_Existing
+ * 溯源: server/leaderboard_rank_cache_test.go::TestLocalLeaderboardRankCache_Insert_Ascending
+ * 溯源: server/leaderboard_rank_cache_test.go::TestLocalLeaderboardRankCache_Insert_Descending
+ * 溯源: server/leaderboard_rank_cache_test.go::TestLocalLeaderboardRankCache_Insert_Existing
  */
 
 const id = (): string => crypto.randomUUID().toUpperCase();

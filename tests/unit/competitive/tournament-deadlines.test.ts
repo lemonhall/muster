@@ -11,7 +11,10 @@ import { calculateTournamentDeadlines } from "../../../src/domain/competitive/to
  * （`1692090000` 就是 2023-08-15T09:00:00Z），不改成"看起来更整齐"的值——
  * 它们的价值正是"跨月、跨周、夏令时无关"的多样化时刻。
  *
- * 溯源: server/core_tournament_test.go::TestTournamentEveryFourteenDaysFromFirst, TestTournamentEveryDayMonThruFri, TestTournamentNowIsResetTime, TestTournamentNowIsBeforeStart
+ * 溯源: server/core_tournament_test.go::TestTournamentEveryFourteenDaysFromFirst
+ * 溯源: server/core_tournament_test.go::TestTournamentEveryDayMonThruFri
+ * 溯源: server/core_tournament_test.go::TestTournamentNowIsResetTime
+ * 溯源: server/core_tournament_test.go::TestTournamentNowIsBeforeStart
  */
 
 function at(seconds: number): Date {

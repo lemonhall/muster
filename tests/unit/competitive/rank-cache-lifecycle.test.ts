@@ -9,7 +9,9 @@ import { SortOrder } from "../../../src/domain/competitive/leaderboard/definitio
  * 这三条用例钉的是"查询键是 `(leaderboardId, expiryTime)` 二元组"。
  * 少一维就会出现"上个月的分数污染这个月的名次"这种最难查的错。
  *
- * 溯源: server/leaderboard_rank_cache_test.go::TestLocalLeaderboardRankCache_TrimExpired, TestLocalLeaderboardRankCache_ExpirySeparation, TestLocalLeaderboardRankCache_LeaderboardSeparation
+ * 溯源: server/leaderboard_rank_cache_test.go::TestLocalLeaderboardRankCache_TrimExpired
+ * 溯源: server/leaderboard_rank_cache_test.go::TestLocalLeaderboardRankCache_ExpirySeparation
+ * 溯源: server/leaderboard_rank_cache_test.go::TestLocalLeaderboardRankCache_LeaderboardSeparation
  */
 
 const id = (): string => crypto.randomUUID().toUpperCase();

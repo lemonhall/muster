@@ -11,7 +11,8 @@ import { toLeaderboard, type LeaderboardRow } from "../../../src/domain/competit
  * `endActive` 回调又重新 `computeNext`，于是任何"上一期的 deadline 还留在竞争里"
  * 的实现都会在这里露馅。
  *
- * 溯源: server/leaderboard_scheduler_test.go::TestLeaderboardSchedulerEndedTournamentHidesLiveExpiry, TestLeaderboardSchedulerEndedTournamentHidesSuccessorExpiry
+ * 溯源: server/leaderboard_scheduler_test.go::TestLeaderboardSchedulerEndedTournamentHidesLiveExpiry
+ * 溯源: server/leaderboard_scheduler_test.go::TestLeaderboardSchedulerEndedTournamentHidesSuccessorExpiry
  */
 
 function board(overrides: Partial<LeaderboardRow> & { readonly id: string }): ReturnType<typeof toLeaderboard> {

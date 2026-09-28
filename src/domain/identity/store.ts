@@ -15,6 +15,8 @@ export interface UserRow {
   readonly location: string;
   readonly timezone: string;
   readonly metadata: string;
+  /** M6：钱包 JSON 文本（形如 `{"value":984}`）。写入口在领域层，读出口是 `GET /v2/account`。 */
+  readonly wallet: string;
   readonly email: string | null;
   readonly password_hash: string | null;
   readonly verify_time: number;
@@ -49,6 +51,7 @@ const USER_COLUMNS = [
   "location",
   "timezone",
   "metadata",
+  "wallet",
   "email",
   "password_hash",
   "verify_time",
