@@ -18,7 +18,7 @@
 | planned | 204 |
 | exempt | 0 |
 | 无理由豁免 | 0 |
-| 第二证据源引用（自主契约测试） | 46 |
+| 第二证据源引用（自主契约测试） | 62 |
 
 ## 按里程碑
 
@@ -372,12 +372,14 @@
 |---|---|
 | `apigrpc/apigrpc.swagger.json::/healthcheck` | `tests/integration/healthcheck.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/account/authenticate/device` | `tests/helpers/identity-fixtures.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/channel/{channelId}` | `tests/integration/channel/history.test.ts` |
 | `server/api_account.go::GetAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_account.go::UpdateAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_authenticate.go::AuthenticateCustom` | `tests/helpers/identity-fixtures.ts` |
 | `server/api_authenticate.go::AuthenticateDevice` | `tests/e2e/identity.e2e.test.ts`、`tests/e2e/tenancy.e2e.test.ts`、`tests/helpers/identity-fixtures.ts`、`tests/integration/tenancy.test.ts` |
 | `server/api_authenticate.go::AuthenticateEmail` | `tests/helpers/identity-fixtures.ts` |
 | `server/api_authenticate.go::generateRefreshToken` | `tests/unit/tenancy_keys.test.ts` |
+| `server/api_channel.go::ListChannelMessages` | `tests/integration/channel/history.test.ts` |
 | `server/api_session.go::SessionLogout` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_session.go::SessionRefresh` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
 | `server/api_user.go::GetUsers` | `tests/e2e/identity.e2e.test.ts`、`tests/e2e/tenancy.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
@@ -389,6 +391,11 @@
 | `server/core_account.go::UpdateAccounts` | `tests/helpers/identity-fixtures.ts` |
 | `server/core_authenticate.go::AuthenticateDevice` | `tests/helpers/identity-fixtures.ts` |
 | `server/core_authenticate.go::AuthenticateEmail` | `tests/helpers/identity-fixtures.ts` |
+| `server/core_channel.go::BuildChannelId` | `tests/integration/channel/ids.test.ts` |
+| `server/core_channel.go::ChannelIdToStream` | `tests/integration/channel/ids.test.ts` |
+| `server/core_channel.go::ChannelMessageSend` | `tests/integration/channel/messages.test.ts` |
+| `server/core_channel.go::ChannelMessagesList` | `tests/integration/channel/history.test.ts` |
+| `server/core_channel.go::StreamToChannelId` | `tests/integration/channel/ids.test.ts` |
 | `server/core_session.go::SessionLogout` | `tests/helpers/identity-fixtures.ts`、`tests/unit/tenancy_keys.test.ts` |
 | `server/core_session.go::SessionRefresh` | `tests/helpers/identity-fixtures.ts` |
 | `server/core_storage.go::StorageDeleteObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts` |
@@ -397,12 +404,18 @@
 | `server/core_storage.go::storagePrepBatch` | `tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::StorageReadObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
 | `server/core_storage.go::StorageWriteObjects` | `tests/e2e/storage.e2e.test.ts`、`tests/helpers/storage-domain.ts`、`tests/integration/storage/domain-extra.test.ts` |
+| `server/pipeline_channel.go::Pipeline.channelJoin` | `tests/integration/channel/join.test.ts`、`tests/integration/channel/validation.test.ts` |
+| `server/pipeline_channel.go::Pipeline.channelLeave` | `tests/integration/channel/validation.test.ts` |
+| `server/pipeline_channel.go::Pipeline.channelMessageRemove` | `tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
+| `server/pipeline_channel.go::Pipeline.channelMessageSend` | `tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
+| `server/pipeline_channel.go::Pipeline.channelMessageUpdate` | `tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
 | `server/pipeline_ping.go::Pipeline.ping` | `tests/integration/realtime/pipeline-basics.test.ts` |
 | `server/pipeline_ping.go::Pipeline.pong` | `tests/integration/realtime/pipeline-basics.test.ts` |
 | `server/pipeline_status.go::Pipeline.statusFollow` | `tests/e2e/realtime.e2e.test.ts`、`tests/integration/realtime/pipeline-status.test.ts` |
 | `server/pipeline_status.go::Pipeline.statusUnfollow` | `tests/integration/realtime/pipeline-status.test.ts` |
 | `server/pipeline_status.go::Pipeline.statusUpdate` | `tests/integration/realtime/pipeline-status.test.ts` |
 | `server/pipeline.go::Pipeline.ProcessRequest` | `tests/integration/realtime/pipeline-basics.test.ts` |
+| `server/session_ws.go::sessionWS.Close` | `tests/integration/channel/presence.test.ts` |
 | `server/session_ws.go::sessionWS.maybeResetPingTimer` | `tests/integration/realtime/session-lifecycle.test.ts` |
 | `server/session_ws.go::sessionWS.pingNow` | `tests/integration/realtime/session-lifecycle.test.ts` |
 | `server/socket_ws.go::extractClientAddressFromRequest` | `tests/integration/realtime/handshake.test.ts` |
@@ -412,8 +425,11 @@
 | `server/storage_index.go::LocalStorageIndex.List` | `tests/integration/storage/index-list.test.ts`、`tests/integration/storage/index-write.test.ts` |
 | `server/storage_index.go::LocalStorageIndex.mapIndexStorageFields` | `tests/integration/storage/index-write.test.ts` |
 | `server/storage_index.go::LocalStorageIndex.Write` | `tests/integration/storage/index-write.test.ts` |
+| `server/tracker.go::LocalTracker.Track` | `tests/integration/channel/join.test.ts` |
 | `server/tracker.go::LocalTracker.TrackMulti` | `tests/integration/realtime/registry.test.ts` |
-| `server/tracker.go::LocalTracker.Untrack` | `tests/integration/realtime/registry.test.ts` |
+| `server/tracker.go::LocalTracker.Untrack` | `tests/integration/channel/presence.test.ts`、`tests/integration/realtime/registry.test.ts` |
+| `server/tracker.go::LocalTracker.UntrackAll` | `tests/integration/channel/presence.test.ts` |
+| `server/tracker.go::StreamModeChannel` | `tests/integration/channel/ids.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=aefbfe4e3984a9572dccf472d68cf8be263f0f94a3c9b187aa12e6cd9b6e9e15 -->
+<!-- integrity: body_sha256=eb65450048d38554f3cd86328ff9e8c08cd0881467c1f536981076d0069a77a7 -->

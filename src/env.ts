@@ -1,3 +1,4 @@
+import type { Channel } from "./durable/channel";
 import type { SessionRegistry } from "./durable/session-registry";
 import type { SessionShard } from "./durable/session-shard";
 
@@ -27,6 +28,12 @@ export interface Bindings extends Env {
    */
   SESSION_SHARD: DurableObjectNamespace<SessionShard>;
   SESSION_REGISTRY: DurableObjectNamespace<SessionRegistry>;
+
+  /**
+   * M4：一个频道一个实例。键是 `租户|频道 id`（`channelKeyOf`），成员表、presence
+   * 与持久化消息历史都住在这个 DO 里（单点定序）。
+   */
+  CHANNEL: DurableObjectNamespace<Channel>;
 }
 
 /**

@@ -98,6 +98,24 @@ export class SessionStore {
       .map((row) => row.session_id);
   }
 
+  /**
+   * 巡检用：这些会话 id 里，当前**还在注册表里**的那些。
+   *
+   * 注册表是"谁在线"的唯一判据（心跳 + 超时驱逐），所以频道 DO 的兜底巡检来问这一句，
+   * 而不是自己养第二套心跳（见 `channel-core.ts::sweep`）。
+   */
+  aliveAmong(sessionIds: readonly string[]): string[] {
+    if (sessionIds.length === 0) return [];
+    const placeholders = sessionIds.map(() => "?").join(", ");
+    return this.sql
+      .exec<SessionRow>(
+        `SELECT * FROM sessions WHERE session_id IN (${placeholders}) ORDER BY session_id`,
+        ...sessionIds,
+      )
+      .toArray()
+      .map((row) => row.session_id);
+  }
+
   follow(sessionId: string, userId: string): void {
     this.sql.exec(
       "INSERT OR IGNORE INTO follows (session_id, user_id) VALUES (?, ?)",

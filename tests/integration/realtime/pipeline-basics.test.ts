@@ -5,7 +5,6 @@ import { EnvelopeSchema, PongSchema } from "../../../src/proto/realtime_pb";
 import { Error_Code } from "../../../src/realtime/errors";
 import { handleEnvelope } from "../../../src/realtime/pipeline";
 import {
-  channelJoinEnvelope,
   errorOf,
   onlyReply,
   pingEnvelope,
@@ -14,6 +13,7 @@ import {
   rpcEnvelope,
   statusFollowEnvelope,
 } from "../../helpers/realtime";
+import { channelJoinEnvelope, recordingChannel } from "../../helpers/channel";
 import { TENANT_A } from "../../helpers/tenants";
 
 /**
@@ -77,22 +77,20 @@ describe("M3 契约: 心跳与未接通的消息类型", () => {
     expect(result.close).toBe(true);
   });
 
-  it("test_channel_messages_are_not_recognized_yet_and_close_the_session", async () => {
-    // **临时**行为（ECN-0006）：M3 只接通 ping/pong/status_*，频道在 M4。
-    // 上游对"认得出类型但没有处理函数"的处理就是这条错误 + 关连接，所以形状一致，
-    // 差别只在"什么时候接通"。
+  it("test_channel_frames_reach_the_channel_service_instead_of_the_fallback", async () => {
+    // M4 起 `channel_join` 走 `pipeline_channel.go` 那条路：校验通过后交给频道服务，
+    // 不再落进"认得出类型但没有处理函数"的兜底分支（那是 M3 的临时行为，见 ECN-0006）。
     const status = recordingStatus();
+    const channel = recordingChannel();
 
     const result = await handleEnvelope(
-      pipelineContext(TENANT_A, status.service),
-      channelJoinEnvelope("c-join"),
+      pipelineContext(TENANT_A, status.service, { channel: channel.service }),
+      channelJoinEnvelope("c-join", "room-1"),
     );
 
-    expect(errorOf(onlyReply(result))).toEqual({
-      code: Error_Code.UNRECOGNIZED_PAYLOAD,
-      message: "Unrecognized message.",
-    });
-    expect(result.close).toBe(true);
+    expect(channel.calls.map((call) => call.op)).toEqual(["join"]);
+    expect(result.replies).toHaveLength(0);
+    expect(result.close).toBe(false);
   });
 
   it("test_rpc_is_a_placeholder_for_now_and_closes_the_session", async () => {

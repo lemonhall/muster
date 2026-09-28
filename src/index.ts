@@ -1,11 +1,13 @@
 import type { Bindings } from "./env";
 import { JSON_CONTENT_TYPE } from "./http/grpc";
 import { Router } from "./http/router";
+import { registerChannelRoutes } from "./http/routes/channel";
 import { registerIdentityRoutes } from "./http/routes/identity";
 import { registerSocketRoutes } from "./http/routes/socket";
 import { registerStorageRoutes } from "./http/routes/storage";
 
 // Durable Object 的类必须从入口模块导出，`wrangler.jsonc` 里的 migrations 才找得到它们。
+export { Channel } from "./durable/channel";
 export { SessionRegistry } from "./durable/session-registry";
 export { SessionShard } from "./durable/session-shard";
 
@@ -36,6 +38,8 @@ router.handlePublic(
 
 registerIdentityRoutes(router);
 registerStorageRoutes(router);
+// 频道历史在存储之后注册：两者路径不重叠，先后无关，但把"新加的里程碑"排在后面读起来顺。
+registerChannelRoutes(router);
 registerSocketRoutes(router);
 
 export default {

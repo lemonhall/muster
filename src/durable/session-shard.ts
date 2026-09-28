@@ -25,12 +25,10 @@ import { DurableObject } from "cloudflare:workers";
 import type { Bindings } from "../env";
 import { decodeEnvelope, encodeEnvelope, type SessionFormat } from "../realtime/envelope";
 import { handleEnvelope, type PipelineContext, type StatusService } from "../realtime/pipeline";
-import {
-  statusPresenceEventEnvelope,
-  type PresenceSnapshot,
-} from "../realtime/presence";
 import { decodeSocketMeta, SOCKET_META_HEADER, type SocketMeta } from "../realtime/socket-meta";
+import { DELIVER_PATH, parseDelivery } from "./delivery";
 import { registryCall, registryFollow } from "./registry-call";
+import { SessionChannels } from "./session-channels";
 
 const decoder = new TextDecoder();
 
@@ -48,10 +46,29 @@ const decoder = new TextDecoder();
 export const SESSION_TOUCH_INTERVAL_MS = 20_000;
 
 export class SessionShard extends DurableObject<Bindings> {
+  readonly #tenantId: string;
+  readonly #channels: SessionChannels;
+
+  constructor(ctx: DurableObjectState, env: Bindings) {
+    super(ctx, env);
+    // 实例名就是 `租户|会话`（`shardKeyOf`）。租户 id 从这里取而不是从每帧的元数据取：
+    // 一个 DO 的**身份**必须来自它自己的键，否则"元数据说自己属于别的租户"这件事
+    // 就没法在入口处被挡住。
+    const name = ctx.id.name;
+    if (name === undefined || name === "") throw new Error("SessionShard 必须以 `租户|会话` 作为实例名");
+    const separator = name.indexOf("|");
+    if (separator <= 0) throw new Error("SessionShard 的实例名必须是 `租户|会话`");
+    this.#tenantId = name.slice(0, separator);
+    this.#channels = new SessionChannels(ctx.storage.sql, env, this.#tenantId);
+    ctx.blockConcurrencyWhile(async () => {
+      this.#channels.migrate();
+    });
+  }
+
   override async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
-    if (url.pathname === "/deliver") {
-      await this.#deliver((await request.json()) as Delivery);
+    if (url.pathname === DELIVER_PATH) {
+      await this.#deliver(await request.json());
       return new Response("{}", { headers: { "content-type": "application/json" } });
     }
     return await this.#accept(request);
@@ -59,6 +76,9 @@ export class SessionShard extends DurableObject<Bindings> {
 
   async #accept(request: Request): Promise<Response> {
     const meta = decodeSocketMeta(request.headers.get(SOCKET_META_HEADER));
+    if (meta.tenantId !== this.#tenantId) {
+      return new Response("tenant mismatch", { status: 400 });
+    }
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
     this.ctx.acceptWebSocket(server);
@@ -66,7 +86,7 @@ export class SessionShard extends DurableObject<Bindings> {
 
     // 先把"我上线了"记进注册表，再把手交回给客户端：否则客户端紧接着发
     // `status_follow` 时，注册表可能还不知道这条会话存在，事件就会漏。
-    await registryCall(this.env, meta.tenantId, "/connect", {
+    await registryCall(this.env, this.#tenantId, "/connect", {
       sessionId: meta.sessionId,
       userId: meta.userId,
       username: meta.username,
@@ -84,21 +104,23 @@ export class SessionShard extends DurableObject<Bindings> {
     for (const socket of sockets) {
       const meta = socket.deserializeAttachment() as SocketMeta | null;
       if (meta === null) continue;
-      await registryCall(this.env, meta.tenantId, "/touch", { sessionId: meta.sessionId });
+      await registryCall(this.env, this.#tenantId, "/touch", { sessionId: meta.sessionId });
     }
     await this.ctx.storage.setAlarm(Date.now() + SESSION_TOUCH_INTERVAL_MS);
   }
 
   /**
-   * 注册表推来的上下线事件 → 连接上的 `status_presence_event`。
-   * 事件没有 cid（上游发这类通知时也不带）。
+   * 别的 DO 推来的帧 → 这条连接。注册表推上下线事件，频道 DO 推 presence 事件与频道消息。
+   *
+   * 帧不带 cid（上游发这类通知时也不带），线格式由**收件连接自己**决定：
+   * 同一条会话的 json 与 protobuf 客户端拿到的是同一份语义、不同的字节。
    */
-  async #deliver(delivery: Delivery): Promise<void> {
+  async #deliver(raw: unknown): Promise<void> {
+    const delivery = parseDelivery(raw);
     for (const socket of this.ctx.getWebSockets()) {
       const meta = socket.deserializeAttachment() as SocketMeta | null;
-      if (meta === null) continue;
-      const envelope = statusPresenceEventEnvelope(delivery.joins, delivery.leaves);
-      socket.send(encodeFor(meta.format, envelope));
+      if (meta === null || meta.sessionId !== delivery.sessionId) continue;
+      socket.send(encodeFor(meta.format, delivery.envelope));
     }
   }
 
@@ -169,23 +191,24 @@ export class SessionShard extends DurableObject<Bindings> {
   #context(meta: SocketMeta): PipelineContext {
     return {
       db: this.env.DB,
-      tenantId: meta.tenantId,
+      tenantId: this.#tenantId,
       sessionId: meta.sessionId,
       userId: meta.userId,
       username: meta.username,
       status: this.#statusService(meta),
+      channel: this.#channels,
     };
   }
 
-  #statusService(meta: SocketMeta): StatusService {
+  #statusService(_meta: SocketMeta): StatusService {
     return {
       follow: (sessionId, userIds) =>
-        registryFollow(this.env, meta.tenantId, sessionId, userIds),
+        registryFollow(this.env, this.#tenantId, sessionId, userIds),
       unfollow: async (sessionId, userIds) => {
-        await registryCall(this.env, meta.tenantId, "/unfollow", { sessionId, userIds });
+        await registryCall(this.env, this.#tenantId, "/unfollow", { sessionId, userIds });
       },
       publish: async (sessionId, userId, username, status) => {
-        await registryCall(this.env, meta.tenantId, "/status", {
+        await registryCall(this.env, this.#tenantId, "/status", {
           sessionId,
           userId,
           username,
@@ -197,15 +220,21 @@ export class SessionShard extends DurableObject<Bindings> {
   }
 
   async #touch(meta: SocketMeta): Promise<void> {
-    await registryCall(this.env, meta.tenantId, "/touch", { sessionId: meta.sessionId });
+    await registryCall(this.env, this.#tenantId, "/touch", { sessionId: meta.sessionId });
   }
 
   /** 幂等：先发关闭帧的路径与客户端自己断开，都会走到这里，注册表只该感知一次。 */
   async #disconnect(meta: SocketMeta): Promise<void> {
     try {
-      await registryCall(this.env, meta.tenantId, "/disconnect", { sessionId: meta.sessionId });
+      await registryCall(this.env, this.#tenantId, "/disconnect", { sessionId: meta.sessionId });
     } catch (error) {
       console.error("会话注册表清理失败", error);
+    }
+    // 频道侧的清理（上游 `UntrackAll`）：漏掉它会让频道里的其他人一直看到幽灵成员。
+    try {
+      await this.#channels.leaveAll(meta.sessionId);
+    } catch (error) {
+      console.error("频道成员清理失败", error);
     }
   }
 
@@ -224,9 +253,4 @@ function encodeFor(format: SessionFormat, envelope: Parameters<typeof encodeEnve
   if (format === "json") return decoder.decode(bytes);
   // 复制到独立的 ArrayBuffer：workerd 不接受视图内部偏移的视图直接发送。
   return bytes.slice().buffer;
-}
-
-interface Delivery {
-  readonly joins: readonly PresenceSnapshot[];
-  readonly leaves: readonly PresenceSnapshot[];
 }

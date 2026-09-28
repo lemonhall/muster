@@ -10,9 +10,9 @@
  * `sessionWS.consume` 跳出读循环并 Close。所以 `BAD_INPUT`、`MISSING_PAYLOAD`、
  * `UNRECOGNIZED_PAYLOAD` 三条路都是"先发错误帧，再关连接"。
  *
- * M3 只接通 `ping` / `pong` / `status_*`；其余消息类型（频道、对局、派对、RPC……）
- * 暂时与上游"没有对应处理函数"时一样走 `UNRECOGNIZED_PAYLOAD` 分支并关闭。
- * 这是**临时**行为，M4 起逐条替换，差异记在 ECN-0006 里。
+ * M3 接通 `ping` / `pong` / `status_*`，M4 接通 `channel_*` 五个；其余消息类型
+ * （对局、派对、RPC……）暂时与上游"没有对应处理函数"时一样走 `UNRECOGNIZED_PAYLOAD`
+ * 分支并关闭。这是**临时**行为，后续里程碑逐条替换，差异记在 ECN-0006 里。
  *
  * 契约源（机器可读）：
  * 契约源: server/pipeline.go::Pipeline.ProcessRequest
@@ -36,7 +36,15 @@ import {
 } from "../proto/realtime_pb";
 import { ackEnvelope, badInputError, missingPayloadError, unrecognizedPayloadError } from "./errors";
 import { normalizeUserId } from "./identifiers";
+import {
+  channelJoin,
+  channelLeave,
+  channelMessageRemove,
+  channelMessageSend,
+  channelMessageUpdate,
+} from "./pipeline-channel";
 import { statusEnvelope, type PresenceSnapshot } from "./presence";
+import type { ChannelService } from "./channel";
 
 /** 状态订阅在会话侧的样子。实现由分片 DO 提供（它去调注册表 DO）。 */
 export interface StatusService {
@@ -54,6 +62,7 @@ export interface PipelineContext {
   readonly userId: string;
   readonly username: string;
   readonly status: StatusService;
+  readonly channel: ChannelService;
 }
 
 export interface PipelineResult {
@@ -99,6 +108,21 @@ export async function handleEnvelope(
 
     case "statusUpdate":
       return statusUpdate(context, cid, envelope.message.value);
+
+    case "channelJoin":
+      return channelJoin(context, cid, envelope.message.value);
+
+    case "channelLeave":
+      return channelLeave(context, cid, envelope.message.value);
+
+    case "channelMessageSend":
+      return channelMessageSend(context, cid, envelope.message.value);
+
+    case "channelMessageUpdate":
+      return channelMessageUpdate(context, cid, envelope.message.value);
+
+    case "channelMessageRemove":
+      return channelMessageRemove(context, cid, envelope.message.value);
 
     default:
       return reply(unrecognizedPayloadError(cid), true);

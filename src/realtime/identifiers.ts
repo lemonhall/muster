@@ -39,11 +39,30 @@ function toCanonicalHex(raw: string): string | null {
 export function normalizeUserId(raw: string): string | null {
   const hex = toCanonicalHex(raw);
   if (hex === null) return null;
+  return formatHex(hex, true);
+}
+
+/**
+ * 消息 id 的规范化：与 `normalizeUserId` 同一套解析规则，但输出**小写**标准形。
+ *
+ * 为什么两条 id 的大小写不同：用户 id 是本项目自己铸的（身份域统一大写），而消息 id
+ * 在线上是上游 `uuid.Must(uuid.NewV4()).String()` 的小写写法，客户端可能把它原样存下来
+ * 再回传。上游用 Postgres 的 `uuid` 类型比较（天然不区分大小写），我们用文本比较，
+ * 所以**在入口处统一大小写**才是等价实现——否则客户端把 id 写成大写就"查不到这条消息"。
+ */
+export function normalizeMessageId(raw: string): string | null {
+  const hex = toCanonicalHex(raw);
+  if (hex === null) return null;
+  return formatHex(hex, false);
+}
+
+function formatHex(hex: string, upper: boolean): string {
+  const digits = upper ? hex : hex.toLowerCase();
   return [
-    hex.slice(0, 8),
-    hex.slice(8, 12),
-    hex.slice(12, 16),
-    hex.slice(16, 20),
-    hex.slice(20),
+    digits.slice(0, 8),
+    digits.slice(8, 12),
+    digits.slice(12, 16),
+    digits.slice(16, 20),
+    digits.slice(20),
   ].join("-");
 }

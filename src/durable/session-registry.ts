@@ -30,8 +30,12 @@
 import { DurableObject } from "cloudflare:workers";
 
 import type { Bindings } from "../env";
-import { presenceOf, type PresenceSnapshot } from "../realtime/presence";
-import { shardKeyOf } from "../realtime/socket-meta";
+import {
+  presenceOf,
+  statusPresenceEventEnvelope,
+  type PresenceSnapshot,
+} from "../realtime/presence";
+import { deliverToSession } from "./delivery";
 import { SessionStore } from "./session-store";
 
 /**
@@ -85,6 +89,8 @@ export class SessionRegistry extends DurableObject<Bindings> {
         return await this.#status(await request.json());
       case "POST /touch":
         return await this.#touch(await request.json());
+      case "POST /alive":
+        return await this.#alive(await request.json());
       default:
         return json({ error: "not found" }, 404);
     }
@@ -158,6 +164,11 @@ export class SessionRegistry extends DurableObject<Bindings> {
     return json({ ok: true });
   }
 
+  /** 频道 DO 的兜底巡检来问的：这些会话还有谁活着。 */
+  async #alive(input: { readonly sessionIds: string[] }): Promise<Response> {
+    return json({ alive: this.#store.aliveAmong(input.sessionIds) });
+  }
+
   /** 兜底巡检：分片没来得及上报就消失的会话，在这里被清掉并补发 leave。 */
   override async alarm(): Promise<void> {
     for (const row of this.#store.staleBefore(Date.now() - SESSION_EVICT_AFTER_MS)) {
@@ -179,14 +190,12 @@ export class SessionRegistry extends DurableObject<Bindings> {
     if (joins.length === 0 && leaves.length === 0) return;
     const followers = this.#store.followersOf(userId);
     if (followers.length === 0) return;
-    const body = JSON.stringify({ joins, leaves });
+    // 帧在这里构造、在分片那里按每条连接的线格式编码：注册表不必知道谁用 json、谁用 protobuf。
+    const envelope = statusPresenceEventEnvelope(joins, leaves);
     await Promise.allSettled(
-      followers.map((sessionId) => {
-        const stub = this.env.SESSION_SHARD.get(
-          this.env.SESSION_SHARD.idFromName(shardKeyOf(this.#tenantId, sessionId)),
-        );
-        return stub.fetch("https://shard/deliver", { method: "POST", body });
-      }),
+      followers.map((sessionId) =>
+        deliverToSession(this.env, this.#tenantId, sessionId, envelope),
+      ),
     );
   }
 

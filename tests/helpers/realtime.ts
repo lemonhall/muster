@@ -2,7 +2,6 @@ import { create } from "@bufbuild/protobuf";
 import { env } from "cloudflare:test";
 
 import {
-  ChannelJoinSchema,
   EnvelopeSchema,
   PingSchema,
   StatusFollowSchema,
@@ -13,6 +12,7 @@ import {
 import { RpcSchema } from "../../src/proto/api/api_pb";
 import type { PipelineContext, PipelineResult, StatusService } from "../../src/realtime/pipeline";
 import type { PresenceSnapshot } from "../../src/realtime/presence";
+import { recordingChannel } from "./channel";
 
 /**
  * M3 实时套件的共享工装：造用户、造帧、记下管线对注册表说过什么。
@@ -76,14 +76,6 @@ export function statusUpdateEnvelope(cid: string, status?: string): Envelope {
   });
 }
 
-/** 一个 M3 还没接通的频道消息，用来验证"未接通类型"的行为。 */
-export function channelJoinEnvelope(cid: string): Envelope {
-  return create(EnvelopeSchema, {
-    cid,
-    message: { case: "channelJoin", value: create(ChannelJoinSchema, { target: "room-1", type: 1 }) },
-  });
-}
-
 /** 一个 RPC 帧：M6 会接通，M3 阶段是占位。 */
 export function rpcEnvelope(cid: string): Envelope {
   return create(EnvelopeSchema, { cid, message: { case: "rpc", value: create(RpcSchema, { id: "r1" }) } });
@@ -144,6 +136,8 @@ export function pipelineContext(
     userId: CALLER_ID,
     username: CALLER_USERNAME,
     status,
+    // M4 起管线需要频道服务；这些 M3 用例不碰频道，给一个"记下调用、不回帧"的假实现。
+    channel: recordingChannel().service,
     ...overrides,
   };
 }

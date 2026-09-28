@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 
-import { decodeEnvelope, type SessionFormat } from "../../src/realtime/envelope";
+import { decodeEnvelope, encodeEnvelope, type SessionFormat } from "../../src/realtime/envelope";
 import { SOCKET_META_HEADER, encodeSocketMeta, shardKeyOf } from "../../src/realtime/socket-meta";
 import type { Envelope, UserPresence } from "../../src/proto/realtime_pb";
 
@@ -18,6 +18,7 @@ const encoder = new TextEncoder();
 
 export interface TestSocket {
   readonly sessionId: string;
+  readonly format: SessionFormat;
   readonly socket: WebSocket;
   readonly frames: Envelope[];
   close(): void;
@@ -60,10 +61,23 @@ export async function openSocket(
 
   return {
     sessionId,
+    format,
     socket,
     frames,
     close: () => socket.close(1000, "test finished"),
   };
+}
+
+/**
+ * 从测试这一侧发一帧：与真实客户端走**同一条路**（对象 → 线格式字节 → 文本/二进制帧），
+ * 而不是在测试里手拼 JSON 字符串——手拼就测不到编码这一层。
+ */
+export function sendFrame(target: TestSocket, envelope: Envelope): void {
+  const bytes = encodeEnvelope(envelope, target.format);
+  // 线格式决定帧类型：json 走文本帧、protobuf 走二进制帧。发错类型会被分片判成畸形帧并断开
+  // （`webSocketMessage` 里那条 `isText !== (format === "json")`），所以这里必须与之一致。
+  if (target.format === "json") target.socket.send(new TextDecoder().decode(bytes));
+  else target.socket.send(bytes);
 }
 
 /** 给注册表 DO 发一条指令，返回解析后的 JSON。 */
@@ -112,6 +126,26 @@ export async function expectNoFrame(
 
 export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * 断言"从这一刻起**不再有新的**匹配帧"。
+ *
+ * 与 `expectNoFrame` 的区别很要紧：帧列表是**历史**。一条会话先收过自己的加入事件、
+ * 之后才进入"本不该再收到事件"的阶段时，`expectNoFrame` 会因为那段历史而误报。
+ * 所以负向断言先钉住基线条数，再等一个有界窗口比条数。
+ */
+export async function expectNoNewFrame(
+  target: TestSocket,
+  predicate: (envelope: Envelope) => boolean,
+  windowMs = 200,
+): Promise<void> {
+  const before = target.frames.filter(predicate).length;
+  await delay(windowMs);
+  const matched = target.frames.filter(predicate);
+  if (matched.length !== before) {
+    throw new Error(`本不该再收到这帧：${describe(matched[matched.length - 1] as Envelope)}`);
+  }
 }
 
 function describe(envelope: Envelope): string {
