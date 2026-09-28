@@ -9,6 +9,7 @@ import { registerIdentityRoutes } from "./http/routes/identity";
 import { registerLeaderboardRoutes } from "./http/routes/leaderboard";
 import { registerMatchRoutes } from "./http/routes/match";
 import { registerNotificationRoutes } from "./http/routes/notification";
+import { registerPartyRoutes } from "./http/routes/party";
 import { registerSocketRoutes } from "./http/routes/socket";
 import { registerStorageRoutes } from "./http/routes/storage";
 import { registerTournamentRoutes } from "./http/routes/tournament";
@@ -17,6 +18,7 @@ import { registerTournamentRoutes } from "./http/routes/tournament";
 export { Channel } from "./durable/channel";
 export { Match } from "./durable/match";
 export { Matchmaker } from "./durable/matchmaker";
+export { Party } from "./durable/party";
 export { SessionRegistry } from "./durable/session-registry";
 export { SessionShard } from "./durable/session-shard";
 
@@ -59,6 +61,8 @@ registerTournamentRoutes(router);
 registerLeaderboardRoutes(router);
 // 对局列表与匹配器统计：前缀 `/v2/match` 与上面的路径不重叠，排在竞技域之后。
 registerMatchRoutes(router);
+// 派对目录：前缀 `/v2/party`，与上面的路径不重叠，排在匹配之后。
+registerPartyRoutes(router);
 registerSocketRoutes(router);
 
 export default {

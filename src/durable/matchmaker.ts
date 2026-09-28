@@ -105,12 +105,23 @@ export class Matchmaker extends DurableObject<Bindings> {
     switch (`${request.method} ${url.pathname}`) {
       case "POST /add":
         return await this.#add(await request.json());
+      case "POST /addParty":
+        return await this.#addParty(await request.json());
       case "POST /remove":
         return await this.#remove(await request.json());
+      case "POST /removeParty":
+        return this.#removeParty(await request.json());
+      case "POST /removePartyAll":
+        return this.#removePartyAll(await request.json());
       case "POST /removeAll":
         return await this.#removeAll(await request.json());
       case "POST /stats":
         return this.#stats();
+      // 池子的原始内容（票号、票面归属的会话/派对、query、人数区间）。
+      // 只读、不改状态：给"这张票到底属于谁"这类断言一个可对着库看的证据，
+      // 而不是让测试去猜（与 `/stats` 同一个理由）。
+      case "POST /tickets":
+        return json({ tickets: this.#pool.tickets().map(extractOf) });
       case "POST /process":
         return await this.#processNow(await request.json());
       case "POST /hook": {
@@ -193,6 +204,71 @@ export class Matchmaker extends DurableObject<Bindings> {
     }
     this.#store.delete([body.ticket]);
     return json({ ok: true });
+  }
+
+  /**
+   * 派对票：一张票代表**整个派对**，票面 `party_id` 是派对 id，
+   * `session_id` 是空串（上游 `PartyHandler.MatchmakerAdd` 传的就是 `""`）。
+   *
+   * 与个人票共用同一个池子与同一套属性查询，所以派对可以和散人配到一起
+   * ——这正是上游 `TestMatchmakerAddMultipleAndSomeMatch` 覆盖的那条语义。
+   */
+  async #addParty(raw: unknown): Promise<Response> {
+    const body = raw as {
+      partyId: string;
+      presences: readonly { userId: string; sessionId: string; username: string; node: string }[];
+      query: string;
+      minCount: number;
+      maxCount: number;
+      countMultiple: number;
+      stringProperties: Record<string, string>;
+      numericProperties: Record<string, number>;
+    };
+    const ticket = uuidV4();
+    const input: AddTicketInput = {
+      ticket,
+      presences: body.presences.map((presence) => ({ ...presence })),
+      // 上游派对票的 `SessionID` 是空串——它靠 `PartyId` 而不是会话来归属。
+      sessionId: "",
+      partyId: body.partyId,
+      query: body.query,
+      minCount: body.minCount,
+      maxCount: body.maxCount,
+      countMultiple: body.countMultiple,
+      stringProperties: body.stringProperties,
+      numericProperties: body.numericProperties,
+      now: Date.now(),
+    };
+    try {
+      const index = this.#pool.add(input);
+      this.#store.insert(extractOf(index), index.createdAt);
+    } catch (error) {
+      if (error instanceof MatchmakerError) return json({ ok: false, failure: error.failure });
+      throw error;
+    }
+    await this.#ensureAlarm();
+    return json({ ok: true, ticket });
+  }
+
+  /** 队长撤掉一张派对票（上游 `LocalMatchmaker.RemoveParty`）。 */
+  #removeParty(raw: unknown): Response {
+    const body = raw as { partyId: string; ticket: string };
+    try {
+      this.#pool.removeParty(body.partyId, body.ticket);
+    } catch (error) {
+      if (error instanceof MatchmakerError) return json({ ok: false, failure: error.failure });
+      throw error;
+    }
+    this.#store.delete([body.ticket]);
+    return json({ ok: true });
+  }
+
+  /** 成员变动 → 这个派对的全部票作废（上游 `RemovePartyAll`，幂等）。 */
+  #removePartyAll(raw: unknown): Response {
+    const body = raw as { partyId: string };
+    const removed = this.#pool.removePartyAll(body.partyId);
+    this.#store.delete(removed);
+    return json({ ok: true, removed });
   }
 
   /** 连接关闭时的清理（上游 `sessionWS.Close` 里的 `RemoveSessionAll`）。 */

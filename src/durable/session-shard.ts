@@ -31,6 +31,7 @@ import { matchmakerRemoveAll } from "./matchmaker-call";
 import { registryCall, registryFollow } from "./registry-call";
 import { SessionChannels } from "./session-channels";
 import { SessionMatch } from "./session-match";
+import { SessionParty } from "./session-party";
 import { SessionMatchmaker } from "./matchmaker-call";
 
 const decoder = new TextDecoder();
@@ -52,6 +53,7 @@ export class SessionShard extends DurableObject<Bindings> {
   readonly #tenantId: string;
   readonly #channels: SessionChannels;
   readonly #matches: SessionMatch;
+  readonly #parties: SessionParty;
   readonly #matchmaker: SessionMatchmaker;
 
   constructor(ctx: DurableObjectState, env: Bindings) {
@@ -66,10 +68,12 @@ export class SessionShard extends DurableObject<Bindings> {
     this.#tenantId = name.slice(0, separator);
     this.#channels = new SessionChannels(ctx.storage.sql, env, this.#tenantId);
     this.#matches = new SessionMatch(env, this.#tenantId, ctx.storage.sql);
+    this.#parties = new SessionParty(env, this.#tenantId, ctx.storage.sql);
     this.#matchmaker = new SessionMatchmaker(env, this.#tenantId);
     ctx.blockConcurrencyWhile(async () => {
       this.#channels.migrate();
       this.#matches.migrate();
+      this.#parties.migrate();
     });
   }
 
@@ -207,6 +211,7 @@ export class SessionShard extends DurableObject<Bindings> {
       channel: this.#channels,
       matchmaker: this.#matchmaker,
       match: this.#matches,
+      party: this.#parties,
     };
   }
 
@@ -251,6 +256,12 @@ export class SessionShard extends DurableObject<Bindings> {
       await this.#matches.leaveAll(meta.sessionId);
     } catch (error) {
       console.error("对局成员清理失败", error);
+    }
+    // 派对侧同理：不退的话队友会一直看到这个幽灵成员。
+    try {
+      await this.#parties.leaveAll(meta.sessionId);
+    } catch (error) {
+      console.error("派对成员清理失败", error);
     }
     // 等票也得撤（上游 `sessionWS.Close` 里的 `matchmaker.RemoveSessionAll`）：
     // 连接都没了，再拿它的票去成局只会得到一群收不到帧的人。

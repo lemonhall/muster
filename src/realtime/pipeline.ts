@@ -46,10 +46,25 @@ import {
 } from "./pipeline-channel";
 import { matchCreate, matchDataSend, matchJoin, matchLeave } from "./pipeline-match";
 import { matchmakerAdd, matchmakerRemove } from "./pipeline-matchmaker";
+import {
+  partyAccept,
+  partyClose,
+  partyCreate,
+  partyDataSend,
+  partyJoin,
+  partyJoinRequestList,
+  partyLeave,
+  partyMatchmakerAdd,
+  partyMatchmakerRemove,
+  partyPromote,
+  partyRemove,
+  partyUpdate,
+} from "./pipeline-party";
 import { statusEnvelope, type PresenceSnapshot } from "./presence";
 import type { ChannelService } from "./channel";
 import type { MatchService } from "./match";
 import type { MatchmakerService } from "./matchmaker";
+import type { PartyService } from "./party";
 
 /** 状态订阅在会话侧的样子。实现由分片 DO 提供（它去调注册表 DO）。 */
 export interface StatusService {
@@ -70,6 +85,7 @@ export interface PipelineContext {
   readonly channel: ChannelService;
   readonly matchmaker: MatchmakerService;
   readonly match: MatchService;
+  readonly party: PartyService;
 }
 
 export interface PipelineResult {
@@ -148,6 +164,42 @@ export async function handleEnvelope(
 
     case "matchDataSend":
       return matchDataSend(context, cid, envelope.message.value);
+
+    case "partyCreate":
+      return partyCreate(context, cid, envelope.message.value);
+
+    case "partyJoin":
+      return partyJoin(context, cid, envelope.message.value);
+
+    case "partyLeave":
+      return partyLeave(context, cid, envelope.message.value);
+
+    case "partyPromote":
+      return partyPromote(context, cid, envelope.message.value);
+
+    case "partyAccept":
+      return partyAccept(context, cid, envelope.message.value);
+
+    case "partyRemove":
+      return partyRemove(context, cid, envelope.message.value);
+
+    case "partyClose":
+      return partyClose(context, cid, envelope.message.value);
+
+    case "partyJoinRequestList":
+      return partyJoinRequestList(context, cid, envelope.message.value);
+
+    case "partyMatchmakerAdd":
+      return partyMatchmakerAdd(context, cid, envelope.message.value);
+
+    case "partyMatchmakerRemove":
+      return partyMatchmakerRemove(context, cid, envelope.message.value);
+
+    case "partyDataSend":
+      return partyDataSend(context, cid, envelope.message.value);
+
+    case "partyUpdate":
+      return partyUpdate(context, cid, envelope.message.value);
 
     default:
       return reply(unrecognizedPayloadError(cid), true);

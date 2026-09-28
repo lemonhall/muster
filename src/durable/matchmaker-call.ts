@@ -31,7 +31,11 @@ const FAILURES: readonly MatchmakerFailure[] = [
   "not-available",
 ];
 
-async function matchmakerCall(
+/**
+ * 匹配器 DO 的通用调用入口。派对那一半（`party-delivery.ts` / `party-frame-ops.ts`）
+ * 也要用同一条路，所以它是导出的——但**只有这一处拼键**这条规矩不变。
+ */
+export async function matchmakerCall(
   env: Bindings,
   tenantId: string,
   path: string,
@@ -103,4 +107,53 @@ export async function matchmakerRemoveAll(
   sessionId: string,
 ): Promise<void> {
   await matchmakerCall(env, tenantId, "/removeAll", { sessionId });
+}
+
+/** 派对票的入参：整队一张票，票面归派对。 */
+export interface MatchmakerPartyAddInput {
+  readonly partyId: string;
+  readonly presences: readonly {
+    readonly userId: string;
+    readonly sessionId: string;
+    readonly username: string;
+    readonly node: string;
+  }[];
+  readonly query: string;
+  readonly minCount: number;
+  readonly maxCount: number;
+  readonly countMultiple: number;
+  readonly stringProperties: Readonly<Record<string, string>>;
+  readonly numericProperties: Readonly<Record<string, number>>;
+}
+
+export async function matchmakerAddParty(
+  env: Bindings,
+  tenantId: string,
+  input: MatchmakerPartyAddInput,
+): Promise<MatchmakerOpResult> {
+  const raw = await matchmakerCall(env, tenantId, "/addParty", input);
+  if (raw["ok"] !== true) return { ok: false, failure: readFailure(raw["failure"]) };
+  const ticket = raw["ticket"];
+  if (typeof ticket !== "string") throw new Error("匹配器没有返回票号");
+  return { ok: true, ticket };
+}
+
+export async function matchmakerRemoveParty(
+  env: Bindings,
+  tenantId: string,
+  partyId: string,
+  ticket: string,
+): Promise<MatchmakerOpResult> {
+  const raw = await matchmakerCall(env, tenantId, "/removeParty", { partyId, ticket });
+  if (raw["ok"] !== true) return { ok: false, failure: readFailure(raw["failure"]) };
+  return { ok: true, ticket };
+}
+
+/** 成员变动 → 这个派对的所有票作废（上游 `RemovePartyAll`，幂等）。 */
+export async function matchmakerRemovePartyAll(
+  env: Bindings,
+  tenantId: string,
+  partyId: string,
+): Promise<void> {
+  await matchmakerCall(env, tenantId, "/removePartyAll", { partyId });
 }

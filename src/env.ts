@@ -1,6 +1,7 @@
 import type { Channel } from "./durable/channel";
 import type { Match } from "./durable/match";
 import type { Matchmaker } from "./durable/matchmaker";
+import type { Party } from "./durable/party";
 import type { SessionRegistry } from "./durable/session-registry";
 import type { SessionShard } from "./durable/session-shard";
 
@@ -44,6 +45,12 @@ export interface Bindings extends Env {
    */
   MATCHMAKER: DurableObjectNamespace<Matchmaker>;
   MATCH: DurableObjectNamespace<Match>;
+
+  /**
+   * M8：一个派对一个实例（成员表、加入请求、队长与广播顺序都要单点定序）。
+   * 与对局同一个理由，同样只跑本地 workerd。
+   */
+  PARTY: DurableObjectNamespace<Party>;
 
   /**
    * M5：Google 登录。四个都是**可选**的，缺省行为在 `src/domain/social/google/config.ts`
