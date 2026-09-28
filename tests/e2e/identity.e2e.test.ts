@@ -4,7 +4,7 @@ import { e2eTenant, e2eTenantB } from "./global-setup";
 /**
  * M1 E2E：身份 / 会话 / 账号，走真实 HTTP 通道。
  *
- * 与 `tests/integration/identity.test.ts` 的分工是刻意的：
+ * 与 `tests/integration/identity/` 下的集成测试的分工是刻意的：
  * - 集成测试直接 import 处理器，断言的是**领域语义**（校验顺序、错误文案、边界）；
  * - 这里只碰网络，断言的是**端到端真的成立**：HTTP 头、状态码、序列化、D1 落库、
  *   以及多租户隔离在真实请求下依然成立。
@@ -219,20 +219,35 @@ describe("M1 E2E: 设备认证与账号（真实 HTTP）", () => {
     expect(body.users.map((user) => user.id)).toEqual([userId]);
   });
 
-  it("test_unimplemented_upstream_path_says_so_over_real_http", async () => {
-    // M1 只覆盖身份域；存储域的端点必须诚实地说"还没实现"，而不是假装不存在。
-    const implementedMethod = await call("/v2/storage", {
+  it("test_unimplemented_domains_and_auth_kinds_over_real_http", async () => {
+    const { session } = await authenticateDevice(e2eTenant, freshDeviceId());
+
+    // 上游有、本项目还没实现的域 → 诚实地说"这条路有、我们还没做"，不假装 404。
+    const notImplemented = await call("/v2/channel/room-1", {
+      authorization: `Bearer ${session.token}`,
+    });
+    await expectStatus(notImplemented, 501, 12, "Not implemented.");
+
+    // 路径已实现但方法不符 → 501 `Method Not Allowed`（上游 handleRoutingError 把 405
+    // 折叠成 codes.Unimplemented，所以状态码是 501 而不是 405）。
+    // 注意别拿 GET 试 `/v2/storage/delete`：那条会被 `/v2/storage/{collection}` 抢走，
+    // 变成"列举名为 delete 的集合"，上游也是这个行为。
+    const wrongMethod = await call("/v2/storage/delete", {
       method: "POST",
+      authorization: `Bearer ${session.token}`,
+      body: {},
+    });
+    await expectStatus(wrongMethod, 501, 12, "Method Not Allowed");
+
+    // 存储域在上游拦截器里走的是 default 分支：**只认 Bearer**。
+    // 拿 server key 走 Basic 打过来会落到 parseBearerAuth 失败 → 401 `Auth token invalid`
+    // （不是 `Server key invalid`，也不是 403）。
+    const withServerKey = await call("/v2/storage", {
+      method: "PUT",
       authorization: basic(e2eTenant.serverKey),
       body: {},
     });
-    await expectStatus(implementedMethod, 501, 12, "Not implemented.");
-
-    // 上游该路径没有 GET；"方法不符"与"路径没实现"是两条不同的消息，都要照搬。
-    const unimplementedMethod = await call("/v2/storage", {
-      authorization: basic(e2eTenant.serverKey),
-    });
-    await expectStatus(unimplementedMethod, 501, 12, "Method Not Allowed");
+    await expectStatus(withServerKey, 401, 16, "Auth token invalid");
   });
 });
 
