@@ -96,6 +96,28 @@ export async function deleteNotifications(
   return result.meta.changes ?? 0;
 }
 
+/**
+ * 按 id 删除，**不限定接收者**：运行时路径上（上游 `nk.notifications_delete`）
+ * 调用方是平台自己，它按 id 点名删，不需要"只能删自己的"这层约束。
+ *
+ * 客户端那条路走上面的 `deleteNotifications`——那里的 `user_id` 过滤是权限，
+ * 不是可选条件，所以两条路不能合并。
+ */
+export async function deleteNotificationsByIds(
+  db: D1Database,
+  tenantId: string,
+  ids: readonly string[],
+): Promise<number> {
+  if (ids.length === 0) return 0;
+  const params: unknown[] = [tenantId];
+  const placeholders = ids.map((id) => `?${push(params, id)}`).join(", ");
+  const result = await db
+    .prepare(`DELETE FROM notifications WHERE tenant_id = ?1 AND id IN (${placeholders})`)
+    .bind(...params)
+    .run();
+  return result.meta.changes ?? 0;
+}
+
 function push(params: unknown[], value: unknown): number {
   params.push(value);
   return params.length;

@@ -5,6 +5,10 @@
     {
       "test": "server/leaderboard_scheduler_test.go::TestLeaderboardScheduler",
       "reason": "上游自己把它 skip 了：正文第一行是 t.Skip(\"auxiliary test for scheduling logic, but too finicky to be part of the test suite\")，函数体没有被任何 CI 执行过。它测的是「后台调度器连续跑几轮之后哪些期数该被清掉」这一段内部时序，属于上游 Go 实现的内部细节，不构成对外可观测契约。同一文件里真正有断言的另外两条（EndedTournamentHidesLiveExpiry / HidesSuccessorExpiry）已逐条搬运到 tests/unit/competitive/leaderboard-scheduler.test.ts，而调度重算本身由 computeNext 的单元用例覆盖。"
+    },
+    {
+      "test": "server/runtime_test.go::TestRuntimeHTTPRequest",
+      "reason": "这条测的是 nk.httpRequest（Lua 的 nakama.http_request）能出网并拿回状态码。本项目走的是**刻意不同的实现路线**（ECN-0012 的出口策略段）：租户模块一律不得自行出网（装载时 globalOutbound: null），出网必须由宿主代发，而宿主代发面在 M8 的验收口径（REQ-0001-020）里不存在。等价的自主测试是 tests/integration/runtime/modules.test.ts::test_a_module_cannot_reach_the_host：它正向断言模块内的 fetch 被拒、宿主文件读不到、require 不存在。也就是说「这条能力不存在」是有证据的登记事实，与 ECN-0012 偏差 11（未实现的 nk.* 不存在，调用抛 TypeError）同一条规则；对外可观测行为的差异已在该 ECN 里登记，不是漏做。"
     }
   ]
 }

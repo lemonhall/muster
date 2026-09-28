@@ -11,6 +11,7 @@ import {
 } from "../../src/proto/realtime_pb";
 import { RpcSchema } from "../../src/proto/api/api_pb";
 import type { PipelineContext, PipelineResult, StatusService } from "../../src/realtime/pipeline";
+import { ALLOW_ALL_HOOKS } from "../../src/realtime/pipeline-hooks";
 import type { PresenceSnapshot } from "../../src/realtime/presence";
 import { recordingChannel } from "./channel";
 import { recordingMatch, recordingMatchmaker } from "./match-service";
@@ -145,6 +146,8 @@ export function pipelineContext(
     match: recordingMatch().service,
     // M8 同理：派对是 DO 的活儿，纯管线用例给"什么都不做"的假实现。
     party: recordingParty().service,
+    // 运行时 hook 默认"永远放行"；要测 hook 的用例自己 override 这一项。
+    runtime: ALLOW_ALL_HOOKS,
     ...overrides,
   };
 }

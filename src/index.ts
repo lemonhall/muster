@@ -10,6 +10,7 @@ import { registerLeaderboardRoutes } from "./http/routes/leaderboard";
 import { registerMatchRoutes } from "./http/routes/match";
 import { registerNotificationRoutes } from "./http/routes/notification";
 import { registerPartyRoutes } from "./http/routes/party";
+import { registerRpcRoutes } from "./http/routes/rpc";
 import { registerSocketRoutes } from "./http/routes/socket";
 import { registerStorageRoutes } from "./http/routes/storage";
 import { registerTournamentRoutes } from "./http/routes/tournament";
@@ -63,6 +64,8 @@ registerLeaderboardRoutes(router);
 registerMatchRoutes(router);
 // 派对目录：前缀 `/v2/party`，与上面的路径不重叠，排在匹配之后。
 registerPartyRoutes(router);
+// 运行时 RPC：路径是 `/v2/rpc/{id}`，鉴权自带第三条规则（http_key），所以它自己解析。
+registerRpcRoutes(router);
 registerSocketRoutes(router);
 
 export default {

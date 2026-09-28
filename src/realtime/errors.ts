@@ -47,3 +47,19 @@ export function unrecognizedPayloadError(cid: string): Envelope {
 export function badInputError(cid: string, message: string): Envelope {
   return errorEnvelope(cid, Error_Code.BAD_INPUT, message);
 }
+
+/**
+ * 运行时 before hook 抛异常：上游回一帧 `RUNTIME_FUNCTION_EXCEPTION` 但**不关连接**
+ * （`pipeline.go`：`return true`）。模块写错了不该把玩家踢下线。
+ */
+export function runtimeFunctionError(cid: string, message: string): Envelope {
+  return errorEnvelope(cid, Error_Code.RUNTIME_FUNCTION_EXCEPTION, message);
+}
+
+/**
+ * 运行时 before hook 返回 nil：上游认为"这个资源被禁用了"，对外表达成
+ * `UNRECOGNIZED_PAYLOAD` + "Requested resource was not found."，并关闭连接。
+ */
+export function disabledResourceError(cid: string): Envelope {
+  return errorEnvelope(cid, Error_Code.UNRECOGNIZED_PAYLOAD, "Requested resource was not found.");
+}

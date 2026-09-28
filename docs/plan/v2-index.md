@@ -4,7 +4,7 @@
 |---|---|
 | 版本 | v2 |
 | 日期 | 2026-09-29 |
-| 状态 | 进行中（M5、M6、M7 已交付；M8 范围已定） |
+| 状态 | 进行中（M5、M6、M7 已交付；M8 见 [v3-party-runtime.md](./v3-party-runtime.md)） |
 | 成本档位 | `standard`（普通功能交付，最多 3 轮 Review） |
 | 愿景 | [../prd/VISION.md](../prd/VISION.md) |
 | 需求基线 | [PRD-0001](../prd/PRD-0001-muster-parity.md) |
@@ -125,6 +125,7 @@ Google ID token 校验（aud/azp 规则与授权码流程）。同时关闭 v1 �
 | [v2-social.md](./v2-social.md) | M5 | REQ-0001-011, REQ-0001-012, REQ-0001-013，以及 REQ-0001-003 的 OAuth 分支 |
 | [v2-competitive.md](./v2-competitive.md) | M6 | REQ-0001-014, REQ-0001-015, REQ-0001-016 |
 | [v2-match.md](./v2-match.md) | M7 | REQ-0001-017, REQ-0001-018 |
+| [v3-party-runtime.md](./v3-party-runtime.md) | M8 | REQ-0001-019, REQ-0001-020 |
 
 ## 追溯矩阵
 
@@ -139,6 +140,8 @@ Google ID token 校验（aud/azp 规则与授权码流程）。同时关闭 v1 �
 | REQ-0001-016 | v2-competitive.md | `tests/integration/competitive/{tournament,tournament-endpoints}.test.ts`（7 条） | `tests/e2e/competitive.e2e.test.ts`（目录参数、空目录、404） | v2-competitive.md Evidence DoD 5/6；覆盖矩阵第 65 条 `ported`；ECN-0010 偏差 4/9/11 | 🟢 已交付（M6，创建面在 M8） |
 | REQ-0001-017 | v2-match.md | `tests/unit/matchmaker/`（3 文件 / 35 条，含 `溯源: server/matchmaker_test.go::TestMatchmakerAddWithBasicMatch` 等 21 条上游用例）+ `tests/integration/matchmaker/`（2 文件 / 14 条） | `tests/e2e/match.e2e.test.ts`（成局 → token 分支 → 中继互发 → 离开事件） | v2-match.md Evidence DoD 1–8；覆盖矩阵 M7 桶 35 条全部 `ported`；ECN-0011 偏差 1/4/5/10/11 | 🟢 已交付（M7，运行时面在 M8） |
 | REQ-0001-018 | v2-match.md | `tests/unit/match/`（6 文件 / 45 条）+ `tests/integration/match/`（4 文件 / 35 条，含 `溯源: server/match_registry_test.go::TestMatchRegistry*` 与 `TestEncode*`） | `tests/e2e/match.e2e.test.ts`（token join 建对局、目录可查、错误体形状） | v2-match.md Evidence DoD 9–11；覆盖矩阵 M7 桶 35 条全部 `ported`；ECN-0011 偏差 2/3/6/7/8/9 | 🟢 已交付（M7，运行时面与 tick 循环在 M8） |
+| REQ-0001-019 | v3-party-runtime.md | `tests/integration/party/`（7 文件 / 71 条，含 `溯源: server/core_party_test.go`、`server/api_party_test.go`、`server/pipeline_party_test.go`、`server/party_registry_test.go`）+ `tests/unit/party/`（2 文件） | `tests/e2e/party.e2e.test.ts`（创建 → 加入请求 → 接受 → 数据广播 → 踢人 → 关闭） | v3-party-runtime.md Evidence DoD 1–3；覆盖矩阵 M8 桶 44 条 `planned=0`；ECN-0013 偏差 1–5 | 🟢 已交付（M8） |
+| REQ-0001-020 | v3-party-runtime.md | `tests/unit/runtime/`（7 文件 / 65 条）+ `tests/integration/runtime/`（4 文件 / 32 条，含 `溯源: server/runtime_test.go::TestRuntime*`） | `tests/e2e/party.e2e.test.ts`（注册 RPC → 客户端调用 → 拿 payload） | v3-party-runtime.md Evidence DoD 4–12；覆盖矩阵 M8 桶 44 条 `planned=0`（1 exempt）；ECN-0012 偏差 1–14 | 🟢 已交付（M8，对局 tick 循环与 Lua 模块不在范围内） |
 
 > 任何 `待填` / `待回填` / `—` 都是断链，禁止在存在断链的情况下宣称对应需求已交付。
 
@@ -150,6 +153,8 @@ Google ID token 校验（aud/azp 规则与授权码流程）。同时关闭 v1 �
 | [ECN-0009](../ecn/ECN-0009-google-id-token.md) | Google 登录用 WebCrypto 验 RS256，证书来自 JWKS 端点 | 已生效 | REQ-0001-003 | `src/domain/social/google/*` |
 | [ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) | 经济与竞技建在 D1 + 内存缓存上（偏差 1–12）：定义进库、名次缓存换有序数组 + 懒加载、钱包用 CAS + 守卫批次、cron 只做受限子集、时间精度到秒、创建面与权威写路径后置到 M8 | 已生效 | REQ-0001-014, REQ-0001-015, REQ-0001-016 | `migrations/0004_competitive.sql`、`src/domain/competitive/*`、`src/http/routes/{leaderboard,tournament}.ts` |
 | [ECN-0011](../ecn/ECN-0011-match-on-durable-objects.md) | 匹配器与对局建在 Durable Object + D1 上（偏差 1–11）：每租户一个匹配器 / 每场一个对局实例、目录合并成 `match_record` 单表、权威对局唯一入口是钩子、不引入 bluge、顺序确定化、node 固定 `muster`、毫秒/秒精度、protojson 取代 gob、运行时面后置到 M8 | 已生效 | REQ-0001-017, REQ-0001-018 | `migrations/0005_match.sql`、`src/domain/match/*`、`src/domain/matchmaker/*`、`src/durable/match*.ts`、`src/durable/matchmaker*.ts` |
+| [ECN-0012](../ecn/ECN-0012-runtime-modules-on-worker-loader.md) | 运行时模块装载在 Worker Loader 上（偏差 1–14）：每租户一个 isolate、`nk.*` 变异步、源码存 D1、只支持 JS、bcrypt 换 PBKDF2、AES-128-CFB 自实现、配额走 workerd `limits`、hook 用泛化操作名、未实现能力"不存在"、能力对象只在本次调用内有效 | 已生效 | REQ-0001-020 | `migrations/0006_runtime.sql`、`src/runtime/*`、`src/http/routes/rpc.ts`、`src/realtime/pipeline-hooks.ts` |
+| [ECN-0013](../ecn/ECN-0013-party-on-durable-objects.md) | 派对建在 Durable Object + D1 上（偏差 1–5）：状态落 DO SQLite、目录换 D1、游标换 `base64url(JSON)`、标签语法细节、断连清待批请求 | 已生效 | REQ-0001-019 | `src/domain/party/*`、`src/durable/party*.ts`、`src/realtime/pipeline-party.ts`、`src/http/routes/party.ts` |
 
 ## Tashan Review 记录
 
@@ -162,11 +167,15 @@ M7 的 Review 记录：[v2-M7.md](../reviews/v2-M7.md)（verdict: pass；1 条 M
 （匹配器令牌的签名段编码毁了二进制签名，签发的 token 永远验不过）+ 4 条 MINOR +
 1 条 NOTE 全部在提交前处置；另记 7 条残余风险，其中 E2E 收尾噪声为既有问题）。
 
+M8 的 Review 记录：[v3-M8.md](../reviews/v3-M8.md)（verdict: pass；1 条 MAJOR
+（模块宿主的 handler 调用约定传成 `(ctx, payload)`，逼模块捕获会失效的 `nk`）+ 4 条 MINOR +
+1 条 NOTE 全部在提交前处置；另记 7 条残余风险，其中"无线上验收""只支持 JS"为里程碑级限制）。
+
 ## Tashan Trigger Audit
 
 ```markdown
 - expected_review_triggers: v_doc_writing_done, v_milestone_done(M5..M9)
-- actual_review_runs: 4 (v_doc_writing_done, v_milestone_done(M5), v_milestone_done(M6), v_milestone_done(M7))
+- actual_review_runs: 5 (v_doc_writing_done, v_milestone_done(M5), v_milestone_done(M6), v_milestone_done(M7), v_milestone_done(M8))
 - skipped_triggers: 0
 - skip_reasons: 独立子代理派发不通（本机限制），降级为同模型自评 + 命令证据
 - mitigation: 每个里程碑完成前必须补 Review 记录，否则不输出完成信号
@@ -182,3 +191,5 @@ v2 与上游的**全部**刻意差异都登记在 ECN 里，这里只做索引�
 | [ECN-0009](../ecn/ECN-0009-google-id-token.md) | Google 证书从 JWKS（`/oauth2/v3/certs`）取而不是 X.509 PEM 端点 | 不可见 | 已生效 |
 | [ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) | 竞技域建在 D1 与内存缓存上（偏差 1–12）：游标不与上游互换、时间精度到秒、`authoritative = 1` 的榜在 M6 里无人能写分、账本端点后置到 M9 | 收不到（游标不透明）；时间精度差异可见（同秒排序退化到元组）；"权威榜永远空"可见 | 已生效 |
 | [ECN-0011](../ecn/ECN-0011-match-on-durable-objects.md) | 匹配器与对局建在 DO + D1 上（偏差 1–11）：票据与对局状态持久化（重启不丢）、查询只实现子集、权威对局的 node 段是 `muster`、同秒排序补 `match_id` 决胜、跨 DO 帧用 protojson、运行时面后置到 M8 | 收不到（match id 与 token 都是不透明字符串）；同秒创建的对局顺序可见；"权威对局没有 tick 循环"在 M8 前可见 | 已生效 |
+| [ECN-0012](../ecn/ECN-0012-runtime-modules-on-worker-loader.md) | 运行时模块建在 Worker Loader + D1 上（偏差 1–14）：`nk.*` 从同步变异步（模块必须 `await`）、只支持 JS 不支持 Lua、bcrypt 换 PBKDF2、AES-128-CFB 自实现、模块内不得自行出网（`globalOutbound: null`）、未实现的 `nk.*` 抛 `TypeError`、能力对象只在一次调用内有效 | 模块作者可见（偏差 1/2/4/5/11/14 直接改变模块写法）；对外部客户端不可见 | 已生效 |
+| [ECN-0013](../ecn/ECN-0013-party-on-durable-objects.md) | 派对建在 DO + D1 上（偏差 1–5）：状态落 DO SQLite、目录换 D1、游标换 `base64url(JSON)` 不与上游互换、标签语法细节、断连时清掉待批加入请求 | 收不到（游标不透明）；断连清请求在极端时序下可见 | 已生效 |

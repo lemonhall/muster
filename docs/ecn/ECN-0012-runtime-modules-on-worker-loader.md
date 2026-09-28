@@ -58,9 +58,11 @@ workerd 上没有这两样东西：
 - **入口契约**：主模块导出带名字的入口类，宿主调用 `init(nk)`；主模块内部在 isolate 里
   找到租户模块导出的 `InitModule(ctx, logger, nk, initializer)` 并调用它。与上游 JS 运行时的
   入口签名逐字一致。
-- **能力递送**：宿主为每个租户构造一个 `nk` 能力对象（`RpcTarget` 子类），在
-  `init` 与每次调用时作为参数传进 isolate。能力对象内部持有**宿主侧解析出来的租户上下文**，
-  隔离区无法伪造。
+- **能力递送**：宿主为**每一次调用**现造一个宿主壳 `{ logger, nk }`（普通对象 + 函数），
+  在 `InitModule` 与每个 handler / hook 调用时作为参数传进 isolate。能力对象内部持有**宿主侧
+  解析出来的租户与调用者上下文**，隔离区无法伪造：模块无论传什么参数都改不了"我是哪个租户"。
+- **调用约定**：handler / hook 的入参逐位对齐上游 `RuntimeJS.InvokeFunction`——
+  `(ctx, logger, nk, ...payloads)`。模块从**参数**里取 `nk` 与 `logger`（偏差 14）。
 - **出口策略**：`globalOutbound: null`。租户模块**不能**直接 `fetch`；需要出网时必须走
   `nk.httpRequest`，由宿主代发。这样出口策略是平台可审计、可限流、可关停的。
 
@@ -81,6 +83,7 @@ workerd 上没有这两样东西：
 | 11 | 未实现的 `nk.*`（`sqlExec`、`event`、`authenticate*`、`stream*` 等）**不存在**，调用会抛 `TypeError` | **可见**且**故意**：宁可让模块作者在装载时就撞到明确错误，也不返回 `undefined` 让错误延后到线上 |
 | 12 | `ctx` 只提供 `userId` / `username` / `sessionId` / `executionMode` / `env` / `matchId` | **可见**：上游 `ctx` 的其余字段（节点 id、tick 速率一类）在本项目的载体上没有对应物 |
 | 13 | 时间字段精度到秒（通知、钱包账本） | 与 ECN-0008 / ECN-0010 一致；同秒多条按 id 决胜 |
+| 14 | 能力对象（`nk` / `logger`）**只在本次调用内有效**，必须从 handler / hook 的入参里取；在 `InitModule` 里捕获一份留到以后用，会在第二次调用时**大声失败**（`RPC stub used after being disposed`） | **可见**（对模块作者）：上游 `nk` 是进程内的长生命周期对象，两种写法都行；本项目每次调用现造宿主壳，它背后的 RPC 会话随这次调用结束而关闭。这是刻意选的方向——留一个"上一次请求的身份"继续可用就是跨请求身份泄漏。上游 JS 的**标准写法**（handler 签名 `(ctx, logger, nk, payload)`）不受影响，受影响的是"在 InitModule 里捕获 nk"这一种 |
 
 ## 为什么这些偏差可接受
 
@@ -89,6 +92,18 @@ workerd 上没有这两样东西：
 
 **对模块作者可见的四条**（偏差 1、2、4、5）都有明确的替代路径，且都是"把模块代码往标准
 ESM/异步风格上收"这一个方向；这类代码在浏览器/Node 里也能跑，属于可移植性提升而非损失。
+偏差 14 同理：它要求模块走上游 JS 运行时的**标准入参形态**（`ctx, logger, nk, payload`），
+而不是 Lua 那种"在模块顶层 `require("nakama")` 拿一个全局 nk"的形态。
+
+### 偏差 14 是实测发现的，不是设计时的推测
+
+M8 收尾时 `TestRuntimeStorageWrite` / `TestRuntimeStorageRead` 的搬运用例红了
+（`tests/integration/runtime/tools.test.ts`）：模块在 `InitModule` 里捕获 `nk`，第一次调用
+成功、第二次调用报 `RPC stub used after being disposed`。桥最初只给 handler 传
+`(ctx, payload)`，于是"从参数里拿 nk"这条正路走不通，模块只能去捕获 `InitModule` 的那一份——
+而那一份的生命周期只有一次调用。修法是让桥按上游逐位传 `(ctx, logger, nk, payload…)`，
+并把这条规则写进本表；红 → 绿输出见
+[v3-party-runtime.md](../plan/v3-party-runtime.md) 的 Evidence DoD 8。
 
 **多租户语义变强而不是变弱**：上游是"一个进程一个游戏"；muster 是"一个租户一个 isolate"，
 所以同账号下多个游戏的代码与数据同时隔离（REQ-0001-026 的代码侧延伸）。

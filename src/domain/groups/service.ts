@@ -61,6 +61,13 @@ export interface CreateGroupInput {
   readonly avatarUrl: string;
   readonly open: boolean;
   readonly maxCount: number;
+  /**
+   * `creator_id` 列。REST 建群时不传（等于调用者自己）；运行时 `nk.groupCreate` 的
+   * 第 3 个参数就是它——上游允许"所有者"与"创建人"是两个不同的账号。
+   */
+  readonly creatorId?: string;
+  /** 元数据 JSON 文本。REST 建群没有这个字段（上游只有控制台/运行时接口有）。 */
+  readonly metadata?: string;
 }
 
 /**
@@ -68,7 +75,7 @@ export interface CreateGroupInput {
  *
  * 重名由 `insertGroup` 的 `WHERE NOT EXISTS` 判定（0 行 = 名字被占用），所以这里
  * 不依赖 D1 的约束错误文案——错误文案是运行时细节，不该变成业务分支的条件。
- * `metadata` 上游走控制台/运行时接口，REST 建群没有这个字段，如实写 `{}`。
+ * `metadata` 与 `creatorId` 都只有运行时/控制台会传；REST 建群走缺省（`{}`、调用者）。
  */
 export async function createGroup(
   env: Bindings,
@@ -82,12 +89,12 @@ export async function createGroup(
   const results = await env.DB.batch([
     insertGroup(env.DB, tenantId, {
       id: groupId,
-      creatorId: callerId,
+      creatorId: input.creatorId ?? callerId,
       name: input.name,
       description: input.description,
       avatarUrl: input.avatarUrl,
       langTag: input.langTag,
-      metadata: "{}",
+      metadata: input.metadata ?? "{}",
       open: input.open,
       maxCount: input.maxCount,
       now,

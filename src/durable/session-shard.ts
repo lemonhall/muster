@@ -25,6 +25,7 @@ import { DurableObject } from "cloudflare:workers";
 import type { Bindings } from "../env";
 import { decodeEnvelope, encodeEnvelope, type SessionFormat } from "../realtime/envelope";
 import { handleEnvelope, type PipelineContext, type StatusService } from "../realtime/pipeline";
+import { realtimeHooks } from "../realtime/pipeline-hooks";
 import { decodeSocketMeta, SOCKET_META_HEADER, type SocketMeta } from "../realtime/socket-meta";
 import { DELIVER_PATH, parseDelivery } from "./delivery";
 import { matchmakerRemoveAll } from "./matchmaker-call";
@@ -212,6 +213,12 @@ export class SessionShard extends DurableObject<Bindings> {
       matchmaker: this.#matchmaker,
       match: this.#matches,
       party: this.#parties,
+      // 租户运行时 hook：能力对象里的租户与调用者来自这一条会话，模块改不了。
+      runtime: realtimeHooks(this.env, this.#tenantId, {
+        userId: meta.userId,
+        username: meta.username,
+        sessionId: meta.sessionId,
+      }),
     };
   }
 

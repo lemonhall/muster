@@ -14,9 +14,9 @@
 |---|---|
 | 上游 commit | `e920249a3465bea4b8ea2968020c488201b61a8e` |
 | 上游测试条目 | 263 |
-| ported | 123 |
-| planned | 139 |
-| exempt | 1 |
+| ported | 165 |
+| planned | 96 |
+| exempt | 2 |
 | 无理由豁免 | 0 |
 | 第二证据源引用（自主契约测试） | 138 |
 
@@ -31,7 +31,7 @@
 | M5 | 社交（好友/群组/通知/社交登录令牌校验） | 4 | 4 | 0 | 0 |
 | M6 | 经济与竞技（钱包/排行榜/锦标赛） | 25 | 24 | 0 | 1 |
 | M7 | 匹配与对局 | 35 | 35 | 0 | 0 |
-| M8 | 派对与运行时扩展 | 44 | 1 | 43 | 0 |
+| M8 | 派对与运行时扩展 | 44 | 43 | 0 | 1 |
 | M9 | 管理台与运维面 | 5 | 0 | 5 | 0 |
 | MX | 横切（配置/指标/关停/流管理） | 4 | 0 | 4 | 0 |
 | LUA | Lua 运行时（后置，不属于 v1~v4 的 P0/P1） | 76 | 0 | 76 | 0 |
@@ -198,49 +198,49 @@
 | # | 状态 | 上游测试 | 文件 | 证据 / 理由 |
 |---:|---|---|---|---|
 | 124 | ported | TestPartyMatchmakerAddAndRemove | `server/party_handler_test.go` | `tests/integration/party/frames.test.ts`、`tests/integration/party/lifecycle.test.ts`、`tests/unit/party/members.test.ts` |
-| 125 | planned | TestGoLoggerDebug | `server/runtime_go_logger_test.go` | — |
-| 126 | planned | TestGoLoggerError | `server/runtime_go_logger_test.go` | — |
-| 127 | planned | TestGoLoggerFields | `server/runtime_go_logger_test.go` | — |
-| 128 | planned | TestGoLoggerInfo | `server/runtime_go_logger_test.go` | — |
-| 129 | planned | TestGoLoggerWarn | `server/runtime_go_logger_test.go` | — |
-| 130 | planned | TestGoLoggerWithField | `server/runtime_go_logger_test.go` | — |
-| 131 | planned | TestGoLoggerWithFields | `server/runtime_go_logger_test.go` | — |
-| 132 | planned | TestJsLoggerDebug | `server/runtime_javascript_logger_test.go` | — |
-| 133 | planned | TestJsLoggerError | `server/runtime_javascript_logger_test.go` | — |
-| 134 | planned | TestJsLoggerInfo | `server/runtime_javascript_logger_test.go` | — |
-| 135 | planned | TestJsLoggerWarn | `server/runtime_javascript_logger_test.go` | — |
-| 136 | planned | TestJsLoggerWithField | `server/runtime_javascript_logger_test.go` | — |
-| 137 | planned | TestJsLoggerWithFields | `server/runtime_javascript_logger_test.go` | — |
-| 138 | planned | TestJsObjectFreeze | `server/runtime_javascript_test.go` | — |
-| 139 | planned | TestRuntimeAes128 | `server/runtime_test.go` | — |
-| 140 | planned | TestRuntimeBase16 | `server/runtime_test.go` | — |
-| 141 | planned | TestRuntimeBase64 | `server/runtime_test.go` | — |
-| 142 | planned | TestRuntimeBcryptCompare | `server/runtime_test.go` | — |
-| 143 | planned | TestRuntimeBcryptHash | `server/runtime_test.go` | — |
-| 144 | planned | TestRuntimeBit32 | `server/runtime_test.go` | — |
-| 145 | planned | TestRuntimeDisallowStandardLibs | `server/runtime_test.go` | — |
-| 146 | planned | TestRuntimeGroupTests | `server/runtime_test.go` | — |
-| 147 | planned | TestRuntimeHTTPRequest | `server/runtime_test.go` | — |
-| 148 | planned | TestRuntimeJson | `server/runtime_test.go` | — |
-| 149 | planned | TestRuntimeMD5Hash | `server/runtime_test.go` | — |
-| 150 | planned | TestRuntimeNotificationsDelete | `server/runtime_test.go` | — |
-| 151 | planned | TestRuntimeNotificationSend | `server/runtime_test.go` | — |
-| 152 | planned | TestRuntimeNotificationsSend | `server/runtime_test.go` | — |
-| 153 | planned | TestRuntimeRegisterRPCWithPayload | `server/runtime_test.go` | — |
-| 154 | planned | TestRuntimeRegisterRPCWithPayloadEndToEnd | `server/runtime_test.go` | — |
-| 155 | planned | TestRuntimeReqAfterHook | `server/runtime_test.go` | — |
-| 156 | planned | TestRuntimeReqBeforeHook | `server/runtime_test.go` | — |
-| 157 | planned | TestRuntimeReqBeforeHookDisallowed | `server/runtime_test.go` | — |
-| 158 | planned | TestRuntimeRequireEval | `server/runtime_test.go` | — |
-| 159 | planned | TestRuntimeRequireFile | `server/runtime_test.go` | — |
-| 160 | planned | TestRuntimeRequirePreload | `server/runtime_test.go` | — |
-| 161 | planned | TestRuntimeRTBeforeHook | `server/runtime_test.go` | — |
-| 162 | planned | TestRuntimeRTBeforeHookDisallow | `server/runtime_test.go` | — |
-| 163 | planned | TestRuntimeSampleScript | `server/runtime_test.go` | — |
-| 164 | planned | TestRuntimeSHA256Hash | `server/runtime_test.go` | — |
-| 165 | planned | TestRuntimeStorageRead | `server/runtime_test.go` | — |
-| 166 | planned | TestRuntimeStorageWrite | `server/runtime_test.go` | — |
-| 167 | planned | TestRuntimeWalletWrite | `server/runtime_test.go` | — |
+| 125 | ported | TestGoLoggerDebug | `server/runtime_go_logger_test.go` | `tests/unit/runtime/log.test.ts` |
+| 126 | ported | TestGoLoggerError | `server/runtime_go_logger_test.go` | `tests/unit/runtime/log.test.ts` |
+| 127 | ported | TestGoLoggerFields | `server/runtime_go_logger_test.go` | `tests/unit/runtime/log.test.ts` |
+| 128 | ported | TestGoLoggerInfo | `server/runtime_go_logger_test.go` | `tests/unit/runtime/log.test.ts` |
+| 129 | ported | TestGoLoggerWarn | `server/runtime_go_logger_test.go` | `tests/unit/runtime/log.test.ts` |
+| 130 | ported | TestGoLoggerWithField | `server/runtime_go_logger_test.go` | `tests/unit/runtime/log.test.ts` |
+| 131 | ported | TestGoLoggerWithFields | `server/runtime_go_logger_test.go` | `tests/unit/runtime/log.test.ts` |
+| 132 | ported | TestJsLoggerDebug | `server/runtime_javascript_logger_test.go` | `tests/unit/runtime/js-logger.test.ts` |
+| 133 | ported | TestJsLoggerError | `server/runtime_javascript_logger_test.go` | `tests/unit/runtime/js-logger.test.ts` |
+| 134 | ported | TestJsLoggerInfo | `server/runtime_javascript_logger_test.go` | `tests/unit/runtime/js-logger.test.ts` |
+| 135 | ported | TestJsLoggerWarn | `server/runtime_javascript_logger_test.go` | `tests/unit/runtime/js-logger.test.ts` |
+| 136 | ported | TestJsLoggerWithField | `server/runtime_javascript_logger_test.go` | `tests/unit/runtime/js-logger.test.ts` |
+| 137 | ported | TestJsLoggerWithFields | `server/runtime_javascript_logger_test.go` | `tests/unit/runtime/js-logger.test.ts` |
+| 138 | ported | TestJsObjectFreeze | `server/runtime_javascript_test.go` | `tests/unit/runtime/freeze.test.ts` |
+| 139 | ported | TestRuntimeAes128 | `server/runtime_test.go` | `tests/unit/runtime/crypto.test.ts` |
+| 140 | ported | TestRuntimeBase16 | `server/runtime_test.go` | `tests/unit/runtime/crypto.test.ts` |
+| 141 | ported | TestRuntimeBase64 | `server/runtime_test.go` | `tests/unit/runtime/crypto.test.ts` |
+| 142 | ported | TestRuntimeBcryptCompare | `server/runtime_test.go` | `tests/unit/runtime/crypto.test.ts` |
+| 143 | ported | TestRuntimeBcryptHash | `server/runtime_test.go` | `tests/unit/runtime/crypto.test.ts` |
+| 144 | ported | TestRuntimeBit32 | `server/runtime_test.go` | `tests/unit/runtime/bit32.test.ts` |
+| 145 | ported | TestRuntimeDisallowStandardLibs | `server/runtime_test.go` | `tests/integration/runtime/modules.test.ts` |
+| 146 | ported | TestRuntimeGroupTests | `server/runtime_test.go` | `tests/integration/runtime/tools.test.ts` |
+| 147 | exempt | TestRuntimeHTTPRequest | `server/runtime_test.go` | 这条测的是 nk.httpRequest（Lua 的 nakama.http_request）能出网并拿回状态码。本项目走的是**刻意不同的实现路线**（ECN-0012 的出口策略段）：租户模块一律不得自行出网（装载时 globalOutbound: null），出网必须由宿主代发，而宿主代发面在 M8 的验收口径（REQ-0001-020）里不存在。等价的自主测试是 tests/integration/runtime/modules.test.ts::test_a_module_cannot_reach_the_host：它正向断言模块内的 fetch 被拒、宿主文件读不到、require 不存在。也就是说「这条能力不存在」是有证据的登记事实，与 ECN-0012 偏差 11（未实现的 nk.* 不存在，调用抛 TypeError）同一条规则；对外可观测行为的差异已在该 ECN 里登记，不是漏做。 |
+| 148 | ported | TestRuntimeJson | `server/runtime_test.go` | `tests/unit/runtime/json.test.ts` |
+| 149 | ported | TestRuntimeMD5Hash | `server/runtime_test.go` | `tests/unit/runtime/crypto.test.ts` |
+| 150 | ported | TestRuntimeNotificationsDelete | `server/runtime_test.go` | `tests/integration/runtime/tools.test.ts` |
+| 151 | ported | TestRuntimeNotificationSend | `server/runtime_test.go` | `tests/integration/runtime/tools.test.ts` |
+| 152 | ported | TestRuntimeNotificationsSend | `server/runtime_test.go` | `tests/integration/runtime/tools.test.ts` |
+| 153 | ported | TestRuntimeRegisterRPCWithPayload | `server/runtime_test.go` | `tests/integration/runtime/rpc.test.ts` |
+| 154 | ported | TestRuntimeRegisterRPCWithPayloadEndToEnd | `server/runtime_test.go` | `tests/integration/runtime/rpc.test.ts` |
+| 155 | ported | TestRuntimeReqAfterHook | `server/runtime_test.go` | `tests/integration/runtime/hooks.test.ts` |
+| 156 | ported | TestRuntimeReqBeforeHook | `server/runtime_test.go` | `tests/integration/runtime/hooks.test.ts` |
+| 157 | ported | TestRuntimeReqBeforeHookDisallowed | `server/runtime_test.go` | `tests/integration/runtime/hooks.test.ts` |
+| 158 | ported | TestRuntimeRequireEval | `server/runtime_test.go` | `tests/integration/runtime/modules.test.ts` |
+| 159 | ported | TestRuntimeRequireFile | `server/runtime_test.go` | `tests/integration/runtime/modules.test.ts` |
+| 160 | ported | TestRuntimeRequirePreload | `server/runtime_test.go` | `tests/integration/runtime/modules.test.ts` |
+| 161 | ported | TestRuntimeRTBeforeHook | `server/runtime_test.go` | `tests/integration/runtime/hooks.test.ts` |
+| 162 | ported | TestRuntimeRTBeforeHookDisallow | `server/runtime_test.go` | `tests/integration/runtime/hooks.test.ts` |
+| 163 | ported | TestRuntimeSampleScript | `server/runtime_test.go` | `tests/integration/runtime/modules.test.ts` |
+| 164 | ported | TestRuntimeSHA256Hash | `server/runtime_test.go` | `tests/unit/runtime/crypto.test.ts` |
+| 165 | ported | TestRuntimeStorageRead | `server/runtime_test.go` | `tests/integration/runtime/tools.test.ts` |
+| 166 | ported | TestRuntimeStorageWrite | `server/runtime_test.go` | `tests/integration/runtime/tools.test.ts` |
+| 167 | ported | TestRuntimeWalletWrite | `server/runtime_test.go` | `tests/integration/runtime/tools.test.ts` |
 
 ### M9 管理台与运维面
 
@@ -508,4 +508,4 @@
 | `server/tracker.go::StreamModeChannel` | `tests/integration/channel/ids.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=983d3519c03adfc92b7aaafae2af9d5a516a958fb28c4b45668e7244e3ead96f -->
+<!-- integrity: body_sha256=34630bcebcd20784ac877798a31bf4793f841fa06393635d43aba238395de056 -->

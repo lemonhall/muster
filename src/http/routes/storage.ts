@@ -25,6 +25,7 @@ import {
   storageObjectListBody,
   storageObjectsBody,
 } from "../../wire/storage";
+import { requestCaller, runRequestAfter, runRequestBefore } from "../../runtime/hooks";
 
 /**
  * 存储引擎的 REST 端点。
@@ -179,10 +180,16 @@ export function registerStorageRoutes(router: Router): void {
 
   router.handleUser("PUT", "/v2/storage", async (context) => {
     const body = asObject(await parseBody(context.request), "body");
+    // 运行时 before hook 排在校验**之前**（上游 `WriteStorageObjects` 就是这个顺序）；
+    // 它看到的是客户端原样送上来的 body，拒绝时给 404 `Requested resource was not found.`。
+    const caller = requestCaller(context.session.user.id, context.session.user.username);
+    await runRequestBefore(context.env, context.tenantEnv.tenantId, caller, "WriteStorageObjects", body);
     const ops = writeOpsOf(body);
     if (ops.length === 0) return json({});
     const acks = await writeObjects(context.tenantEnv, context.session.user.id, ops);
-    return json(storageObjectAcksBody(acks));
+    const payload = storageObjectAcksBody(acks);
+    await runRequestAfter(context.env, context.tenantEnv.tenantId, caller, "WriteStorageObjects", payload);
+    return json(payload);
   });
 
   router.handleUser("PUT", "/v2/storage/delete", async (context) => {

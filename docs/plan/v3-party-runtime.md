@@ -78,16 +78,23 @@ v3 补上的是**最后两块让平台真正"可二次开发"的东西**：
 - 第 10 条的"被拒且不产生副作用"必须同时断言**HTTP/WS 层的拒绝**与**库里没有新行**。
 - 第 1、4、5 条必须先红后绿，红/绿输出粘到本文件的 Evidence 段。
 
-## 文件清单（预期）
+## 文件清单（落地后回填）
 
 | 区域 | 文件 |
 |---|---|
 | 派对域 | `src/domain/party/{types,ids,errors,members,catalog,matchmaker,store}.ts` |
 | 派对运行时载体 | `src/durable/party.ts`、`src/durable/party-{call,members,envelope}.ts`、`src/durable/party-registry.ts` |
 | 派对接入面 | `src/realtime/pipeline-party.ts`、`src/http/routes/party.ts` |
-| 运行时域 | `src/runtime/{log,js-logger,freeze,bit32,crypto,aes-cfb,json,modules,loader,capability,bridge,hooks,rpc-call}.ts` |
+| 运行时域（宿主侧） | `src/runtime/{log,freeze,bit32,crypto,aes-cfb,json}.ts` |
+| 运行时域（隔离区侧） | `src/runtime/js-logger.ts`、`src/runtime/modules.ts` |
+| 运行时域（装载与桥） | `src/runtime/{loader,bridge,service,host,hooks}.ts` |
+| 运行时域（能力面） | `src/runtime/{capability,capability-tools,capability-data,capability-groups}.ts` |
 | 运行时接入面 | `src/http/routes/rpc.ts`、`src/realtime/pipeline-hooks.ts` |
 | 迁移 | `migrations/0006_runtime.sql` |
+
+> 与规划时的差别：`rpc-call.ts` 在落地时拆成 `src/http/routes/rpc.ts`（HTTP 面）
+> 与 `src/runtime/host.ts`（把入参译成模块调用），能力面按"工具 / 数据 / 群组"拆成
+> 三个不超过 300 行的文件。这里如实回填，不再保留规划名。
 
 ## 风险
 
@@ -132,3 +139,87 @@ $ npx vitest run tests/integration/party/lifecycle.test.ts --reporter=verbose
 
 红的两条足以说明：缺 cid 信封 → 客户端等不到回执（`party` 帧到了、`ack` 没到），
 不清元数据 → 关闭后的派对还能被 `party_join` 加进去。
+
+### DoD 4（`InitModule` 只执行一次）红 → 绿
+
+红色探针：把 `src/runtime/bridge.ts::ensureInit` 开头那句 `if (state.initialized) return;`
+摘掉（只摘这一句，别的一行没动）。
+
+```
+$ npx vitest run tests/integration/runtime/modules.test.ts --reporter=verbose
+ × M8 运行时: 装载一次 > test_init_module_runs_exactly_once_and_module_state_survives
+   → expected { initCount: 2, calls: 2 } to deeply equal { initCount: 1, calls: 2 }
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+```
+
+恢复守卫后：
+
+```
+$ npx vitest run tests/integration/runtime/modules.test.ts --reporter=verbose
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+```
+
+红的那一条正好把两件事分开：`calls` 从 1 走到 2（模块级状态确实跨调用保留，所以它不受影响），
+而 `initCount` 变成 2——说明"只初始化一次"这句话由那句守卫负责，不是"看起来像"。
+
+### DoD 5（隔离性）红 → 绿
+
+两个机制各摘一处：
+① `src/runtime/loader.ts` 装载参数里的 `globalOutbound: null`（模块于是能自己出网）；
+② `src/runtime/service.ts::capabilityOf` 里的 `tenantId` 换成常量（能力对象不再闭在租户上）。
+
+```
+$ npx vitest run tests/integration/runtime/modules.test.ts --reporter=verbose
+ × M8 运行时: 隔离 > test_a_module_cannot_reach_the_host
+   → expected 'allowed' to be 'blocked' // Object.is equality
+ × M8 运行时: 隔离 > test_the_same_user_and_collection_in_two_tenants_stay_apart
+   → expected [ { from: 'b' } ] to deeply equal [ { from: 'a' } ]
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+```
+
+第二行的红值值得看一眼：A 租户读到的是 **B 写进去的那一份**——这正是跨租户泄漏的样子，
+而不是"两个租户都读不到"。两处机制都恢复后：
+
+```
+$ npx vitest run tests/integration/runtime/modules.test.ts --reporter=verbose
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+```
+
+### DoD 8（数据面）红 → 绿：一次真缺陷 + 一次测试自己的错
+
+第一次跑 `tests/integration/runtime/tools.test.ts` 是 **3 failed | 5 passed**，
+两个失败同源、一个不同源：
+
+```
+$ npx vitest run tests/integration/runtime/tools.test.ts --reporter=verbose
+ × test_storage_read_returns_empty_values_for_empty_objects
+   → RPC global-read 失败：RPC stub used after being disposed.
+ × test_notifications_delete_removes_the_row
+   → RPC notify-delete 失败：RPC stub used after being disposed.
+ × test_group_create_update_list_delete_round_trip
+   → D1_ERROR: no such column: group_id at offset 54: SQLITE_ERROR
+      Tests  3 failed | 5 passed (8)
+```
+
+1. **真缺陷（产品）**：前两条是桥的调用约定错了。桥当时给 handler 传的是 `(ctx, payload)`，
+   于是模块只能去捕获 `InitModule` 的那一份 `nk`；而那一份背后的 RPC 会话在第一次调用
+   结束时就关闭了，第二次调用必然拿到一个已释放的 stub。上游 `RuntimeJS.InvokeFunction`
+   拼的入参是 `[ctx, logger, nk, ...payloads]`，桥改成逐位对齐之后这一类模块就能正常工作
+   （偏差登记为 [ECN-0012](../ecn/ECN-0012-runtime-modules-on-worker-loader.md) 偏差 14）。
+2. **测试自己的错（工装）**：第三条是本文件里的断言写错了列名——`group_edge` 的两列叫
+   `source_id` / `destination_id`，不是 `group_id` / `user_id`。修的是测试，不是实现。
+
+修完两处之后：
+
+```
+$ npx vitest run tests/integration/runtime/tools.test.ts --reporter=verbose
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+```
+
+这里刻意把两类红分开写：把"实现错了"和"断言写错了"混成一句"修好了"，
+等于把这次唯一的真缺陷从记录里抹掉。

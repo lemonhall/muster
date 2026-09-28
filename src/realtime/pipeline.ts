@@ -35,7 +35,14 @@ import {
   type StatusUnfollow,
   type StatusUpdate,
 } from "../proto/realtime_pb";
-import { ackEnvelope, badInputError, missingPayloadError, unrecognizedPayloadError } from "./errors";
+import {
+  ackEnvelope,
+  badInputError,
+  disabledResourceError,
+  missingPayloadError,
+  runtimeFunctionError,
+  unrecognizedPayloadError,
+} from "./errors";
 import { normalizeUserId } from "./identifiers";
 import {
   channelJoin,
@@ -65,6 +72,7 @@ import type { ChannelService } from "./channel";
 import type { MatchService } from "./match";
 import type { MatchmakerService } from "./matchmaker";
 import type { PartyService } from "./party";
+import type { RealtimeHookService } from "./pipeline-hooks";
 
 /** 状态订阅在会话侧的样子。实现由分片 DO 提供（它去调注册表 DO）。 */
 export interface StatusService {
@@ -86,6 +94,8 @@ export interface PipelineContext {
   readonly matchmaker: MatchmakerService;
   readonly match: MatchService;
   readonly party: PartyService;
+  /** 租户运行时的实时 hook；没有模块时是"永远放行"的实现。 */
+  readonly runtime: RealtimeHookService;
 }
 
 export interface PipelineResult {
@@ -107,6 +117,51 @@ export async function handleEnvelope(
   context: PipelineContext,
   envelope: Envelope,
 ): Promise<PipelineResult> {
+  const op = opNameOf(envelope);
+  // 缺 payload 与不认识的 payload 在上游是**提前 return** 的（走不到 hook 那一段）。
+  if (op === null) return dispatch(context, envelope);
+
+  const decision = await context.runtime.before(op, hookPayload(envelope));
+  if (decision.kind === "failed") return reply(runtimeFunctionError(envelope.cid, decision.message));
+  if (decision.kind === "disabled") return reply(disabledResourceError(envelope.cid), true);
+
+  const result = await dispatch(context, envelope);
+  // 上游：只有成功的操作才触发 after hook（`if success && messageName != ""`）。
+  if (!result.close) await context.runtime.after(op, hookPayload(envelope));
+  return result;
+}
+
+/**
+ * 消息类型 → 上游的 hook 名字。
+ *
+ * 上游用 `fmt.Sprintf("%T", in.Message)` 取出 `*rtapi.Envelope_MatchCreate`，再整体转小写；
+ * 注册端拼的是 `*rtapi.Envelope_` + 名字。两边的公共部分就是 **proto 消息名**，
+ * 所以这里从生成物的 case 名还原它（`matchCreate` → `MatchCreate`），比较仍然不区分大小写。
+ */
+function opNameOf(envelope: Envelope): string | null {
+  const name = envelope.message.case;
+  if (name === undefined) return null;
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+/**
+ * 交给 hook 的 payload。
+ *
+ * 上游给的是那个 protobuf 消息本身。本项目的消息对象带着生成器的原型，跨 isolate
+ * 传之前统一折成纯 JSON（`Uint8Array` 会变成下标对象、`bigint` 会让 `stringify`
+ * 抛错——后者回 `null` 而不是让整条消息失败：hook 只是观察者）。
+ */
+function hookPayload(envelope: Envelope): unknown {
+  const value = envelope.message.value;
+  if (value === undefined) return null;
+  try {
+    return JSON.parse(JSON.stringify(value)) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+async function dispatch(context: PipelineContext, envelope: Envelope): Promise<PipelineResult> {
   const cid = envelope.cid;
 
   switch (envelope.message.case) {
