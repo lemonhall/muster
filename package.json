@@ -10,6 +10,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "e2e": "vitest run --config vitest.e2e.config.ts",
+    "tenant:create": "node scripts/tenant.mjs create",
+    "tenant:list": "node scripts/tenant.mjs list",
     "conformance:inventory": "node scripts/upstream-inventory.mjs",
     "conformance:matrix": "node scripts/conformance-matrix.mjs",
     "docs:check": "python scripts/doc_hygiene_check.py --root ."
