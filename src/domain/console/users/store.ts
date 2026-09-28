@@ -145,12 +145,40 @@ export function isRetryableD1Error(error: unknown): boolean {
   return message.includes("SQLITE_BUSY") || message.includes("database is locked");
 }
 
+/**
+ * 只写一次性 code。
+ *
+ * 与 `updatePassword` 分成两条 SQL 而不是"一条带默认空口令的更新"：
+ * 重新发邀请**不能**把已经设好的口令清掉（上游的 upsert 同样不动 `password` 列）。
+ */
+async function setInviteCode(
+  db: D1Database,
+  tenantId: string,
+  username: string,
+  codeHash: string,
+  codeExpiry: number,
+  now: number,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `UPDATE console_user
+       SET password_code = ?1, password_code_expiry = ?2, update_time = ?3
+       WHERE tenant_id = ?4 AND username = ?5
+       RETURNING id`,
+    )
+    .bind(codeHash, codeExpiry, now, tenantId, username)
+    .first<{ readonly id: string }>();
+  return row !== null;
+}
+
 export function d1ConsoleUserStore(db: D1Database, tenantId: string): ConsoleUserStore {
   return {
     insertUser: (user) => insertUser(db, tenantId, user),
     listUsers: () => listUsers(db, tenantId),
     readUserAcl: (username) => readUserAcl(db, tenantId, username),
     updatePassword: (username, patch, now) => updatePassword(db, tenantId, username, patch, now),
+    setInviteCode: (username, codeHash, codeExpiry, now) =>
+      setInviteCode(db, tenantId, username, codeHash, codeExpiry, now),
     writeAudit: (entry) => writeAudit(db, tenantId, entry),
   };
 }

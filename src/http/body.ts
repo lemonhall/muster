@@ -34,6 +34,8 @@ const PROTO_TO_JSON_NAME: Readonly<Record<string, string>> = {
   user_id: "userId",
   create_time: "createTime",
   update_time: "updateTime",
+  mfa_required: "mfaRequired",
+  mfa_enabled: "mfaEnabled",
 };
 
 export function readField(container: Record<string, unknown>, key: string): unknown {

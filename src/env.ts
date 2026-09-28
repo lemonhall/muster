@@ -71,6 +71,15 @@ export interface Bindings extends Env {
    * 与 secret 同类，不进 `wrangler.jsonc` 的公开 vars：本地用 `--var` 注入。
    */
   MATCHMAKER_INTERVAL_MS?: string;
+
+  /**
+   * M9：控制台用户创建时不允许占用的用户名——上游 `config.GetConsole().Username`。
+   *
+   * 缺省是 `admin`（上游把这两个值一起挡住）。这是**可选**的：不配就是缺省行为，
+   * 配了则连这个用户名也不允许被创建，与上游 `Username cannot be the console
+   * configured username` 那条检查对齐。
+   */
+  CONSOLE_USERNAME?: string;
 }
 
 /**

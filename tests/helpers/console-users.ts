@@ -29,6 +29,7 @@ export interface FakeConsoleStore extends ConsoleUserStore {
     writes: number;
     inserts: number;
     audits: number;
+    invites: number;
     readonly inserted: NewConsoleUser[];
     readonly patches: PasswordPatch[];
     readonly auditEntries: ConsoleAuditEntry[];
@@ -45,6 +46,7 @@ export function fakeConsoleUserStore(
     writes: 0,
     inserts: 0,
     audits: 0,
+    invites: 0,
     inserted: [],
     patches: [],
     auditEntries: [],
@@ -85,6 +87,10 @@ export function fakeConsoleUserStore(
     async writeAudit(entry: ConsoleAuditEntry): Promise<void> {
       state.audits += 1;
       state.auditEntries.push(entry);
+    },
+    async setInviteCode(): Promise<boolean> {
+      state.invites += 1;
+      return true;
     },
   };
 }

@@ -3,6 +3,8 @@ import { JSON_CONTENT_TYPE } from "./http/grpc";
 import { Router } from "./http/router";
 import { registerChannelRoutes } from "./http/routes/channel";
 import { registerSocialRoutes } from "./http/routes/authenticate-social";
+import { registerConsoleLedgerRoutes } from "./http/routes/console-ledger";
+import { registerConsoleUserRoutes } from "./http/routes/console-users";
 import { registerFriendRoutes } from "./http/routes/friend";
 import { registerGroupRoutes } from "./http/routes/group";
 import { registerIdentityRoutes } from "./http/routes/identity";
@@ -67,6 +69,10 @@ registerPartyRoutes(router);
 // 运行时 RPC：路径是 `/v2/rpc/{id}`，鉴权自带第三条规则（http_key），所以它自己解析。
 registerRpcRoutes(router);
 registerSocketRoutes(router);
+// 控制台面（管理）：前缀 `/v2/console`，与上面所有路径不重叠；鉴权用 tenant server key，
+// 所以它是 `handleServerKey` 那一类（ECN-0014 偏差 1）。
+registerConsoleUserRoutes(router);
+registerConsoleLedgerRoutes(router);
 
 export default {
   fetch(request: Request, env: Bindings): Response | Promise<Response> {

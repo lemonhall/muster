@@ -90,6 +90,13 @@ export interface ConsoleUserStore {
   readUserAcl(username: string): Promise<string | null>;
   /** 写回口令与一次性 code；目标不存在回 `false`。 */
   updatePassword(username: string, patch: PasswordPatch, now: number): Promise<boolean>;
+  /**
+   * 只写一次性 code，**不碰口令**。
+   *
+   * 与 `updatePassword` 分开是必须的：上游 `dbInsertConsoleUser` 的 upsert 在用户名已存在时
+   * 只改权限与 MFA 要求，**不动口令**（否则"重新发一次邀请"会把别人的口令清空）。
+   */
+  setInviteCode(username: string, codeHash: string, codeExpiry: number, now: number): Promise<boolean>;
   writeAudit(entry: ConsoleAuditEntry): Promise<void>;
 }
 
@@ -245,4 +252,31 @@ export async function resetConsoleUserPassword(
 
 export function listConsoleUsers(store: ConsoleUserStore): Promise<readonly ConsoleUserRecord[]> {
   return store.listUsers();
+}
+
+export interface IssuedCode {
+  /** 一次性 code 的明文——只在这一刻存在，库里存的是它的 SHA-256。 */
+  readonly code: string;
+}
+
+/**
+ * 发一个新的一次性 code（上游 `AddUser` 响应里那个 `token` 的位置）。
+ *
+ * 上游把 invite 做成控制台 JWT；本项目没有控制台签名密钥（ECN-0014 偏差 1），
+ * 所以发的是一枚随机 code，它的哈希落在 `console_user.password_code` 上。
+ * 语义不变：这是一次性的、有时效的、能换来"设置口令"的凭据。
+ */
+export async function issueConsoleUserCode(
+  store: ConsoleUserStore,
+  input: { readonly username: string; readonly now: number; readonly codeExpirySec?: number },
+): Promise<IssuedCode> {
+  const code = randomSecret();
+  const stored = await store.setInviteCode(
+    input.username,
+    await sha256Hex(code),
+    input.now + (input.codeExpirySec ?? CONSOLE_RESET_CODE_EXPIRY_SEC),
+    input.now,
+  );
+  if (!stored) throw internal("Error creating console user.");
+  return { code };
 }
