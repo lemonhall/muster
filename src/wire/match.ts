@@ -16,7 +16,7 @@
  * 与上游的一处已知差异：上游的权威对局条目还会带 `tick_rate` 与 `handler_name`
  * （它们是运行时 handler 的属性）。本项目还没有运行时（M8），权威对局的 tick rate
  * 恒为 0、handler 名恒为空——按规则 2 它们本来就不该出现在 JSON 里，所以形状一致，
- * 记在 ECN-0011 偏差 9。
+ * 记在 ECN-0011 偏差 11。
  *
  * 契约源（机器可读）：
  * 契约源: apigrpc/apigrpc.swagger.json::/v2/match

@@ -18,7 +18,7 @@
 | planned | 140 |
 | exempt | 1 |
 | 无理由豁免 | 0 |
-| 第二证据源引用（自主契约测试） | 123 |
+| 第二证据源引用（自主契约测试） | 124 |
 
 ## 按里程碑
 
@@ -377,6 +377,7 @@
 | `apigrpc/apigrpc.swagger.json::/v2/friend` | `tests/e2e/social.e2e.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/group` | `tests/e2e/social.e2e.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/leaderboard/{leaderboardId}` | `tests/e2e/competitive.e2e.test.ts` |
+| `apigrpc/apigrpc.swagger.json::/v2/match` | `tests/e2e/match.e2e.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/notification` | `tests/e2e/social.e2e.test.ts` |
 | `apigrpc/apigrpc.swagger.json::/v2/tournament` | `tests/e2e/competitive.e2e.test.ts`、`tests/integration/competitive/tournament-endpoints.test.ts` |
 | `server/api_account.go::GetAccount` | `tests/e2e/identity.e2e.test.ts`、`tests/helpers/identity-fixtures.ts` |
@@ -457,7 +458,7 @@
 | `server/match_registry.go::LocalMatchRegistry.JoinAttempt` | `tests/integration/match/registry.test.ts`、`tests/integration/match/roundtrip.test.ts` |
 | `server/match_registry.go::LocalMatchRegistry.ListMatches` | `tests/integration/match/registry.test.ts`、`tests/unit/match/catalog.test.ts`、`tests/unit/match/store.test.ts` |
 | `server/match_registry.go::LocalMatchRegistry.UpdateMatchLabel` | `tests/integration/match/registry.test.ts`、`tests/unit/match/store.test.ts` |
-| `server/matchmaker.go::LocalMatchmaker.Add` | `tests/integration/matchmaker/rounds.test.ts`、`tests/unit/matchmaker/tracking.test.ts` |
+| `server/matchmaker.go::LocalMatchmaker.Add` | `tests/e2e/match.e2e.test.ts`、`tests/integration/matchmaker/rounds.test.ts`、`tests/unit/matchmaker/tracking.test.ts` |
 | `server/matchmaker.go::LocalMatchmaker.Process` | `tests/integration/matchmaker/rounds.test.ts`、`tests/unit/match/token.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelJoin` | `tests/integration/channel/dm-request.test.ts`、`tests/integration/channel/join.test.ts`、`tests/integration/channel/validation.test.ts` |
 | `server/pipeline_channel.go::Pipeline.channelLeave` | `tests/integration/channel/validation.test.ts` |
@@ -466,7 +467,7 @@
 | `server/pipeline_channel.go::Pipeline.channelMessageUpdate` | `tests/integration/channel/messages.test.ts`、`tests/integration/channel/validation.test.ts` |
 | `server/pipeline_match.go::Pipeline.matchCreate` | `tests/integration/match/pipeline.test.ts`、`tests/unit/uuid.test.ts` |
 | `server/pipeline_match.go::Pipeline.matchDataSend` | `tests/integration/match/pipeline.test.ts`、`tests/unit/match/data.test.ts` |
-| `server/pipeline_match.go::Pipeline.matchJoin` | `tests/integration/match/pipeline.test.ts`、`tests/unit/match/ids.test.ts`、`tests/unit/match/token.test.ts` |
+| `server/pipeline_match.go::Pipeline.matchJoin` | `tests/e2e/match.e2e.test.ts`、`tests/integration/match/pipeline.test.ts`、`tests/unit/match/ids.test.ts`、`tests/unit/match/token.test.ts` |
 | `server/pipeline_match.go::Pipeline.matchLeave` | `tests/integration/match/pipeline.test.ts`、`tests/unit/match/ids.test.ts` |
 | `server/pipeline_matchmaker.go::Pipeline.matchmakerAdd` | `tests/integration/matchmaker/pipeline.test.ts` |
 | `server/pipeline_matchmaker.go::Pipeline.matchmakerRemove` | `tests/integration/matchmaker/pipeline.test.ts` |
@@ -493,4 +494,4 @@
 | `server/tracker.go::StreamModeChannel` | `tests/integration/channel/ids.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::DefaultHTTPErrorHandler` | `tests/integration/healthcheck.test.ts`、`tests/unit/grpc_status.test.ts` |
 | `vendor/github.com/grpc-ecosystem/grpc-gateway/v2/runtime/errors.go::HTTPStatusFromCode` | `tests/e2e/toolchain.e2e.test.ts`、`tests/unit/grpc_status.test.ts` |
-<!-- integrity: body_sha256=90ed1543cccb0183f6eadcf1aee1d890387dd449f9c9d7af6732ba26f976a1a9 -->
+<!-- integrity: body_sha256=37273dd6c5b350582dde232a3ee74dda4c5503d4c707a534ea29ab45be48c999 -->

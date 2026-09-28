@@ -149,8 +149,8 @@
 | REQ-0001-014 | 钱包与账本（含幂等与事务性） | P1 | 并发扣款不出现负余额；账本可逐笔对账。**M6 交付**：上游 `core_wallet_test.go` 的 7 条全部搬运，另有并发写、CAS 守卫与账本用例；原子性从 `SELECT ... FOR UPDATE` 换成 CAS + 守卫批次，数值用 JS number（[ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) 偏差 6/7）。账本的 REST 面属控制台 API，M9 交付（偏差 12） |
 | REQ-0001-015 | 排行榜：best/incr/set 模式、衰减、重置周期、owner 记录 | P1 | 上游 `api_leaderboard` 等价断言全绿；重置后旧周期数据可查。**M6 交付**：`TestApiLeaderboard` 的 5 个子用例搬运，名次缓存用有序数组 + 世代号（[ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) 偏差 5），定义放 D1（偏差 1），cron 只实现受限子集（偏差 2/3）；**创建面**（运行时模块）在 M8（偏差 10） |
 | REQ-0001-016 | 锦标赛：起止时间、最大规模、尝试次数、加入/排名 | P1 | 上游 `api_tournament` 等价断言全绿。**M6 交付**：`TestApiTournamentHaystack` 搬运 + 目录 / 报名 / 写分的契约测试；`max_size = 0` 表示无上限（[ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) 偏差 4），目录坏游标改回 400（偏差 9），目录排序键为 `(create_time, id)`（偏差 11） |
-| REQ-0001-017 | 匹配器：ticket、查询表达式、数值属性、min/max/count_multiple、超时 | P1 | 上游 `matchmaker` 等价断言全绿（含并发与超时） |
-| REQ-0001-018 | 对局：authoritative match 生命周期、RPC hook、状态落盘、广播过滤、可查询的对局列表 | P1 | 上游 `match_registry`/`match_common` 等价断言全绿 |
+| REQ-0001-017 | 匹配器：ticket、查询表达式、数值属性、min/max/count_multiple、超时 | P1 | 上游 `matchmaker` 等价断言全绿（含并发与超时）。**M7 交付**：票据池从"进程内存 + 常驻 ticker"换成**每租户一个 DO**（SQLite + 闹钟，[ECN-0011](../ecn/ECN-0011-match-on-durable-objects.md) 偏差 1），不引入 bluge——查询只实现用得到的子集、打分只算子句 boost 之和（偏差 4），遍历与快照顺序确定化（偏差 5），跨 DO 边界的表示用 protojson 取代 gob（偏差 10）；成局"给 match id 还是给 token"由声明式钩子决定（偏差 11，运行时回调在 M8） |
+| REQ-0001-018 | 对局：authoritative match 生命周期、RPC hook、状态落盘、广播过滤、可查询的对局列表 | P1 | 上游 `match_registry`/`match_common` 等价断言全绿。**M7 交付**：成员表与对局元数据住**每场对局一个 DO**（[ECN-0011](../ecn/ECN-0011-match-on-durable-objects.md) 偏差 1/7），目录合并成 D1 的 `match_record` 一张表（偏差 2），权威对局的唯一入口是匹配器钩子（偏差 3），node 段固定 `muster`（偏差 6），同秒排序补 `match_id` 决胜（偏差 8），时间精度到毫秒/秒（偏差 9）；运行时面（`nk.*`、tick 循环、`tick_rate` / `handler_name`）在 M8（偏差 11） |
 | REQ-0001-019 | 派对：创建、加入请求、批准、踢人、转移队长、关闭、数据广播、标签 | P1 | 上游 `party_handler` 等价断言全绿 |
 | REQ-0001-020 | 运行时扩展：RPC 注册、前后置 hook、定时器、存储/排行榜 API、隔离与配额 | P1 | 扩展 Worker 可注册 RPC 并被客户端调用；死循环/超限被隔离 |
 | REQ-0001-021 | 管理台：用户、账号、存储、排行榜、通知、扩展、配置、指标 | P2 | 与上游 console 面等价的核心操作可完成 |

@@ -11,7 +11,7 @@ import type { Envelope } from "../../../src/proto/realtime_pb";
  * 上游那三条 `TestEncode*` 用 gob 编解码 `[]MatchmakerEntry` / `[]Presence`，
  * 钉的是同一件事：运行时把这些结构交给别的组件时不会掉字段。本项目没有 gob，
  * 跨边界的地方是 DO → DO 的投递（`deliveryBody` / `parseDelivery`，protojson），
- * 于是等价物就是"编码再解码，逐字段相等"（ECN-0011 偏差 9）。
+ * 于是等价物就是"编码再解码，逐字段相等"（ECN-0011 偏差 10）。
  *
  * 为什么值得单独测：protojson 有三个坑——`op_code` 是 int64（走字符串）、
  * `data` 是 bytes（走 base64）、`label` 是包装类型（空串也带键）。这三样任意一样

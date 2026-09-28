@@ -4,7 +4,7 @@
 |---|---|
 | 版本 | v2 |
 | 日期 | 2026-09-29 |
-| 状态 | 进行中（M5、M6 已交付；M7 范围已定，DoD 在启动时冻结） |
+| 状态 | 进行中（M5、M6、M7 已交付；M8 范围已定） |
 | 成本档位 | `standard`（普通功能交付，最多 3 轮 Review） |
 | 愿景 | [../prd/VISION.md](../prd/VISION.md) |
 | 需求基线 | [PRD-0001](../prd/PRD-0001-muster-parity.md) |
@@ -85,6 +85,10 @@ Google ID token 校验（aud/azp 规则与授权码流程）。同时关闭 v1 �
 超时）、REQ-0001-018（对局：authoritative match 生命周期、RPC hook、状态落盘、
 广播过滤、可查询的对局列表）。DoD 在 M7 启动时写入本节并冻结。
 
+**交付证据**：[v2-match.md](./v2-match.md)（逐条 DoD 的证据、红/绿输出、命令与数字）。
+13 条 DoD 全部达成；三处红证据（查询命中筛选、成局帧的 `self`、REST 路由注册、
+匹配器闹钟）逐条粘在计划文档里。
+
 **DoD（逐条可判定 + 验证命令 + 反作弊）**
 
 | # | DoD | 验证命令 | 预期 |
@@ -120,6 +124,7 @@ Google ID token 校验（aud/azp 规则与授权码流程）。同时关闭 v1 �
 |---|---|---|
 | [v2-social.md](./v2-social.md) | M5 | REQ-0001-011, REQ-0001-012, REQ-0001-013，以及 REQ-0001-003 的 OAuth 分支 |
 | [v2-competitive.md](./v2-competitive.md) | M6 | REQ-0001-014, REQ-0001-015, REQ-0001-016 |
+| [v2-match.md](./v2-match.md) | M7 | REQ-0001-017, REQ-0001-018 |
 
 ## 追溯矩阵
 
@@ -132,6 +137,8 @@ Google ID token 校验（aud/azp 规则与授权码流程）。同时关闭 v1 �
 | REQ-0001-014 | v2-competitive.md | `tests/integration/competitive/wallet.test.ts`（11 条）+ `wallet-ledger.test.ts`（4 条） | 无独立 E2E（钱包没有 REST 面；运行时面在 M8） | v2-competitive.md Evidence DoD 7；覆盖矩阵第 70–76 条 `ported`；ECN-0010 偏差 6/7/12 | 🟢 已交付（M6，账本端点后置到 M9） |
 | REQ-0001-015 | v2-competitive.md | `tests/integration/competitive/{leaderboard,leaderboard-haystack}.test.ts`（7 条）+ `tests/unit/competitive/`（16 条） | `tests/e2e/competitive.e2e.test.ts`（路由注册、404 形状、校验顺序） | v2-competitive.md Evidence DoD 1/2/4；覆盖矩阵第 64、66–69、77–88 条 `ported` | 🟢 已交付（M6，创建面在 M8） |
 | REQ-0001-016 | v2-competitive.md | `tests/integration/competitive/{tournament,tournament-endpoints}.test.ts`（7 条） | `tests/e2e/competitive.e2e.test.ts`（目录参数、空目录、404） | v2-competitive.md Evidence DoD 5/6；覆盖矩阵第 65 条 `ported`；ECN-0010 偏差 4/9/11 | 🟢 已交付（M6，创建面在 M8） |
+| REQ-0001-017 | v2-match.md | `tests/unit/matchmaker/`（3 文件 / 35 条，含 `溯源: server/matchmaker_test.go::TestMatchmakerAddWithBasicMatch` 等 21 条上游用例）+ `tests/integration/matchmaker/`（2 文件 / 14 条） | `tests/e2e/match.e2e.test.ts`（成局 → token 分支 → 中继互发 → 离开事件） | v2-match.md Evidence DoD 1–8；覆盖矩阵 M7 桶 35 条全部 `ported`；ECN-0011 偏差 1/4/5/10/11 | 🟢 已交付（M7，运行时面在 M8） |
+| REQ-0001-018 | v2-match.md | `tests/unit/match/`（6 文件 / 45 条）+ `tests/integration/match/`（4 文件 / 35 条，含 `溯源: server/match_registry_test.go::TestMatchRegistry*` 与 `TestEncode*`） | `tests/e2e/match.e2e.test.ts`（token join 建对局、目录可查、错误体形状） | v2-match.md Evidence DoD 9–11；覆盖矩阵 M7 桶 35 条全部 `ported`；ECN-0011 偏差 2/3/6/7/8/9 | 🟢 已交付（M7，运行时面与 tick 循环在 M8） |
 
 > 任何 `待填` / `待回填` / `—` 都是断链，禁止在存在断链的情况下宣称对应需求已交付。
 
@@ -142,6 +149,7 @@ Google ID token 校验（aud/azp 规则与授权码流程）。同时关闭 v1 �
 | [ECN-0008](../ecn/ECN-0008-social-graph-on-d1.md) | 社交图（好友边/群组/通知）建在 D1 上，游标沿用 base64url(JSON) | 已生效 | REQ-0001-011, REQ-0001-012, REQ-0001-013 | `migrations/0003_social.sql`、`src/domain/friends/*`、`src/domain/groups/*`、`src/domain/notifications/*` |
 | [ECN-0009](../ecn/ECN-0009-google-id-token.md) | Google 登录用 WebCrypto 验 RS256，证书来自 JWKS 端点 | 已生效 | REQ-0001-003 | `src/domain/social/google/*` |
 | [ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) | 经济与竞技建在 D1 + 内存缓存上（偏差 1–12）：定义进库、名次缓存换有序数组 + 懒加载、钱包用 CAS + 守卫批次、cron 只做受限子集、时间精度到秒、创建面与权威写路径后置到 M8 | 已生效 | REQ-0001-014, REQ-0001-015, REQ-0001-016 | `migrations/0004_competitive.sql`、`src/domain/competitive/*`、`src/http/routes/{leaderboard,tournament}.ts` |
+| [ECN-0011](../ecn/ECN-0011-match-on-durable-objects.md) | 匹配器与对局建在 Durable Object + D1 上（偏差 1–11）：每租户一个匹配器 / 每场一个对局实例、目录合并成 `match_record` 单表、权威对局唯一入口是钩子、不引入 bluge、顺序确定化、node 固定 `muster`、毫秒/秒精度、protojson 取代 gob、运行时面后置到 M8 | 已生效 | REQ-0001-017, REQ-0001-018 | `migrations/0005_match.sql`、`src/domain/match/*`、`src/domain/matchmaker/*`、`src/durable/match*.ts`、`src/durable/matchmaker*.ts` |
 
 ## Tashan Review 记录
 
@@ -150,11 +158,15 @@ M5 的 Review 记录：[v2-M5.md](../reviews/v2-M5.md)（verdict: pass；7 条 M
 M6 的 Review 记录：[v2-M6.md](../reviews/v2-M6.md)（verdict: pass；1 条 MAJOR
 （新记录 `metadata` 违反 NOT NULL，首写 500）+ 3 条 MINOR + 1 条 NOTE 全部在提交前处置）。
 
+M7 的 Review 记录：[v2-M7.md](../reviews/v2-M7.md)（verdict: pass；1 条 MAJOR
+（匹配器令牌的签名段编码毁了二进制签名，签发的 token 永远验不过）+ 4 条 MINOR +
+1 条 NOTE 全部在提交前处置；另记 7 条残余风险，其中 E2E 收尾噪声为既有问题）。
+
 ## Tashan Trigger Audit
 
 ```markdown
-- expected_review_triggers: v_doc_writing_done, v_milestone_done(M5..M7)
-- actual_review_runs: 3 (v_doc_writing_done, v_milestone_done(M5), v_milestone_done(M6))
+- expected_review_triggers: v_doc_writing_done, v_milestone_done(M5..M9)
+- actual_review_runs: 4 (v_doc_writing_done, v_milestone_done(M5), v_milestone_done(M6), v_milestone_done(M7))
 - skipped_triggers: 0
 - skip_reasons: 独立子代理派发不通（本机限制），降级为同模型自评 + 命令证据
 - mitigation: 每个里程碑完成前必须补 Review 记录，否则不输出完成信号
@@ -169,3 +181,4 @@ v2 与上游的**全部**刻意差异都登记在 ECN 里，这里只做索引�
 | [ECN-0008](../ecn/ECN-0008-social-graph-on-d1.md) | 社交图与通知建在 D1 上（偏差 1–14）；游标不透明但不与上游互换；时间精度到秒；群成员变更与群频道系统消息不是同一事务；多目标满员时逐目标原子 | 收不到（游标不透明）；时间精度差异可见（同秒多条时排序按 id）；"批内部分成功"在满员时可观察 | 已生效 |
 | [ECN-0009](../ecn/ECN-0009-google-id-token.md) | Google 证书从 JWKS（`/oauth2/v3/certs`）取而不是 X.509 PEM 端点 | 不可见 | 已生效 |
 | [ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) | 竞技域建在 D1 与内存缓存上（偏差 1–12）：游标不与上游互换、时间精度到秒、`authoritative = 1` 的榜在 M6 里无人能写分、账本端点后置到 M9 | 收不到（游标不透明）；时间精度差异可见（同秒排序退化到元组）；"权威榜永远空"可见 | 已生效 |
+| [ECN-0011](../ecn/ECN-0011-match-on-durable-objects.md) | 匹配器与对局建在 DO + D1 上（偏差 1–11）：票据与对局状态持久化（重启不丢）、查询只实现子集、权威对局的 node 段是 `muster`、同秒排序补 `match_id` 决胜、跨 DO 帧用 protojson、运行时面后置到 M8 | 收不到（match id 与 token 都是不透明字符串）；同秒创建的对局顺序可见；"权威对局没有 tick 循环"在 M8 前可见 | 已生效 |
