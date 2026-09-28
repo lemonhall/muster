@@ -65,12 +65,22 @@ npm run tenant:list -- --apply                        # 列出本地已开通的
 M9 已交付的 8 条 DoD 与剩余 3 条（限流、内购校验、矩阵与文档收尾）逐条列在
 [v4-console-ops.md](docs/plan/v4-console-ops.md) 的「进度」一节，含每条对应的提交号。
 
+下一次接着做的三件事（细节与反作弊条款都在 v4 计划里）：
+
+- **限流**：`src/durable/rate-limiter.ts`（每租户一个 DO，窗口计数只活在内存里）＋
+  `wrangler.jsonc` 的 `RATE_LIMITER` 绑定与迁移项；超限 429 + `retry-after`，按租户隔离。
+- **内购**：`src/domain/iap/{types,apple,service}.ts` ＋ `src/http/routes/iap.ts`；
+  Apple 走 `verifyReceipt`，厂商调用走注入的传输层，测试不碰 Apple 端点。
+- **收尾**：M9 段的 `planned` 清零、Evidence 回填、`docs/reviews/v4-M9.md`、
+  `docs/plan/v2-index.md` 的追溯行，最后四个门禁一起跑。
+
 门禁数字（全部跑在本机 workerd 与本地 `wrangler dev --local` 上，测试不外呼任何
 Cloudflare 远端资源，因此不产生账单）：
 
-- `npm run typecheck`：0 错；
-- `npm test`：109 个测试文件、813 条断言全绿（M9 第 4 次提交点）；
-- `npm run e2e`：M8 收尾时的数字是 11 个文件、43 条；M9 收尾要重跑一次。
+- `npm run typecheck`：0 错（`761ff4d` 上复跑确认）；
+- `npm test`：109 个测试文件、813 条断言全绿（M9 第 4 次提交点，此后只有文档改动）；
+- `npm run e2e`：M8 收尾时的数字是 11 个文件、43 条；M9 的 E2E 还没重跑，
+  与 DoD 9/10 一起放在收尾那一轮。
 
 每个里程碑的 DoD、验证命令与证据：[v1-index.md](docs/plan/v1-index.md)（M0–M4）、
 [v2-index.md](docs/plan/v2-index.md)（M5–M9 的追溯矩阵）、
