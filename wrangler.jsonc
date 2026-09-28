@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "muster",
+  "main": "src/index.ts",
+  // Set to today's date when starting new work; it gates runtime behaviour changes.
+  "compatibility_date": "2026-09-28",
+  "observability": {
+    "enabled": true
+  }
+
+  // Bindings are introduced milestone by milestone:
+  //   M1: D1 (accounts/users/profiles), secrets (JWT signing key)
+  //   M3: Durable Object namespaces (session shard, session registry)
+  //   M4: Durable Object namespace (channel)
+  // They are intentionally absent here so that M0 stays green without provisioning.
+}
