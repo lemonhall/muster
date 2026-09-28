@@ -16,6 +16,7 @@ import { MatchmakerRig } from "../../helpers/matchmaker-world";
  * 溯源: server/matchmaker_test.go::TestMatchmakerAddRemoveRepeated
  * 溯源: server/matchmaker_test.go::TestMatchmakerPropertyRegexSubmatch
  * 溯源: server/matchmaker_test.go::TestMatchmakerPropertyRegexSubmatchMultiple
+ * 溯源: server/match_registry_test.go::TestMatchRegistryAuthoritativeMatchAndListMatchesWithQueryingAndBoost
  */
 
 const BLOCKED_A = "4bd6667a-2659-4888-b245-e13690ff4a9b";
@@ -35,11 +36,22 @@ describe("M7 匹配池: 查询语言", () => {
   it("test_optional_clauses_are_or_while_required_clauses_are_and", () => {
     const query = parseMatchmakerQuery("properties.a6:bar properties.a6:foo +properties.id:abc");
     expect(query.clauses.map((clause) => clause.required)).toEqual([false, false, true]);
-    // 可选子句 OR：命中其中之一即可；required 的那条必须命中。
     expect(matchProperties(query, { a6: "bar", id: "abc" }).matched).toBe(true);
     expect(matchProperties(query, { a6: "foo", id: "abc" }).matched).toBe(true);
-    expect(matchProperties(query, { a6: "nope", id: "abc" }).matched).toBe(false);
+    // required 的那条挂了一切都挂——这一半与"可选子句松不松"无关。
     expect(matchProperties(query, { a6: "bar", id: "other" }).matched).toBe(false);
+  });
+
+  it("test_required_clauses_downgrade_optional_clauses_to_scoring_only", () => {
+    // 上游那条 boost 用例（match_registry_test.go）钉着这条反直觉的规矩：十条标签里
+    // 只有四条能命中 `label.baz:4^10` / `label.baz:2^5`，但十条**全部**返回，
+    // 命中者靠分数排到前面。也就是说：只要有一条 `+` 子句，可选子句就不再是门槛。
+    const query = parseMatchmakerQuery("+properties.id:abc properties.a6:bar");
+    expect(matchProperties(query, { id: "abc", a6: "nope" }).matched).toBe(true);
+    expect(matchProperties(query, { id: "other", a6: "bar" }).matched).toBe(false);
+    // 反过来，一个 `+` 子句都没有时，"至少命中一条可选子句"才重新成为门槛。
+    const optionalOnly = parseMatchmakerQuery("properties.a6:bar properties.a6:foo");
+    expect(matchProperties(optionalOnly, { a6: "nope" }).matched).toBe(false);
   });
 
   it("test_negative_clauses_exclude_matches", () => {
@@ -65,7 +77,11 @@ describe("M7 匹配池: 查询语言", () => {
     // 两条 required 子句各自 +1，命中 baz:4 再加 10。
     expect(matchProperties(query, { foo: 5, bar: 1, baz: 4 }, "label.").score).toBe(12);
     expect(matchProperties(query, { foo: 5, bar: 1, baz: 2 }, "label.").score).toBe(7);
-    expect(matchProperties(query, { foo: 5, bar: 1, baz: 0 }, "label.").score).toBe(0);
+    // 两条可选子句一条都没命中：**照样匹配**（有 `+` 子句时可选子句只打分），
+    // 分数只剩下两条 required 子句的 1+1。
+    const noOptionalHit = matchProperties(query, { foo: 5, bar: 1, baz: 0 }, "label.");
+    expect(noOptionalHit.matched).toBe(true);
+    expect(noOptionalHit.score).toBe(2);
   });
 
   it("test_unknown_fields_never_match_but_keep_the_boolean_structure", () => {

@@ -33,6 +33,21 @@ import { MatchmakerStore, type StoredMatchmakerConfig } from "./matchmaker-store
 /** 上游 `config.Matchmaker.IntervalSec` 的默认值。闹钟周期只影响"最坏情况多久成局"。 */
 export const MATCHMAKER_INTERVAL_MS = 15_000;
 
+/**
+ * 闹钟周期可以用部署变量覆盖（上游对应 `matchmaker.interval_sec`，默认 15 秒）。
+ *
+ * 为什么需要这个口子：E2E 不能等 15 秒。上游自己的测试把 `IntervalSec` 调成 1，
+ * 这里等价地允许把毫秒数调小（E2E 用 200ms）。取值顺序是
+ * **持久化配置 > 部署变量 > 默认值**，与上游"配置文件 > 默认值"同形。
+ */
+function intervalFromEnv(env: Bindings): number | null {
+  const raw: unknown = env.MATCHMAKER_INTERVAL_MS;
+  if (typeof raw !== "string" && typeof raw !== "number") return null;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 1) return null;
+  return Math.floor(parsed);
+}
+
 /** 反向匹配（互配）校验的毫秒预算，与上游那只看门狗定时器同义。 */
 const MUTUAL_MATCH_BUDGET_MS = 5_000;
 
@@ -60,6 +75,7 @@ export class Matchmaker extends DurableObject<Bindings> {
   #pool: MatchmakerPool;
   #hook = null as ReturnType<typeof readHook>;
   #intervalMs = MATCHMAKER_INTERVAL_MS;
+  readonly #defaultIntervalMs: number;
 
   constructor(ctx: DurableObjectState, env: Bindings) {
     super(ctx, env);
@@ -68,6 +84,7 @@ export class Matchmaker extends DurableObject<Bindings> {
     this.#tenantId = name;
     this.#store = new MatchmakerStore(ctx.storage.sql);
     this.#pool = new MatchmakerPool(DEFAULT_MATCHMAKER_CONFIG);
+    this.#defaultIntervalMs = intervalFromEnv(env) ?? MATCHMAKER_INTERVAL_MS;
     ctx.blockConcurrencyWhile(async () => {
       this.#store.migrate();
       this.#restore();
@@ -78,7 +95,7 @@ export class Matchmaker extends DurableObject<Bindings> {
   #restore(): void {
     const stored = this.#store.config();
     this.#pool = new MatchmakerPool(configOf(stored));
-    this.#intervalMs = stored.intervalMs ?? MATCHMAKER_INTERVAL_MS;
+    this.#intervalMs = stored.intervalMs ?? this.#defaultIntervalMs;
     this.#hook = this.#store.hook();
     this.#pool.insert(this.#store.tickets());
   }
@@ -109,7 +126,7 @@ export class Matchmaker extends DurableObject<Bindings> {
         const extracts = this.#pool.tickets().map(extractOf);
         this.#pool = new MatchmakerPool(configOf(body.config));
         this.#pool.insert(extracts);
-        this.#intervalMs = body.config.intervalMs ?? MATCHMAKER_INTERVAL_MS;
+        this.#intervalMs = body.config.intervalMs ?? this.#defaultIntervalMs;
         return json({ ok: true });
       }
       default:

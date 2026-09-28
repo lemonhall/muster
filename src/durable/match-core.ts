@@ -27,58 +27,25 @@
  */
 
 import type { Bindings } from "../env";
-import { routeRelayedData, type MatchDataFilter } from "../domain/match/data";
+import { routeRelayedData } from "../domain/match/data";
 import { formatMatchId } from "../domain/match/ids";
-import type { MatchPresence } from "../domain/match/presence";
 import { deleteMatchRecord, upsertMatchRecord } from "../domain/match/store";
 import { ackEnvelope } from "../realtime/errors";
+import { matchDataEnvelope, matchEnvelope, matchPresenceEventEnvelope, type MatchOpResult } from "../realtime/match";
+import type { MatchMembers } from "./match-members";
+import { broadcastTo, deliverTo, presenceOf, presencesOf } from "./match-roster";
 import {
-  matchDataEnvelope,
-  matchEnvelope,
-  matchPresenceEventEnvelope,
-  type MatchOpResult,
-} from "../realtime/match";
-import { deliverToSession } from "./delivery";
-import type { MatchMemberRow, MatchMembers } from "./match-members";
+  caseFoldedSessionIds,
+  foldSessions,
+  notFound,
+  silent,
+  type DataInput,
+  type JoinInput,
+  type LeaveInput,
+  type MatchMeta,
+} from "./match-shapes";
 
-export interface MatchMeta {
-  readonly authoritative: boolean;
-  /** NULL（D1/存储里）表示"没有 label 字段"；这里用 `undefined` 表达同一件事。 */
-  readonly label: string | undefined;
-  readonly node: string;
-  readonly createTime: number;
-}
-
-export interface JoinInput {
-  readonly cid: string;
-  /** 客户端送来的原始 match id（回执要原样回带它，上游就是这么做的）。 */
-  readonly matchId: string;
-  readonly node: string;
-  readonly sessionId: string;
-  readonly userId: string;
-  readonly username: string;
-  readonly allowEmpty: boolean;
-}
-
-export interface LeaveInput {
-  readonly cid: string;
-  readonly sessionId: string;
-  readonly userId: string;
-  readonly username: string;
-  readonly node: string;
-}
-
-export interface DataInput {
-  readonly matchId: string;
-  readonly node: string;
-  readonly sessionId: string;
-  readonly userId: string;
-  readonly username: string;
-  readonly opCode: bigint;
-  readonly data: Uint8Array;
-  readonly reliable: boolean;
-  readonly filters: readonly MatchDataFilter[];
-}
+export type { DataInput, JoinInput, LeaveInput, MatchMeta } from "./match-shapes";
 
 export class MatchCore {
   constructor(
@@ -168,12 +135,12 @@ export class MatchCore {
       });
       await this.#syncRecord();
     }
-    const self = this.#presence(input.sessionId, input.userId, input.username, "");
-    const all = this.#presences();
-    const others = all.filter(
-      (presence) => !(isNew && presence.sessionId === input.sessionId),
-    );
-    if (isNew) await this.#broadcast(matchPresenceEventEnvelope(input.matchId, [self], []), input.sessionId);
+    const self = presenceOf(input.sessionId, input.userId, input.username, "");
+    const all = presencesOf(this.members);
+    const others = all.filter((presence) => !(isNew && presence.sessionId === input.sessionId));
+    if (isNew) {
+      await this.#broadcast(matchPresenceEventEnvelope(input.matchId, [self], []), input.sessionId);
+    }
     return {
       ok: true,
       replies: [
@@ -212,12 +179,14 @@ export class MatchCore {
       await this.#syncRecord();
     }
 
-    const self = this.#presence(input.sessionId, input.userId, input.username, meta.node);
+    const self = presenceOf(input.sessionId, input.userId, input.username, meta.node);
     // 上游：**刚刚加入**的人不出现在"已有成员"快照里；老成员重复 join 时会出现（含自己）。
-    const presences = this.#presences().filter(
+    const presences = presencesOf(this.members).filter(
       (presence) => !(isNew && presence.sessionId === input.sessionId),
     );
-    if (isNew) await this.#broadcast(matchPresenceEventEnvelope(input.matchId, [self], []), input.sessionId);
+    if (isNew) {
+      await this.#broadcast(matchPresenceEventEnvelope(input.matchId, [self], []), input.sessionId);
+    }
 
     return {
       ok: true,
@@ -247,7 +216,7 @@ export class MatchCore {
     await this.#syncRecord();
     const meta = this.meta();
     if (meta === undefined) return;
-    const leaf = this.#presence(removed.session_id, removed.user_id, removed.username, removed.node);
+    const leaf = presenceOf(removed.session_id, removed.user_id, removed.username, removed.node);
     // 事件里的 match id 用**规范形**（上游 tracker 拼的就是 `subject.label`）。
     await this.#broadcast(matchPresenceEventEnvelope(this.canonicalId(meta.node), [], [leaf]), sessionId);
   }
@@ -255,19 +224,19 @@ export class MatchCore {
   async dataSend(input: DataInput): Promise<MatchOpResult> {
     const meta = this.meta();
     if (meta === undefined || meta.node !== input.node) return silent();
-    const all = this.#presences();
+    const all = presencesOf(this.members);
 
     if (meta.authoritative) {
       // 权威对局：成员之外的人发不了；成员发的消息回显给他自己（上游 BroadcastMessage）。
       if (this.members.find(input.sessionId) === undefined) return silent();
       const frame = matchDataEnvelope(
         this.canonicalId(meta.node),
-        this.#presence(input.sessionId, input.userId, input.username, meta.node),
+        presenceOf(input.sessionId, input.userId, input.username, meta.node),
         input.opCode,
         input.data,
         input.reliable,
       );
-      await this.#deliver(all, frame);
+      await deliverTo(this.env, this.tenantId, all, frame);
       return { ok: true, replies: [] };
     }
 
@@ -278,7 +247,7 @@ export class MatchCore {
     const byId = new Map(all.map((presence) => [presence.sessionId, presence]));
     const frame = matchDataEnvelope(
       input.matchId,
-      this.#presence(input.sessionId, input.userId, input.username, meta.node),
+      presenceOf(input.sessionId, input.userId, input.username, meta.node),
       input.opCode,
       input.data,
       input.reliable,
@@ -286,37 +255,14 @@ export class MatchCore {
     for (const recipient of route.recipients) {
       const original = byId.get(recipient.sessionId);
       if (original === undefined) continue;
-      await this.#deliver([original], frame);
+      await deliverTo(this.env, this.tenantId, [original], frame);
     }
     return { ok: true, replies: [] };
   }
 
-  #presence(sessionId: string, userId: string, username: string, node: string): MatchPresence {
-    return { node, userId, sessionId, username };
-  }
-
-  #presences(): readonly MatchPresence[] {
-    return this.members
-      .list()
-      .map((row: MatchMemberRow) => this.#presence(row.session_id, row.user_id, row.username, row.node));
-  }
-
-  /** 广播给"除了某条会话之外"的全部成员（上游 `SendToStream` 减去发起者）。 */
-  async #broadcast(frame: Parameters<typeof deliverToSession>[3], exceptSessionId: string): Promise<void> {
-    const targets = this.#presences().filter((presence) => presence.sessionId !== exceptSessionId);
-    await this.#deliver(targets, frame);
-  }
-
-  async #deliver(
-    targets: readonly MatchPresence[],
-    frame: Parameters<typeof deliverToSession>[3],
-  ): Promise<void> {
-    if (targets.length === 0) return;
-    await Promise.allSettled(
-      targets.map((presence) =>
-        deliverToSession(this.env, this.tenantId, presence.sessionId, frame),
-      ),
-    );
+  /** 广播给"除了某条会话之外"的全部成员。 */
+  async #broadcast(frame: Parameters<typeof deliverTo>[3], exceptSessionId: string): Promise<void> {
+    await broadcastTo(this.env, this.tenantId, presencesOf(this.members), exceptSessionId, frame);
   }
 
   /**
@@ -348,22 +294,4 @@ export class MatchCore {
       console.error("对局目录同步失败", error);
     }
   }
-}
-
-/** 过滤器里的 uuid 已经统一成小写标准形，这里用同一把尺子量成员会话 id。 */
-function caseFoldedSessionIds(sessionId: string): string {
-  return sessionId.toLowerCase();
-}
-
-function foldSessions(presences: readonly MatchPresence[]): readonly MatchPresence[] {
-  return presences.map((presence) => ({ ...presence, sessionId: presence.sessionId.toLowerCase() }));
-}
-
-function notFound(): MatchOpResult {
-  return { ok: false, failure: { kind: "not-found" } };
-}
-
-/** 上游 `return false, nil`：不发帧、关连接。 */
-function silent(): MatchOpResult {
-  return { ok: false, failure: { kind: "silent" } };
 }

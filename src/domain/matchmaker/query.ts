@@ -228,8 +228,14 @@ export interface QueryMatch {
 
 /**
  * 求值。语义与 bluge 的布尔查询一致：
- * 必须子句（`+`）全部命中、禁止子句（`-`）全部不命中、可选子句至少命中一个
- * （若一个可选子句都没有，则"可选"这一维自动为真）。
+ * 必须子句（`+`）全部命中、禁止子句（`-`）全部不命中。
+ *
+ * 可选子句（不加前缀）的**门槛**取决于有没有必须子句，这是 Lucene/bluge 的规矩，
+ * 也有一条上游用例钉着它（`match_registry_test.go` 的
+ * `TestMatchRegistryAuthoritativeMatchAndListMatchesWithQueryingAndBoost`）：
+ *   - 有必须子句时，可选子句**只参与打分、不参与筛选**——十条标签里只有四条能命中
+ *     `label.baz:4^10` / `label.baz:2^5`，但上游期望十条全部返回，靠分数排前四位；
+ *   - 一个必须子句都没有时，可选子句至少命中一个才算匹配（纯 should 查询的默认门槛）。
  */
 export function matchFields(
   query: MatchmakerQuery,
@@ -240,6 +246,7 @@ export function matchFields(
   let score = 0;
   let optionalHit = false;
   let hasOptional = false;
+  let hasRequired = false;
 
   for (const clause of query.clauses) {
     const hit = matchesClause(clause, fields);
@@ -249,6 +256,7 @@ export function matchFields(
       continue;
     }
     if (clause.required) {
+      hasRequired = true;
       if (!hit) return { matched: false, score: 0 };
       score += clause.boost;
       continue;
@@ -260,7 +268,7 @@ export function matchFields(
     }
   }
 
-  if (hasOptional && !optionalHit) return { matched: false, score: 0 };
+  if (hasOptional && !hasRequired && !optionalHit) return { matched: false, score: 0 };
   return { matched: true, score };
 }
 

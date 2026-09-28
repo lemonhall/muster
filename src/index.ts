@@ -7,6 +7,7 @@ import { registerFriendRoutes } from "./http/routes/friend";
 import { registerGroupRoutes } from "./http/routes/group";
 import { registerIdentityRoutes } from "./http/routes/identity";
 import { registerLeaderboardRoutes } from "./http/routes/leaderboard";
+import { registerMatchRoutes } from "./http/routes/match";
 import { registerNotificationRoutes } from "./http/routes/notification";
 import { registerSocketRoutes } from "./http/routes/socket";
 import { registerStorageRoutes } from "./http/routes/storage";
@@ -56,6 +57,8 @@ registerSocialRoutes(router);
 // 竞技域（排行榜与锦标赛）注册在社交之后：路径前缀不同，先后无关。
 registerTournamentRoutes(router);
 registerLeaderboardRoutes(router);
+// 对局列表与匹配器统计：前缀 `/v2/match` 与上面的路径不重叠，排在竞技域之后。
+registerMatchRoutes(router);
 registerSocketRoutes(router);
 
 export default {

@@ -56,6 +56,14 @@ export interface Bindings extends Env {
   GOOGLE_CLIENT_SECRET?: string;
   GOOGLE_TOKEN_ENDPOINT?: string;
   GOOGLE_JWKS_URL?: string;
+
+  /**
+   * M7：匹配器闹钟的周期（毫秒）。与上游 `matchmaker.interval_sec` 同一个旋钮，
+   * 默认 15000。E2E 把它调到 200ms —— 否则一条用例要等 15 秒。
+   *
+   * 与 secret 同类，不进 `wrangler.jsonc` 的公开 vars：本地用 `--var` 注入。
+   */
+  MATCHMAKER_INTERVAL_MS?: string;
 }
 
 /**
