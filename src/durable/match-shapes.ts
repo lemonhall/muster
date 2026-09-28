@@ -17,7 +17,6 @@
  */
 
 import type { MatchDataFilter } from "../domain/match/data";
-import type { MatchPresence } from "../domain/match/presence";
 import type { MatchOpResult } from "../realtime/match";
 
 export interface MatchMeta {
@@ -66,16 +65,4 @@ export function notFound(): MatchOpResult {
 /** 上游 `return false, nil`：不发帧、关连接。 */
 export function silent(): MatchOpResult {
   return { ok: false, failure: { kind: "silent" } };
-}
-
-/**
- * 过滤器里的 uuid 已经统一成小写标准形（上游 `MatchDataFilter` 在解析时就做完了），
- * 这里用同一把尺子量成员会话 id，于是 `presences` 过滤器比对不受客户端大小写影响。
- */
-export function caseFoldedSessionIds(sessionId: string): string {
-  return sessionId.toLowerCase();
-}
-
-export function foldSessions(presences: readonly MatchPresence[]): readonly MatchPresence[] {
-  return presences.map((presence) => ({ ...presence, sessionId: presence.sessionId.toLowerCase() }));
 }

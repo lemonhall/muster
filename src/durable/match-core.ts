@@ -35,8 +35,6 @@ import { matchDataEnvelope, matchEnvelope, matchPresenceEventEnvelope, type Matc
 import type { MatchMembers } from "./match-members";
 import { broadcastTo, deliverTo, presenceOf, presencesOf } from "./match-roster";
 import {
-  caseFoldedSessionIds,
-  foldSessions,
   notFound,
   silent,
   type DataInput,
@@ -241,7 +239,8 @@ export class MatchCore {
     }
 
     // 中继对局：过滤与"不回显发送者"的规则全在 routeRelayedData 里（它是纯函数）。
-    const route = routeRelayedData(caseFoldedSessionIds(input.sessionId), foldSessions(all), input.filters);
+    // 两侧的大小写归一化也在那个函数里做（上游比的是 16 字节的 uuid）。
+    const route = routeRelayedData(input.sessionId, all, input.filters);
     if (!route.senderFound) return silent();
     if (route.recipients.length === 0) return { ok: true, replies: [] };
     const byId = new Map(all.map((presence) => [presence.sessionId, presence]));

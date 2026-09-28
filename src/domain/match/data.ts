@@ -15,6 +15,10 @@
  * `filters != nil` 而不是 `len(filters) > 0`，所以把 3 个过滤器用完之后，剩下的成员
  * 会被**全部丢掉**（不是"过滤器用完了就都发"）。这里用 `hasFilters` 明确表达这件事。
  *
+ * 比较用的是**规范化后的小写标准形**：上游两边都是 `uuid.UUID`，比较的是 16 字节，
+ * 天然不区分大小写与连字符写法；我们这边线上传下来的可能是任意写法，所以在这一层
+ * 统一小写（调用方已经把它们规范成带连字符的标准形）。
+ *
  * 契约源（机器可读）：
  * 契约源: server/pipeline_match.go::Pipeline.matchDataSend
  *
@@ -41,19 +45,21 @@ export function routeRelayedData(
   members: readonly MatchPresence[],
   filters: readonly MatchDataFilter[],
 ): MatchDataRoute {
+  const sender = senderSessionId.toLowerCase();
   const hasFilters = filters.length > 0;
-  const pending = [...filters];
+  const pending = filters.map((filter) => filter.sessionId.toLowerCase());
   const recipients: MatchPresence[] = [];
   let senderFound = false;
 
   for (const member of members) {
-    if (member.sessionId === senderSessionId) {
+    const sessionId = member.sessionId.toLowerCase();
+    if (sessionId === sender) {
       senderFound = true;
       // 不带过滤：别把发送者自己的消息回给他（上游的 break 那一支）。
       if (!hasFilters) continue;
     }
     if (hasFilters) {
-      const at = pending.findIndex((filter) => filter.sessionId === member.sessionId);
+      const at = pending.indexOf(sessionId);
       if (at < 0) continue;
       pending.splice(at, 1);
     }
