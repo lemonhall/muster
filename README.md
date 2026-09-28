@@ -54,10 +54,28 @@ npm run tenant:list -- --apply                        # 列出本地已开通的
 | M0 | 工程地基与一致性工装（workerd 测试链、上游清单、覆盖矩阵、文档卫生） | 🟢 完成 |
 | M1 | 身份与账号：多租户、设备/邮箱/自定义认证、令牌与会话、资料读写 | 🟢 完成 |
 | M2 | 存储引擎：对象 CRUD、权限、version 乐观锁、游标分页、存储索引 | 🟢 完成 |
-| M3 | 实时协议骨架与在线状态（`/ws`、`Envelope`、presence） | ⏳ 未开始 |
-| M4 | 频道与会话内聊天 | ⏳ 未开始 |
+| M3 | 实时协议骨架与在线状态（`/ws`、`Envelope`、presence） | 🟢 完成 |
+| M4 | 频道与会话内聊天 | 🟢 完成 |
+| M5 | 社交：好友、群组、通知、Google ID token 校验 | 🟢 完成 |
+| M6 | 经济与竞技：钱包与账本、排行榜、锦标赛 | 🟢 完成 |
+| M7 | 匹配与对局：票据池、查询表达式、match 句柄、超时 | 🟢 完成 |
+| M8 | 派对与运行时扩展：派对状态机与实时面、租户模块宿主、`nk` 工具/数据/群组面 | 🟢 完成 |
+| M9 | 管理台与运维面：控制台用户与 ACL、钱包账本端点、运行时创建面与权威写分、请求 ID 关联 | 🟡 进行中（11 条 DoD 已交付 8 条） |
 
-每个里程碑的 DoD、验证命令与证据见 [docs/plan/v1-index.md](docs/plan/v1-index.md)。
+M9 已交付的 8 条 DoD 与剩余 3 条（限流、内购校验、矩阵与文档收尾）逐条列在
+[v4-console-ops.md](docs/plan/v4-console-ops.md) 的「进度」一节，含每条对应的提交号。
+
+门禁数字（全部跑在本机 workerd 与本地 `wrangler dev --local` 上，测试不外呼任何
+Cloudflare 远端资源，因此不产生账单）：
+
+- `npm run typecheck`：0 错；
+- `npm test`：109 个测试文件、813 条断言全绿（M9 第 4 次提交点）；
+- `npm run e2e`：M8 收尾时的数字是 11 个文件、43 条；M9 收尾要重跑一次。
+
+每个里程碑的 DoD、验证命令与证据：[v1-index.md](docs/plan/v1-index.md)（M0–M4）、
+[v2-index.md](docs/plan/v2-index.md)（M5–M9 的追溯矩阵）、
+[v3-party-runtime.md](docs/plan/v3-party-runtime.md)（M8）、
+[v4-console-ops.md](docs/plan/v4-console-ops.md)（M9）。
 
 ## 常用命令
 

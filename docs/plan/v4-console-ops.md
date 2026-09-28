@@ -91,7 +91,8 @@ v3 交付之后，muster 已经是一个能跑真游戏的平台：身份、存�
 | 控制台接入面 | `src/http/routes/{console-users,console-ledger}.ts` |
 | 运维面 | `src/http/request-id.ts`、`src/durable/rate-limiter.ts` |
 | 内购 | `src/domain/iap/{types,apple,service}.ts`、`src/http/routes/iap.ts` |
-| 运行时面 | `src/runtime/capability-competitive.ts` |
+| 运行时面 | `src/runtime/capability-competitive.ts`（创建）、`src/runtime/capability-records.ts`（权威写分）、
+`src/runtime/capability-ledger.ts`（钱包账本）、`src/runtime/competitive-args.ts`（参数解析） |
 | 迁移 | `migrations/0007_console.sql` |
 
 ## 风险
@@ -106,3 +107,31 @@ v3 交付之后，muster 已经是一个能跑真游戏的平台：身份、存�
 ## Evidence
 
 逐条 DoD 的证据（红 → 绿输出、命令、数字）在里程碑收尾时回填到本节。
+
+## 进度（第 4 次提交点：`a818654`）
+
+| # | DoD | 状态 | 证据 |
+|---|---|---|---|
+| 1 | `Test_Permission` 搬运 | 已完成 | `7283993`；`tests/unit/console/acl-permission.test.ts` 12 条 |
+| 2 | `TestValidateConsoleUserACLGrant` | 已完成 | `7283993`；`tests/unit/console/user-policy.test.ts` |
+| 3 | `TestAddUserRejectsInvalidACLBeforeSideEffects` | 已完成 | `7283993`；副作用计数断言 |
+| 4 | `TestValidateConsoleUserTargetACL` | 已完成 | `7283993`；`user-policy.test.ts` |
+| 5 | `TestResetUserPasswordAuthorizesTargetACLBeforeUpdate` | 已完成 | `7283993`；`user-reset-acl.test.ts` 拒绝格更新次数 0 |
+| 6 | 管理面四条端点 | 已完成（E2E 未建） | `bd50b04`；`tests/integration/console/{users,ledger}.test.ts` 12 条。`tests/e2e/console.e2e.test.ts` 尚未建立，所以本条只跑过 `npm test`，`npm run e2e` 这一半还没落地 |
+| 7 | 运行时面四条 `nk.*` | 已完成 | `0a6e650`；`tests/integration/runtime/competitive-{create,write}.test.ts` 12 条，断言读库里的行 |
+| 8 | 请求 ID 关联 | 已完成 | `a818654`；`tests/integration/ops/request-id.test.ts` 7 条 |
+| 9 | 限流 | 未开始 | 剩余：`src/durable/rate-limiter.ts`、`wrangler.jsonc` 的 `RATE_LIMITER` 绑定与迁移项、429 + `retry-after`、租户隔离、E2E 打真 429 |
+| 10 | 内购校验 | 未开始 | 剩余：`src/domain/iap/{types,apple,service}.ts`、`src/http/routes/iap.ts`、Apple verifyReceipt 的注入传输层 |
+| 11 | 矩阵清零与 ECN 可追 | 未开始 | 剩余：M9 段 `planned` 转 `ported`、Evidence 段回填第 1/5/9 条红绿输出、`docs/reviews/v4-M9.md`、`v2-index.md` 的追溯行与 ECN 索引 |
+
+两处已经落定的偏差收尾（写进 ECN-0010 的两条）：
+
+- 偏差 10 的**创建面**由 `0a6e650` 关闭；同一提交还补上了偏差 10 的另一半
+  （`nk.leaderboardRecordWrite` / `leaderboardRecordDelete`，调用者是模块即
+  `uuid.Nil`，于是 `authoritative = 1` 的榜"没人能写分"不再成立）。
+- 偏差 12 由 `bd50b04` + `0a6e650` 关闭：账本游标带上时间窗并校验用户与时间窗，
+  控制台折成 `Internal`，运行时折成 `wallet ledger cursor invalid`。
+
+第 4 次提交点的门禁数字：`npm run typecheck` 0 错；`npm test` 109 文件 / 813 条全绿。
+`npm run e2e`、`npm run conformance:matrix`、`npm run docs:check` 属于收尾门禁，
+与 DoD 9/10/11 一起在第 5 次提交点跑。
