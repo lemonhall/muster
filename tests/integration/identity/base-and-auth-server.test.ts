@@ -81,16 +81,17 @@ describe("M1 契约: 服务端密钥鉴权", () => {
 
 describe("M1 契约: 上游对账（501/404）", () => {
   it("test_upstream_path_we_have_not_implemented_returns_501", async () => {
-    // `POST /v2/iap/purchase/google` 在上游 REST 表里存在、本项目还没做 →
+    // `POST /v2/iap/purchase/samsung` 在上游 REST 表里存在、本项目还没做 →
     // 诚实地说"有、没做"（而不是 404 假装不存在）。
     // 这条用例会随里程碑推进而"换靶子"：M5 把 `/v2/friend` 做掉、M6 把
-    // `/v2/tournament/{id}/join` 做掉，靶子就换到还没进任何里程碑的 IAP 面上。
-    // 选它的原因是它**不在**任何里程碑的测试文件范围里（上游没有 IAP 的测试文件），
-    // 所以它不会因为某个里程碑落地而再次过期。
+    // `/v2/tournament/{id}/join` 做掉，M9 又接通了 IAP 的 apple/google/huawei/
+    // facebookinstant 四个购买端点，于是靶子挪到同一面上**仍然没做**的 Samsung。
+    // 选它的原因：本项目对 Samsung 走的是公开订单接口，不需要凭据，
+    // 所以它在本项目的可预见范围里会一直保持"有这条路、还没做"。
     //
     // 路径选得**不能是两段**：`/v2/storage/{collection}` 会把任何 `v2/<名字>` 抢走，
     // 于是两段路径得到的是 "Method Not Allowed" 而不是 "Not implemented."。
-    const res = await call("/v2/iap/purchase/google", { method: "POST" });
+    const res = await call("/v2/iap/purchase/samsung", { method: "POST" });
     expect(res.status).toBe(501);
     expect(await errorBody(res)).toEqual({ code: 12, message: "Not implemented." });
   });

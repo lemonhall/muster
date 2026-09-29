@@ -98,6 +98,16 @@ export interface Bindings extends Env {
    */
   RATE_LIMIT_PER_WINDOW?: string;
   RATE_LIMIT_WINDOW_MS?: string;
+
+  /**
+   * M9：Apple 内购的 shared secret（上游 `iap.apple.shared_password`）。
+   *
+   * 不配 = 这个 provider 没开：`POST /v2/iap/purchase/apple` 会明确报
+   * `Apple IAP is not configured.`（上游同一句文案、同一个 `FailedPrecondition`），
+   * 而不是偷偷跳过校验。与 secret 同类：本地用 `.dev.vars` / `--var`，线上用
+   * `wrangler secret put`。
+   */
+  IAP_APPLE_SHARED_PASSWORD?: string;
 }
 
 /**

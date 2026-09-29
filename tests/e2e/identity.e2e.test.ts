@@ -166,12 +166,13 @@ describe("M1 E2E: 设备认证与账号（真实 HTTP）", () => {
     // 它变成 400 `Invalid channel ID.`（路由认得，只是 id 不合法），这条断言当场过期。
     // M5 又把它换掉了：好友域接通之后 `/v2/friend` 是 200，于是拿锦标赛当例子；
     // M6 把锦标赛也接通了，`/v2/tournament/t-1/join` 于是变成 404 `Tournament not found.`
-    // ——路由真的实现了，只是那场锦标赛不存在。这次改挑一条 **v2 范围外**的上游路径：
-    // 内购校验（IAP）不在 v2 计划里，它会在整条 v2 生命周期里保持"有这条路、还没做"，
-    // 不会再被下一个里程碑顶掉。
+    // ——路由真的实现了，只是那场锦标赛不存在。M9 又接通了内购校验的 apple/google/
+    // huawei/facebookinstant 四个购买端点，于是靶子挪到同一面上**仍然没做**的 Samsung
+    // 校验：本项目让 Samsung 走公开订单接口（不需要凭据），它在可预见范围里会一直是
+    // "有这条路、还没做"。
     // 路径必须是 ≥3 段：两段的 `POST /v2/<名字>` 会被 `/v2/storage/{collection}` 抢走，
     // 返回 501 `Method Not Allowed` 而不是 `Not implemented.`。
-    const notImplemented = await call("/v2/iap/purchase/google", {
+    const notImplemented = await call("/v2/iap/purchase/samsung", {
       method: "POST",
       authorization: `Bearer ${session.token}`,
     });

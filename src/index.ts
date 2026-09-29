@@ -8,6 +8,7 @@ import { registerConsoleUserRoutes } from "./http/routes/console-users";
 import { registerFriendRoutes } from "./http/routes/friend";
 import { registerGroupRoutes } from "./http/routes/group";
 import { registerIdentityRoutes } from "./http/routes/identity";
+import { registerIapRoutes } from "./http/routes/iap";
 import { registerLeaderboardRoutes } from "./http/routes/leaderboard";
 import { registerMatchRoutes } from "./http/routes/match";
 import { registerNotificationRoutes } from "./http/routes/notification";
@@ -74,6 +75,8 @@ registerSocketRoutes(router);
 // 所以它是 `handleServerKey` 那一类（ECN-0014 偏差 1）。
 registerConsoleUserRoutes(router);
 registerConsoleLedgerRoutes(router);
+// 内购校验：前缀 `/v2/iap`，鉴权是用户令牌（与上游同一条 securityInterceptor 分支）。
+registerIapRoutes(router);
 
 export default {
   fetch(request: Request, env: Bindings): Response | Promise<Response> {
