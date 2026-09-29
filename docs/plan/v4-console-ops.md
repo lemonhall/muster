@@ -191,6 +191,19 @@ v3 交付之后，muster 已经是一个能跑真游戏的平台：身份、存�
 上；全量 `npm run e2e` 的数字见下面的门禁段。限流那条**必须**在真 HTTP 上打到 429，
 因为 429 是由响应头（`retry-after`）与状态码共同判定的，单测里看不到这一层。
 
+### DoD 11 — ECN-0014 的三处可追
+
+覆盖矩阵里只有一种 ECN 锚点：豁免理由（M8 的 `TestRuntimeHTTPRequest` 就是这么指向
+ECN-0012 的）。M9 桶是 **5 ported / 0 planned / 0 exempt**，没有需要写理由的条目，
+所以第三条腿按 v1 DoD 10 定下的口径核对——`npm run docs:check` 退出码 0，
+再人工核对 `docs/ecn/ECN-0014-console-and-ops.md` 的引用面：
+
+- PRD：[REQ-0001-021 / 022 / 023](../prd/PRD-0001-muster-parity.md) 三行都写着偏差号，
+  并各自收窄了验收口径；
+- 计划：本文件（DoD / 范围 / 风险三处）与 [v2-index.md](./v2-index.md) 的 ECN 索引；
+- 矩阵：M9 桶清零 + 每条 `ported` 的证据列指向我们自己的测试文件，
+  而那些文件的 `契约源:` / `溯源:` 行双向可查（`derived_citations=162`）。
+
 ### DoD 10 的一处自纠
 
 内购面先写测试后跑 `npx vitest run tests/integration/iap`，当时是 `15 passed / 1 failed`：
