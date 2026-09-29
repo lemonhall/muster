@@ -104,25 +104,126 @@ v3 交付之后，muster 已经是一个能跑真游戏的平台：身份、存�
 | 限流 DO 是新增有状态实体 | 多一个每租户实例与一份迁移 | 桶只活在内存里（不落库），窗口靠闹钟滚动；实测断言"窗口滑过后恢复" |
 | 内购的厂商调用不能进测试 | 测试会打到 Apple/Google 真实端点 | 传输层注入：默认实现是真 `fetch`，测试注入假响应；伪造收据用例走假响应 |
 
-## Evidence
+## Evidence（红 → 绿）
 
-逐条 DoD 的证据（红 → 绿输出、命令、数字）在里程碑收尾时回填到本节。
+下面三段是收尾轮在本机复现的原始输出（`npx vitest run <file>`，2026-09-29）。
+红态的操作都只改源码一处、跑完立刻还原，还原后 `git diff --stat -- src/` 为空。
 
-## 进度（第 4 次提交点：`a818654`）
+### DoD 1 — `Test_Permission` 搬运
+
+红：把 `hasAccess` 里的**逐位比较循环**摘掉，只留"`required` 非空即真"。
+
+```
+ ❯ tests/unit/console/acl-permission.test.ts (12 tests | 7 failed) 28ms
+     × test_composed_permissions_answer_each_query_individually 15ms
+     × test_account_read_write_true_delete_false 3ms
+     × test_account_wallet_has_read_only 1ms
+     × test_account_export_has_delete_only 1ms
+     × test_admin_expansion_covers_every_resource_and_level
+     × test_none_expands_to_all_false
+     × test_json_round_trips_and_defaults_missing_cells_to_false
+ AssertionError: expected '________________' to be '0IAAAAAAAAAAAAAA'
+ Tests  7 failed | 5 passed (12)
+```
+
+绿：还原循环后
+
+```
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+```
+
+这 7 格正好是"4 个查询的假侧" + `ACL()` 展开的 3 格——证明断言是**逐格钉**的，
+换成"位图非空"式的断言这 7 格不会红。
+
+### DoD 5 — `TestResetUserPasswordAuthorizesTargetACLBeforeUpdate` 搬运
+
+红：把 `validateConsoleUserTargetACL(input.callerPermission, targetRole)` 换成
+`void input.callerPermission;`（即"不做目标授权检查"）。
+
+```
+ ❯ tests/unit/console/user-reset-acl.test.ts (8 tests | 2 failed) 27ms
+     × test_admin_permissions_are_rejected 10ms
+     × test_the_denied_cell_carries_the_upstream_message 7ms
+ AssertionError: expected +0 to be 7
+ AssertionError: expected '' to be 'Cannot reset the password of a user with permissions outside the current session.'
+ Tests  2 failed | 6 passed (8)
+```
+
+绿：还原调用后
+
+```
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+```
+
+两格一起红是关键：少了授权的实现既**改了不该改的行**（写次数 0 → 7），
+也**给错了话**（文案空）。只看状态码的话第一格骗得过去，第二格骗不过去。
+
+### DoD 9 — 限流
+
+红：先在 `wrangler.jsonc` 配 `RATE_LIMIT_PER_WINDOW=3` 把用例写出来，但**限流还没接**
+（请求直接放行）。
+
+```
+ ❯ tests/integration/ops/rate-limit.test.ts (5 tests | 5 failed) 349ms
+     × test_requests_within_the_threshold_pass_and_the_next_one_is_429 63ms
+     × test_the_window_slides_and_the_bucket_refills 62ms
+     × test_a_second_tenant_is_not_affected_by_the_first_one_being_exhausted 76ms
+     × test_user_routes_are_counted_per_user_inside_the_same_tenant 88ms
+     × test_the_rejection_lands_in_the_request_log_for_ops 57ms
+ AssertionError: expected 200 to be 429   （5 处，均为同一形状）
+ Tests  5 failed (5)
+```
+
+绿：`npx vitest run tests/integration/ops`
+
+```
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+```
+
+（2 个文件 = 请求 ID 7 条 + 限流 5 条；同目录一起跑，顺带证明限流没把请求日志写坏。）
+
+### DoD 6 / 9 的另一半（真 HTTP）
+
+`tests/e2e/console.e2e.test.ts` 5 条、`tests/e2e/ops.e2e.test.ts` 1 条跑在真 `wrangler dev --local`
+上；全量 `npm run e2e` 的数字见下面的门禁段。限流那条**必须**在真 HTTP 上打到 429，
+因为 429 是由响应头（`retry-after`）与状态码共同判定的，单测里看不到这一层。
+
+### DoD 10 的一处自纠
+
+内购面先写测试后跑 `npx vitest run tests/integration/iap`，当时是 `15 passed / 1 failed`：
+`test_samsung_and_the_subscription_surface_are_honestly_unimplemented` 断言
+`{code: 12, message: "Not implemented."}`，实际拿到 `{code: 12, message: "Method Not Allowed"}`。
+**错的是测试断言不是实现**：`/v2/iap/purchase/samsung` 没有注册路由，落回通配目录后才被
+方法表拒掉。改断言并在注释里写清两条路径的差别后转绿（16 条）。
+
+## 进度（最终提交点：M9 收尾）
 
 | # | DoD | 状态 | 证据 |
 |---|---|---|---|
-| 1 | `Test_Permission` 搬运 | 已完成 | `7283993`；`tests/unit/console/acl-permission.test.ts` 12 条 |
+| 1 | `Test_Permission` 搬运 | 已完成 | `7283993`；`tests/unit/console/acl-permission.test.ts` 12 条；红 7 / 绿 12 |
 | 2 | `TestValidateConsoleUserACLGrant` | 已完成 | `7283993`；`tests/unit/console/user-policy.test.ts` |
-| 3 | `TestAddUserRejectsInvalidACLBeforeSideEffects` | 已完成 | `7283993`；副作用计数断言 |
+| 3 | `TestAddUserRejectsInvalidACLBeforeSideEffects` | 已完成 | `7283993`；副作用计数断言（新建数 / 审计行均为 0） |
 | 4 | `TestValidateConsoleUserTargetACL` | 已完成 | `7283993`；`user-policy.test.ts` |
-| 5 | `TestResetUserPasswordAuthorizesTargetACLBeforeUpdate` | 已完成 | `7283993`；`user-reset-acl.test.ts` 拒绝格更新次数 0 |
-| 6 | 管理面四条端点 | 已完成（E2E 未建） | `bd50b04`；`tests/integration/console/{users,ledger}.test.ts` 12 条。`tests/e2e/console.e2e.test.ts` 尚未建立，所以本条只跑过 `npm test`，`npm run e2e` 这一半还没落地 |
+| 5 | `TestResetUserPasswordAuthorizesTargetACLBeforeUpdate` | 已完成 | `7283993`；`user-reset-acl.test.ts` 8 条，红 2 / 绿 8，拒绝格写次数 0 |
+| 6 | 管理面四条端点 | 已完成 | `bd50b04` + `978e52c`；`tests/integration/console/{users,ledger}.test.ts` 12 条 + `tests/e2e/console.e2e.test.ts` 5 条真 HTTP |
 | 7 | 运行时面四条 `nk.*` | 已完成 | `0a6e650`；`tests/integration/runtime/competitive-{create,write}.test.ts` 12 条，断言读库里的行 |
 | 8 | 请求 ID 关联 | 已完成 | `a818654`；`tests/integration/ops/request-id.test.ts` 7 条 |
-| 9 | 限流 | 未开始 | 剩余：`src/durable/rate-limiter.ts`、`wrangler.jsonc` 的 `RATE_LIMITER` 绑定与迁移项、429 + `retry-after`、租户隔离、E2E 打真 429 |
-| 10 | 内购校验 | 未开始 | 剩余：`src/domain/iap/{types,apple,service}.ts`、`src/http/routes/iap.ts`、Apple verifyReceipt 的注入传输层 |
-| 11 | 矩阵清零与 ECN 可追 | 未开始 | 剩余：M9 段 `planned` 转 `ported`、Evidence 段回填第 1/5/9 条红绿输出、`docs/reviews/v4-M9.md`、`v2-index.md` 的追溯行与 ECN 索引 |
+| 9 | 限流 | 已完成 | `b988db7` + `978e52c`；`tests/integration/ops/rate-limit.test.ts` 5 条（红 5 / 绿 5）+ `tests/e2e/ops.e2e.test.ts` 真 HTTP 429 |
+| 10 | 内购校验 | 已完成 | `8dc5dff`；`tests/integration/iap/*` 16 条，厂商调用走注入传输层 |
+| 11 | 矩阵清零与 ECN 可追 | 已完成 | `7283993`…`45a49b8`；M9 段 `planned=0`、`unreasoned_exemptions=0`、`problems=0`；`docs/reviews/v4-M9.md`、`docs/ecn/ECN-0014-console-and-ops.md`、`v2-index.md` 三处可追 |
+
+门禁数字（收尾轮实跑）：
+
+| 门禁 | 结果 |
+|---|---|
+| `npm run typecheck` | 0 错 |
+| `npm test` | 113 文件 / 842 条全绿 |
+| `npm run e2e` | 13 文件 / 49 条全绿 |
+| `npm run conformance:matrix` | `entries=263 ported=170 planned=91 exempt=2 unreasoned_exemptions=0 derived_citations=162`（M9 段 `5 / 5 / 0 / 0`） |
+| `npm run docs:check` | `problems=0` |
 
 两处已经落定的偏差收尾（写进 ECN-0010 的两条）：
 
@@ -131,7 +232,3 @@ v3 交付之后，muster 已经是一个能跑真游戏的平台：身份、存�
   `uuid.Nil`，于是 `authoritative = 1` 的榜"没人能写分"不再成立）。
 - 偏差 12 由 `bd50b04` + `0a6e650` 关闭：账本游标带上时间窗并校验用户与时间窗，
   控制台折成 `Internal`，运行时折成 `wallet ledger cursor invalid`。
-
-第 4 次提交点的门禁数字：`npm run typecheck` 0 错；`npm test` 109 文件 / 813 条全绿。
-`npm run e2e`、`npm run conformance:matrix`、`npm run docs:check` 属于收尾门禁，
-与 DoD 9/10/11 一起在第 5 次提交点跑。

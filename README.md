@@ -60,32 +60,30 @@ npm run tenant:list -- --apply                        # 列出本地已开通的
 | M6 | 经济与竞技：钱包与账本、排行榜、锦标赛 | 🟢 完成 |
 | M7 | 匹配与对局：票据池、查询表达式、match 句柄、超时 | 🟢 完成 |
 | M8 | 派对与运行时扩展：派对状态机与实时面、租户模块宿主、`nk` 工具/数据/群组面 | 🟢 完成 |
-| M9 | 管理台与运维面：控制台用户与 ACL、钱包账本端点、运行时创建面与权威写分、请求 ID 关联 | 🟡 进行中（11 条 DoD 已交付 8 条） |
+| M9 | 管理台与运维面：控制台用户与 ACL、钱包账本端点、运行时创建面与权威写分、请求 ID 关联、每租户限流、内购校验面 | 🟢 完成 |
 
-M9 已交付的 8 条 DoD 与剩余 3 条（限流、内购校验、矩阵与文档收尾）逐条列在
-[v4-console-ops.md](docs/plan/v4-console-ops.md) 的「进度」一节，含每条对应的提交号。
-
-下一次接着做的三件事（细节与反作弊条款都在 v4 计划里）：
-
-- **限流**：`src/durable/rate-limiter.ts`（每租户一个 DO，窗口计数只活在内存里）＋
-  `wrangler.jsonc` 的 `RATE_LIMITER` 绑定与迁移项；超限 429 + `retry-after`，按租户隔离。
-- **内购**：`src/domain/iap/{types,apple,service}.ts` ＋ `src/http/routes/iap.ts`；
-  Apple 走 `verifyReceipt`，厂商调用走注入的传输层，测试不碰 Apple 端点。
-- **收尾**：M9 段的 `planned` 清零、Evidence 回填、`docs/reviews/v4-M9.md`、
-  `docs/plan/v2-index.md` 的追溯行，最后四个门禁一起跑。
+M9 的 11 条 DoD 逐条列在 [v4-console-ops.md](docs/plan/v4-console-ops.md) 的「进度」一节，
+含每条对应的提交号；红 → 绿输出在同一个文件的 Evidence 段。
+**M9 冻结了 `v1`–`v4` 的 P0/P1 面**：至此覆盖矩阵里 M1–M9 的 172 条上游测试条目
+要么 `ported`、要么带非空理由的豁免，剩余 `planned` 的 91 条全部落在里程碑之外
+（Lua 运行时 76、上游内部算法 9、横切面 4、非目标商业控制台 2）。
 
 门禁数字（全部跑在本机 workerd 与本地 `wrangler dev --local` 上，测试不外呼任何
 Cloudflare 远端资源，因此不产生账单）：
 
-- `npm run typecheck`：0 错（`761ff4d` 上复跑确认）；
-- `npm test`：109 个测试文件、813 条断言全绿（M9 第 4 次提交点，此后只有文档改动）；
-- `npm run e2e`：M8 收尾时的数字是 11 个文件、43 条；M9 的 E2E 还没重跑，
-  与 DoD 9/10 一起放在收尾那一轮。
+- `npm run typecheck`：0 错；
+- `npm test`：113 个测试文件、842 条断言全绿；
+- `npm run e2e`：13 个文件、49 条全绿（真进程 + 真 HTTP/WS，含一条打到真 429 的限流用例）；
+- `npm run conformance:matrix`：`entries=263 ported=170 planned=91 exempt=2
+  unreasoned_exemptions=0`，M9 桶 `5 / 5 / 0 / 0`；
+- `npm run docs:check`：`problems=0`。
 
 每个里程碑的 DoD、验证命令与证据：[v1-index.md](docs/plan/v1-index.md)（M0–M4）、
 [v2-index.md](docs/plan/v2-index.md)（M5–M9 的追溯矩阵）、
 [v3-party-runtime.md](docs/plan/v3-party-runtime.md)（M8）、
 [v4-console-ops.md](docs/plan/v4-console-ops.md)（M9）。
+
+里程碑 Review 记录：[docs/reviews/](docs/reviews/)（最新一份是 M9）。
 
 ## 常用命令
 

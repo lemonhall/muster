@@ -136,6 +136,11 @@ Cloudflare 上没有"常驻进程"（只有请求与 Cron 触发），也没有�
 客户端可见差异只有一条：`authoritative = 1` 的榜在 M6 里**没有人**能写分。
 上游有 server key 的调用方能写。这条在 M8 落地运行时面时关闭。
 
+**已关闭**：M8 的 `0a6e650` 补上 `nk.leaderboardCreate` / `nk.tournamentCreate`
+与权威写分的另一半（`nk.leaderboardRecordWrite` / `leaderboardRecordDelete`，
+调用者是模块即 `uuid.Nil`，于是 `authoritative = 1` 的榜"没人能写分"不再成立）。
+验收证据在 [v4-console-ops.md](../plan/v4-console-ops.md) 的 Evidence DoD 7。
+
 ### 偏差 11：锦标赛目录的排序键是 `(create_time, id)`
 
 上游的目录顺序是 `LeaderboardCache` 的**内存插入序**（`list` 切片的追加顺序），
@@ -153,6 +158,9 @@ Cloudflare 上没有"常驻进程"（只有请求与 Cron 触发），也没有�
 进这一条的原因是账本的 REST 面属于**控制台 API**（`server/console_account.go::GetWalletLedger`），
 而 M6 只做到存储层（`src/domain/competitive/wallet/store.ts`）。M9 接控制台面时
 必须把这个校验补齐——这条偏差就是那个待办的门禁。
+
+**已关闭**：M9 的 `bd50b04` + `0a6e650` 把游标改成带时间窗、并校验用户与时间窗
+（控制台面把非法游标折成 `Internal`，运行时面折成 `wallet ledger cursor invalid`）。
 
 ## 影响范围
 

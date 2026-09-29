@@ -50,9 +50,11 @@
 | `src/domain/console/users/*` | `server/console_user.go` | 两条授权规则 + 建用户 / 重置密码 / 列表 |
 | `src/http/routes/console-*.ts` | console gRPC-gateway 面 | 受 tenant server key 保护（偏差 1） |
 | `migrations/0007_console.sql` | `console_user` 表 | 多租户首列的等价表 |
-| `src/domain/iap/*` | `iap/iap.go` | provider 分派 + Apple verifyReceipt（注入传输层） |
+| `src/domain/iap/{types,transport,apple,store,service}.ts` | `iap/iap.go`、`server/api_purchase.go` | provider 分派 + Apple verifyReceipt（注入传输层，偏差 5） |
+| `src/wire/iap.ts`、`src/http/routes/iap.ts` | purchase 的 gRPC-gateway 面 | 请求体与错误体形状对齐上游（偏差 7） |
+| `migrations/0008_iap.sql` | `purchase` 表 | 多租户首列 + 显式 `seen_before` + Unix 秒（偏差 8） |
 | `src/http/request-id.ts` | 请求 ID 中间件 | 响应头与日志关联 |
-| `src/durable/rate-limiter.ts` | 限流中间件 | 每租户一个限流 DO（偏差 4） |
+| `src/durable/rate-limiter.ts`、`src/http/rate-limit.ts` | 限流中间件 | 每租户一个限流 DO，**不配阈值即关闭**（偏差 4 / 9） |
 
 ## 偏差清单
 
@@ -64,6 +66,9 @@
 | 4 | 限流桶只活在**限流 DO 的内存里**（不落库） | **非可见**：窗口靠 DO 内存里的计数 + 时间戳滚动；DO 实例被回收即清零，等价于"窗口自然滑过"。每租户一个 DO，租户之间天然隔离 |
 | 5 | 内购的厂商调用走**注入的传输层** | **非可见**：默认实现是真 `fetch`（Apple `verifyReceipt`），测试注入假响应。伪造收据（`status != 0`）被拒且不带出任何账本副作用；未配置凭据的 provider 返回明确错误 |
 | 6 | 控制台面只实现**最小可信内核**（用户 + ACL + 钱包账本），不是上游整个 console API | **客户端可见**（只覆盖核心操作）：上游 console API 有 90 多个操作，多数依赖 Hiro/Satori 商业面（NS 桶，非目标）。REQ-0001-021 的验收口径是"核心操作可完成" |
+| 7 | **Samsung 与订阅面不注册**：`/v2/iap/purchase/samsung` 与 `/v2/iap/subscription*` 返回 501 `Not implemented.`，而 Google / Huawei / FacebookInstant 是"已注册但缺凭据"的配置守卫 | **客户端可见**（用 Samsung 的集成方要换 provider 或等切片）：上游 Samsung 的实现走公开订单接口、**不需要凭据**，所以照抄成"未配置"说不通——那会变成一个永远说不清楚的 400。宁可诚实地 501。订阅面同理（上游的订阅校验要求能解 Apple 双向凭证链） |
+| 8 | `migrations/0008_iap.sql` 与上游 `purchase` 表四处不同：① 首列 `tenant_id`（ECN-0001）；② 冲突判定是 `(tenant_id, store, transaction_id)` 而不是全局 `transaction_id`——交易号只在**同一商店内**唯一，跨商店撞号不该互相覆盖；③ `seen_before` 是**显式列**（上游用 `update_time > create_time` 反推，在秒精度下会退化成 false）；冲突时**不覆盖** `refund_time`（退款通知的时间要留住）；④ 时间列统一 Unix **秒** | **非可见**：都是存储形态与冲突语义的差异。`seen_before` 与 `refund_time` 的取值经端点原样带出，行为与上游一致 |
+| 9 | 限流**默认关闭**（`RATE_LIMIT_PER_WINDOW` 缺省 = 0 = 不过桶，连限流 DO 都不碰） | **非可见**：上游没有这个中间件，默认开着等于给迁移过来的人一个看不见的行为变化。运营者要限流就显式拧两个旋钮；E2E 用专属 dev server 把阈值压到 3 才能打出真 429 |
 
 ## 为什么这些偏差可接受
 
@@ -86,11 +91,14 @@
   REQ-0001-023（验收口径收窄为两条：限流阈值可配 + 日志含请求 ID）。
 - 受影响的计划：[v4-console-ops.md](../plan/v4-console-ops.md)（M9）的 DoD 1~11 直接对应本文。
 - 受影响的代码：`src/domain/console/**`、`src/http/routes/console-*.ts`、
-  `src/http/request-id.ts`、`src/durable/rate-limiter.ts`、`src/domain/iap/**`、
-  `src/http/routes/iap.ts`、`migrations/0007_console.sql`、`wrangler.jsonc`。
+  `src/http/request-id.ts`、`src/durable/rate-limiter.ts`、`src/http/rate-limit.ts`、
+  `src/domain/iap/**`、`src/wire/iap.ts`、`src/http/routes/iap.ts`、
+  `migrations/0007_console.sql`、`migrations/0008_iap.sql`、`wrangler.jsonc`。
 - 受影响的测试：`tests/unit/console/`、`tests/unit/ops/`、
   `tests/integration/console/`、`tests/integration/iap/`、`tests/integration/ops/`、
-  `tests/e2e/console.e2e.test.ts`、`tests/e2e/ops.e2e.test.ts`。
+  `tests/integration/runtime/competitive-{create,write}.test.ts`、
+  `tests/e2e/console.e2e.test.ts`、`tests/e2e/ops.e2e.test.ts`（自带专属 dev server
+  `tests/e2e/ops-server.ts`，理由见偏差 9）、`tests/helpers/{console-users,iap}.ts`。
 
 ## 处置方式
 

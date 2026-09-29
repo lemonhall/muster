@@ -4,7 +4,7 @@
 |---|---|
 | 版本 | v2 |
 | 日期 | 2026-09-29 |
-| 状态 | 进行中（M5、M6、M7 已交付；M8 见 [v3-party-runtime.md](./v3-party-runtime.md)） |
+| 状态 | M5、M6、M7 已交付；M8 见 [v3-party-runtime.md](./v3-party-runtime.md)、M9 见 [v4-console-ops.md](./v4-console-ops.md)（两者均已交付）。M6 后置的两笔（运行时创建面、控制台账本端点）已在 M8 / M9 关闭 |
 | 成本档位 | `standard`（普通功能交付，最多 3 轮 Review） |
 | 愿景 | [../prd/VISION.md](../prd/VISION.md) |
 | 需求基线 | [PRD-0001](../prd/PRD-0001-muster-parity.md) |
@@ -126,6 +126,7 @@ Google ID token 校验（aud/azp 规则与授权码流程）。同时关闭 v1 �
 | [v2-competitive.md](./v2-competitive.md) | M6 | REQ-0001-014, REQ-0001-015, REQ-0001-016 |
 | [v2-match.md](./v2-match.md) | M7 | REQ-0001-017, REQ-0001-018 |
 | [v3-party-runtime.md](./v3-party-runtime.md) | M8 | REQ-0001-019, REQ-0001-020 |
+| [v4-console-ops.md](./v4-console-ops.md) | M9 | REQ-0001-021, REQ-0001-022, REQ-0001-023 |
 
 ## 追溯矩阵
 
@@ -142,6 +143,9 @@ Google ID token 校验（aud/azp 规则与授权码流程）。同时关闭 v1 �
 | REQ-0001-018 | v2-match.md | `tests/unit/match/`（6 文件 / 45 条）+ `tests/integration/match/`（4 文件 / 35 条，含 `溯源: server/match_registry_test.go::TestMatchRegistry*` 与 `TestEncode*`） | `tests/e2e/match.e2e.test.ts`（token join 建对局、目录可查、错误体形状） | v2-match.md Evidence DoD 9–11；覆盖矩阵 M7 桶 35 条全部 `ported`；ECN-0011 偏差 2/3/6/7/8/9 | 🟢 已交付（M7，运行时面与 tick 循环在 M8） |
 | REQ-0001-019 | v3-party-runtime.md | `tests/integration/party/`（8 文件 / 71 条，含 `溯源: server/core_party_test.go`、`server/api_party_test.go`、`server/pipeline_party_test.go`、`server/party_registry_test.go`）+ `tests/unit/party/`（2 文件） | `tests/e2e/party.e2e.test.ts`（创建 → 加入请求 → 待批名单 → 接受 → 数据广播 → 踢人 → 关闭；另含目录面的开放/隐藏过滤） | v3-party-runtime.md Evidence DoD 1–3 与 DoD 13；覆盖矩阵 M8 桶 44 条 `planned=0`；ECN-0013 偏差 1–5 | 🟢 已交付（M8） |
 | REQ-0001-020 | v3-party-runtime.md | `tests/unit/runtime/`（7 文件 / 65 条）+ `tests/integration/runtime/`（4 文件 / 32 条，含 `溯源: server/runtime_test.go::TestRuntime*`） | `tests/e2e/runtime.e2e.test.ts`（`?http_key=` 通道 → 模块返回 payload；用户令牌通道 → `nk` 存储往返；跨两个真请求的模块级计数器） | v3-party-runtime.md Evidence DoD 4–13；覆盖矩阵 M8 桶 44 条 `planned=0`（1 exempt）；ECN-0012 偏差 1–15 | 🟢 已交付（M8，对局 tick 循环与 Lua 模块不在范围内） |
+| REQ-0001-021 | v4-console-ops.md | `tests/unit/console/`（4 文件 / 35 条，含 `溯源: console/acl/acl_test.go::Test_Permission`、`server/console_user_add_acl_test.go::TestValidateConsoleUserACLGrant`、`server/console_user_reset_password_acl_test.go::TestResetUserPasswordAuthorizesTargetACLBeforeUpdate` 等 5 条上游用例）+ `tests/integration/console/`（2 文件 / 17 条） | `tests/e2e/console.e2e.test.ts`（建控制台用户 → 重置口令拿一次性 code → 列本租户用户 → 读钱包账本；四条端点都过真 HTTP） | v4-console-ops.md Evidence DoD 1–6；覆盖矩阵第 168–172 条 `ported`；ECN-0014 偏差 1/3/6 | 🟢 已交付（M9，只覆盖最小可信内核） |
+| REQ-0001-022 | v4-console-ops.md | `tests/integration/iap/`（2 文件 / 16 条，含 `溯源: iap/iap.go::ValidateLegacyReceiptApple`、`server/api_purchase.go::ValidatePurchase*`） | 无独立 E2E：厂商端点**不在端到端链路上**（注入传输层，测试不打 Apple / Google 真端点） | v4-console-ops.md Evidence DoD 10；ECN-0014 偏差 5/7/8；`migrations/0008_iap.sql` | 🟢 已交付（M9，Apple 真校验；其余 provider 为配置守卫，Samsung 与订阅面 501） |
+| REQ-0001-023 | v4-console-ops.md | `tests/unit/ops/rate-limit-window.test.ts`（8 条）+ `tests/integration/ops/`（2 文件 / 12 条，含 `溯源: server/logger.go::LoggerWithTraceId`） | `tests/e2e/ops.e2e.test.ts`（真进程打到 429：状态码 + `retry-after` + 错误体 + `x-request-id`，再证明第二个租户不受影响） | v4-console-ops.md Evidence DoD 8/9；ECN-0014 偏差 2/4/9 | 🟢 已交付（M9，验收口径只取限流与请求 ID 关联两条；指标导出与多环境不在载体上） |
 
 > 任何 `待填` / `待回填` / `—` 都是断链，禁止在存在断链的情况下宣称对应需求已交付。
 
@@ -155,6 +159,7 @@ Google ID token 校验（aud/azp 规则与授权码流程）。同时关闭 v1 �
 | [ECN-0011](../ecn/ECN-0011-match-on-durable-objects.md) | 匹配器与对局建在 Durable Object + D1 上（偏差 1–11）：每租户一个匹配器 / 每场一个对局实例、目录合并成 `match_record` 单表、权威对局唯一入口是钩子、不引入 bluge、顺序确定化、node 固定 `muster`、毫秒/秒精度、protojson 取代 gob、运行时面后置到 M8 | 已生效 | REQ-0001-017, REQ-0001-018 | `migrations/0005_match.sql`、`src/domain/match/*`、`src/domain/matchmaker/*`、`src/durable/match*.ts`、`src/durable/matchmaker*.ts` |
 | [ECN-0012](../ecn/ECN-0012-runtime-modules-on-worker-loader.md) | 运行时模块装载在 Worker Loader 上（偏差 1–15）：每租户一个 isolate、`nk.*` 变异步、源码存 D1、只支持 JS、bcrypt 换 PBKDF2、AES-128-CFB 自实现、配额走 workerd `limits`、hook 用泛化操作名、未实现能力"不存在"、能力对象只在本次调用内有效、宿主只缓存模块映射不缓存 Loader 句柄 | 已生效 | REQ-0001-020 | `migrations/0006_runtime.sql`、`src/runtime/*`、`src/http/routes/rpc.ts`、`src/realtime/pipeline-hooks.ts` |
 | [ECN-0013](../ecn/ECN-0013-party-on-durable-objects.md) | 派对建在 Durable Object + D1 上（偏差 1–5）：状态落 DO SQLite、目录换 D1、游标换 `base64url(JSON)`、标签语法细节、断连清待批请求 | 已生效 | REQ-0001-019 | `src/domain/party/*`、`src/durable/party*.ts`、`src/realtime/pipeline-party.ts`、`src/http/routes/party.ts` |
+| [ECN-0014](../ecn/ECN-0014-console-and-ops.md) | 管理台、内购校验与运维面在 Cloudflare 上的载体（偏差 1–9）：控制台面用 tenant server key 取代 console JWT、指标导出与多环境不在载体上、无行锁改用串行路径、限流桶只活在 DO 内存且默认关闭、内购厂商调用走注入传输层、控制台只做最小可信内核、Samsung 与订阅面诚实地 501、`purchase` 表的冲突判定与 `seen_before` 形态 | 已生效 | REQ-0001-021, REQ-0001-022, REQ-0001-023 | `src/domain/console/**`、`src/http/routes/console-*.ts`、`src/domain/iap/**`、`src/http/routes/iap.ts`、`src/durable/rate-limiter.ts`、`src/http/rate-limit.ts`、`src/http/request-id.ts`、`migrations/0007_console.sql`、`migrations/0008_iap.sql` |
 
 ## Tashan Review 记录
 
@@ -171,11 +176,16 @@ M8 的 Review 记录：[v3-M8.md](../reviews/v3-M8.md)（verdict: pass；1 条 M
 （模块宿主的 handler 调用约定传成 `(ctx, payload)`，逼模块捕获会失效的 `nk`）+ 4 条 MINOR +
 1 条 NOTE 全部在提交前处置；另记 7 条残余风险，其中"无线上验收""只支持 JS"为里程碑级限制）。
 
+M9 的 Review 记录：[v4-M9.md](../reviews/v4-M9.md)（verdict: pass；本轮无 MAJOR，
+4 条 MINOR（限流阈值是全局绑定、控制台 E2E 用户名越界、覆盖矩阵把上游测试名写进
+`契约源:`、内购 501 的断言写错）+ 2 条 NOTE 全部在提交前处置；另记 9 条残余风险，
+其中"控制台鉴权与上游不同""限流默认关闭""内购只有 Apple 是真校验"为里程碑级限制）。
+
 ## Tashan Trigger Audit
 
 ```markdown
 - expected_review_triggers: v_doc_writing_done, v_milestone_done(M5..M9)
-- actual_review_runs: 5 (v_doc_writing_done, v_milestone_done(M5), v_milestone_done(M6), v_milestone_done(M7), v_milestone_done(M8))
+- actual_review_runs: 6 (v_doc_writing_done, v_milestone_done(M5), v_milestone_done(M6), v_milestone_done(M7), v_milestone_done(M8), v_milestone_done(M9))
 - skipped_triggers: 0
 - skip_reasons: 独立子代理派发不通（本机限制），降级为同模型自评 + 命令证据
 - mitigation: 每个里程碑完成前必须补 Review 记录，否则不输出完成信号
@@ -189,7 +199,8 @@ v2 与上游的**全部**刻意差异都登记在 ECN 里，这里只做索引�
 |---|---|---|---|
 | [ECN-0008](../ecn/ECN-0008-social-graph-on-d1.md) | 社交图与通知建在 D1 上（偏差 1–14）；游标不透明但不与上游互换；时间精度到秒；群成员变更与群频道系统消息不是同一事务；多目标满员时逐目标原子 | 收不到（游标不透明）；时间精度差异可见（同秒多条时排序按 id）；"批内部分成功"在满员时可观察 | 已生效 |
 | [ECN-0009](../ecn/ECN-0009-google-id-token.md) | Google 证书从 JWKS（`/oauth2/v3/certs`）取而不是 X.509 PEM 端点 | 不可见 | 已生效 |
-| [ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) | 竞技域建在 D1 与内存缓存上（偏差 1–12）：游标不与上游互换、时间精度到秒、`authoritative = 1` 的榜在 M6 里无人能写分、账本端点后置到 M9 | 收不到（游标不透明）；时间精度差异可见（同秒排序退化到元组）；"权威榜永远空"可见 | 已生效 |
+| [ECN-0010](../ecn/ECN-0010-competitive-on-d1.md) | 竞技域建在 D1 与内存缓存上（偏差 1–12）：游标不与上游互换、时间精度到秒、`authoritative = 1` 的榜在 M6 里无人能写分、账本端点后置到 M9 | 收不到（游标不透明）；时间精度差异可见（同秒排序退化到元组）；"权威榜永远空"可见 | 已生效（偏差 10 由 M8 `0a6e650` 关闭、偏差 12 由 M9 `bd50b04` 关闭；两条的注释都已回填原文档） |
 | [ECN-0011](../ecn/ECN-0011-match-on-durable-objects.md) | 匹配器与对局建在 DO + D1 上（偏差 1–11）：票据与对局状态持久化（重启不丢）、查询只实现子集、权威对局的 node 段是 `muster`、同秒排序补 `match_id` 决胜、跨 DO 帧用 protojson、运行时面后置到 M8 | 收不到（match id 与 token 都是不透明字符串）；同秒创建的对局顺序可见；"权威对局没有 tick 循环"在 M8 前可见 | 已生效 |
 | [ECN-0012](../ecn/ECN-0012-runtime-modules-on-worker-loader.md) | 运行时模块建在 Worker Loader + D1 上（偏差 1–15）：`nk.*` 从同步变异步（模块必须 `await`）、只支持 JS 不支持 Lua、bcrypt 换 PBKDF2、AES-128-CFB 自实现、模块内不得自行出网（`globalOutbound: null`）、未实现的 `nk.*` 抛 `TypeError`、能力对象只在一次调用内有效 | 模块作者可见（偏差 1/2/4/5/11/14 直接改变模块写法）；对外部客户端不可见（偏差 15 完全在平台实现内） | 已生效 |
 | [ECN-0013](../ecn/ECN-0013-party-on-durable-objects.md) | 派对建在 DO + D1 上（偏差 1–5）：状态落 DO SQLite、目录换 D1、游标换 `base64url(JSON)` 不与上游互换、标签语法细节、断连时清掉待批加入请求 | 收不到（游标不透明）；断连清请求在极端时序下可见 | 已生效 |
+| [ECN-0014](../ecn/ECN-0014-console-and-ops.md) | 管理台、内购与运维面换载体（偏差 1–9）：控制台改用 tenant server key 鉴权、只做最小可信内核、指标导出与多环境不在载体上、无行锁改用串行路径、内购厂商调用走注入传输层、Samsung 与订阅面 501、限流默认关闭且桶只在 DO 内存、`purchase` 表冲突判定按 `(tenant_id, store, transaction_id)` | 控制台鉴权与覆盖范围**客户端可见**（前端要换鉴权、多数管理端点后置）；Samsung 集成方可见；其余不可见 | 已生效 |
