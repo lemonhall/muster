@@ -22,6 +22,7 @@ export { Channel } from "./durable/channel";
 export { Match } from "./durable/match";
 export { Matchmaker } from "./durable/matchmaker";
 export { Party } from "./durable/party";
+export { RateLimiter } from "./durable/rate-limiter";
 export { SessionRegistry } from "./durable/session-registry";
 export { SessionShard } from "./durable/session-shard";
 

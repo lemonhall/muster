@@ -2,6 +2,7 @@ import type { Channel } from "./durable/channel";
 import type { Match } from "./durable/match";
 import type { Matchmaker } from "./durable/matchmaker";
 import type { Party } from "./durable/party";
+import type { RateLimiter } from "./durable/rate-limiter";
 import type { SessionRegistry } from "./durable/session-registry";
 import type { SessionShard } from "./durable/session-shard";
 
@@ -53,6 +54,12 @@ export interface Bindings extends Env {
   PARTY: DurableObjectNamespace<Party>;
 
   /**
+   * M9：一个租户一个限流实例（键是租户 id）。桶只活在 DO 的内存里，实例回收即清零
+   * ——等价于窗口自然滑过（ECN-0014 偏差 4）。只跑本地 workerd。
+   */
+  RATE_LIMITER: DurableObjectNamespace<RateLimiter>;
+
+  /**
    * M5：Google 登录。四个都是**可选**的，缺省行为在 `src/domain/social/google/config.ts`
    * 里写死成一张清单（空 client id = 不校验 aud/azp；没有 secret+endpoint = 不启用授权码流程）。
    *
@@ -80,6 +87,17 @@ export interface Bindings extends Env {
    * configured username` 那条检查对齐。
    */
   CONSOLE_USERNAME?: string;
+
+  /**
+   * M9：限流的两个旋钮，**不配 = 关闭**。
+   *
+   * 上游没有这个中间件，默认开着就等于给迁移过来的人一个看不见的行为变化；
+   * 运营者要限流就显式拧这两个值（`src/http/rate-limit.ts` 只认正整数，
+   * 非法值当作没配）。与 secret 同类：不进 `wrangler.jsonc` 的公开 vars，
+   * 本地用 `--var` 注入，线上用 `wrangler secret put` 或环境变量。
+   */
+  RATE_LIMIT_PER_WINDOW?: string;
+  RATE_LIMIT_WINDOW_MS?: string;
 }
 
 /**

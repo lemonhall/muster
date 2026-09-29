@@ -5,6 +5,7 @@ import { isParamSegment } from "./endpoints";
 import { ApiError, internal } from "./errors";
 import { Code, statusResponse } from "./grpc";
 import { resolveBearerContext, resolveServerKeyTenant } from "./auth";
+import { serveWithRateLimit } from "./rate-limit";
 import { recordRequest, requestIdOf, withRequestId } from "./request-id";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
@@ -81,6 +82,10 @@ function matchTemplate(
  *
  * 鉴权在分发这一层统一执行（对应上游的 securityInterceptorFunc）：处理器拿到的
  * 上下文里 `tenantEnv` 已经解析好，处理器不再自己解析 Authorization 头。
+ *
+ * 限流也挂在同一层、紧跟在鉴权之后：桶挂在租户上（每租户一个限流 DO），主体是
+ * user id（用户路由）或租户 id（server key 路由）。未配置阈值时这一步是空转，
+ * 见 `rate-limit.ts`。
  *
  * 鉴权来源按路由类别区分（对应上游拦截器的 switch）：
  * - `server-key`（认证/刷新类）：租户来自 `Basic <server_key>`
@@ -180,11 +185,17 @@ export class Router {
       } else if (route.kind === "server-key") {
         const tenantEnv = await resolveServerKeyTenant(env, request);
         tenantId = tenantEnv.tenantId;
-        response = await handler({ env, request, url, params, tenantEnv });
+        // server key 路由没有"某个玩家"这个身份（管理面、认证面），桶按租户算。
+        response = await serveWithRateLimit(env, tenantId, tenantId, () =>
+          handler({ env, request, url, params, tenantEnv }),
+        );
       } else {
         const { tenantEnv, session } = await resolveBearerContext(env, request);
         tenantId = tenantEnv.tenantId;
-        response = await handler({ env, request, url, params, tenantEnv, session });
+        // 用户路由按 user id 分桶：同一个租户里一个人刷屏不该把别人一起限掉。
+        response = await serveWithRateLimit(env, tenantId, session.user.id, () =>
+          handler({ env, request, url, params, tenantEnv, session }),
+        );
       }
     } catch (error) {
       if (error instanceof ApiError) {

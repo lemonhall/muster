@@ -38,7 +38,10 @@
       { "name": "MATCHMAKER", "class_name": "Matchmaker" },
       { "name": "MATCH", "class_name": "Match" },
       // M8：一个派对一个实例。成员表、加入请求、队长与广播顺序都要单点定序。
-      { "name": "PARTY", "class_name": "Party" }
+      { "name": "PARTY", "class_name": "Party" },
+      // M9：一个租户一个限流实例。计数必须单点（每个 isolate 各记一份等于没限），
+      // 桶只活在内存里、不落库（ECN-0014 偏差 4）。只跑本地 workerd。
+      { "name": "RATE_LIMITER", "class_name": "RateLimiter" }
     ]
   },
   "migrations": [
@@ -61,6 +64,12 @@
       // M8：一个派对一个实例，成员/请求/队长都存 SQLite。只跑本地 workerd。
       "tag": "m8-parties",
       "new_sqlite_classes": ["Party"]
+    },
+    {
+      // M9：限流实例。它不写存储（桶在内存里），但仍然要声明成 SQLite 类：
+      // 这样它跟其余 DO 走同一条迁移路径，将来要加持久桶不必再改迁移历史。
+      "tag": "m9-rate-limiter",
+      "new_sqlite_classes": ["RateLimiter"]
     }
   ]
 
