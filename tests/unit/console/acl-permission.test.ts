@@ -27,8 +27,9 @@ import { ACL_RESOURCES } from "../../../src/domain/console/acl/resources";
  * 反作弊点：`hasAccess` 与 `ACL()` 展开**两件事都要逐格断言**——只断言"位图非空"
  * 会漏掉"位序写反了但自洽"这种最危险的实现。
  *
+ * 溯源: console/acl/acl_test.go::Test_Permission
+ *
  * 契约源（机器可读）：
- * 契约源: console/acl/acl_test.go::Test_Permission
  * 契约源: console/acl/acl.go::Permission.HasAccess
  * 契约源: console/acl/acl.go::Permission.ACL
  *

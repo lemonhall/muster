@@ -15,7 +15,7 @@ import { basicAuth, call, createTenant } from "../../helpers/tenants";
  * UUID 形状；以及没有解析出租户的请求（401）不写日志行——写不了，`tenant_id` 是必填。
  *
  * 契约源（机器可读）：
- * 契约源: server/console.go::LoggerWithTraceId
+ * 契约源: server/logger.go::LoggerWithTraceId
  *
  * REQ-0001-023
  */

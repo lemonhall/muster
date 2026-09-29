@@ -21,6 +21,8 @@ import { fakeConsoleUserStore, statusOf } from "../../helpers/console-users";
  * 反作弊点：只看状态码的话，"先写后验"的实现也能凑出 403，但计数骗不过去。
  * 另外两格钉住"读失败重试一次"与"畸形 ACL 失败关闭"。
  *
+ * 溯源: server/console_user_reset_password_acl_test.go::TestResetUserPasswordAuthorizesTargetACLBeforeUpdate
+ *
  * REQ-0001-021
  */
 

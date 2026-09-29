@@ -22,6 +22,8 @@ import { fakeConsoleUserStore, statusOf } from "../../helpers/console-users";
  * `inserts` 与 `audits` 都必须是 0。只有状态码为 `InvalidArgument` 而计数非 0，
  * 就说明我们把"先写后验"写成了默认行为（那正是上游那条用例要防的漏洞）。
  *
+ * 溯源: server/console_user_add_acl_test.go::TestAddUserRejectsInvalidACLBeforeSideEffects
+ *
  * REQ-0001-021
  */
 

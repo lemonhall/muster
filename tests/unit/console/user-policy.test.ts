@@ -27,6 +27,9 @@ import { statusOf } from "../../helpers/console-users";
  * 两件事必须一起钉住：**状态码**（客户端按它分支）与**逐字文案**（客户端按它展示）。
  * 只断言码会在文案被改坏时静默通过。
  *
+ * 溯源: server/console_user_add_acl_test.go::TestValidateConsoleUserACLGrant
+ * 溯源: server/console_user_reset_password_acl_test.go::TestValidateConsoleUserTargetACL
+ *
  * REQ-0001-021
  */
 

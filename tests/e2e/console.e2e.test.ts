@@ -25,10 +25,10 @@ import {
  * 用户名每次运行都换（本地 D1 跨运行保留），否则第二次跑就会撞唯一约束。
  *
  * 契约源（机器可读）：
- * 契约源: console/console.proto::Console/AddUser
- * 契约源: console/console.proto::Console/ResetUserPassword
- * 契约源: console/console.proto::Console/ListUsers
- * 契约源: console/console.proto::Console/GetWalletLedger
+ * 契约源: server/console_user.go::AddUser
+ * 契约源: server/console_user.go::ResetUserPassword
+ * 契约源: server/console_user.go::ListUsers
+ * 契约源: server/console_account.go::GetWalletLedger
  *
  * REQ-0001-021
  */
